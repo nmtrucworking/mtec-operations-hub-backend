@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.errors import raise_api_error
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -163,16 +164,34 @@ def review_request(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if current_user.role not in {"bcn", "bvh_hr"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen duyet request")
+        raise_api_error(
+            status_code=status.HTTP_403_FORBIDDEN,
+            code="REQUEST_REVIEW_FORBIDDEN",
+            message="Khong co quyen duyet request",
+        )
 
     if body.status not in {"Da duyet", "Tu choi"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="status review khong hop le")
+        raise_api_error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="REQUEST_REVIEW_INVALID_STATUS",
+            message="status review khong hop le",
+            details={"allowed": ["Da duyet", "Tu choi"]},
+        )
 
     req = db.get(Request, request_id)
     if not req:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request")
+        raise_api_error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="REQUEST_NOT_FOUND",
+            message="Khong tim thay request",
+        )
     if req.status != "Cho duyet":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi duoc review request dang Cho duyet")
+        raise_api_error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="REQUEST_REVIEW_INVALID_STATE",
+            message="Chi duoc review request dang Cho duyet",
+            details={"currentStatus": req.status},
+        )
 
     before = {
         "status": req.status,
@@ -189,15 +208,33 @@ def review_request(
 
     if body.status == "Da duyet" and req.finance_draft_enabled:
         if req.linked_transaction_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request da lien ket transaction truoc do")
+            raise_api_error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                code="REQUEST_ALREADY_LINKED_TRANSACTION",
+                message="Request da lien ket transaction truoc do",
+                details={"linkedTransactionId": req.linked_transaction_id},
+            )
         if not req.finance_draft_amount or req.finance_draft_amount <= 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Finance draft amount khong hop le")
+            raise_api_error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                code="REQUEST_FINANCE_DRAFT_INVALID_AMOUNT",
+                message="Finance draft amount khong hop le",
+            )
         if not req.finance_draft_type or not req.finance_draft_category or not req.finance_draft_title:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Finance draft chua day du")
+            raise_api_error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                code="REQUEST_FINANCE_DRAFT_INCOMPLETE",
+                message="Finance draft chua day du",
+            )
 
         tx_type = req.finance_draft_type
         if tx_type not in {"Thu", "Chi"}:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="financeDraftType khong hop le")
+            raise_api_error(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                code="REQUEST_FINANCE_DRAFT_INVALID_TYPE",
+                message="financeDraftType khong hop le",
+                details={"allowed": ["Thu", "Chi"]},
+            )
 
         status_value = "Da duyet" if tx_type == "Thu" else "Cho duyet"
         required_role = None if tx_type == "Thu" else get_required_approval_role(req.finance_draft_category)

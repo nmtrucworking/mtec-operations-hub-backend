@@ -5,6 +5,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.errors import raise_api_error
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -180,22 +181,48 @@ def review_transaction(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if body.status not in {"Da duyet", "Tu choi"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="status review khong hop le")
+        raise_api_error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="TRANSACTION_REVIEW_INVALID_STATUS",
+            message="status review khong hop le",
+            details={"allowed": ["Da duyet", "Tu choi"]},
+        )
 
     tx = db.get(Transaction, tx_id)
     if not tx or tx.is_deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich")
+        raise_api_error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="TRANSACTION_NOT_FOUND",
+            message="Khong tim thay giao dich",
+        )
     if tx.status != "Cho duyet":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi duoc review item dang Cho duyet")
+        raise_api_error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="TRANSACTION_REVIEW_INVALID_STATE",
+            message="Chi duoc review item dang Cho duyet",
+            details={"currentStatus": tx.status},
+        )
 
     if tx.required_approval_role == "bcn" and current_user.role != "bcn":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Chi BCN duoc duyet giao dich nay")
+        raise_api_error(
+            status_code=status.HTTP_403_FORBIDDEN,
+            code="TRANSACTION_REVIEW_ROLE_DENIED_BCN",
+            message="Chi BCN duoc duyet giao dich nay",
+        )
 
     if tx.required_approval_role == "bvh_finance" and current_user.role not in {"bvh_finance", "bcn"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen duyet giao dich nay")
+        raise_api_error(
+            status_code=status.HTTP_403_FORBIDDEN,
+            code="TRANSACTION_REVIEW_ROLE_DENIED_FINANCE",
+            message="Khong co quyen duyet giao dich nay",
+        )
 
     if tx.type == "Chi" and not body.reviewNote:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="approvalNote khong duoc rong voi giao dich Chi")
+        raise_api_error(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="TRANSACTION_REVIEW_NOTE_REQUIRED",
+            message="approvalNote khong duoc rong voi giao dich Chi",
+        )
 
     before = {
         "status": tx.status,

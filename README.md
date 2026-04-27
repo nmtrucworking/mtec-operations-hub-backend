@@ -15,6 +15,12 @@ py -3.12 -m venv .venv
 pip install -r requirements.txt
 ```
 
+Copy env va cau hinh:
+
+```bash
+copy .env.example .env
+```
+
 ## 2. Chay local
 
 ```bash
@@ -128,3 +134,5 @@ alembic upgrade head
 - Database hien tai dung SQLite (`mtec_ops.db`) de MVP chay nhanh.
 - Da co audit log cho cac hanh dong: CREATE_MEMBER, REVIEW_REQUEST, REVIEW_TRANSACTION, SOFT_DELETE_TRANSACTION.
 - Da co rate limit memory-level cho login va AI endpoints.
+- AI gateway da goi provider that qua adapter service (`AI_PROVIDER=gemini`).
+- Error review duoc chuan hoa theo schema detail: `{ code, message, details? }`.
