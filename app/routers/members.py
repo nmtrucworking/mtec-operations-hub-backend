@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.db import get_db
@@ -91,7 +92,7 @@ def get_member(
 def create_member(
     body: MemberCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr")),
+    current_user: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
     if db.scalar(select(Member).where(Member.mssv == body.mssv)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mssv da ton tai")
@@ -116,6 +117,14 @@ def create_member(
         orientation=body.orientation,
     )
     db.add(member)
+    create_audit_log(
+        db=db,
+        action="CREATE_MEMBER",
+        resource_type="member",
+        resource_id=member.id,
+        actor=current_user,
+        after_snapshot={"mssv": member.mssv, "name": member.name, "ban": member.ban, "status": member.status},
+    )
     db.commit()
     db.refresh(member)
     return api_response(data=_member_out(member))

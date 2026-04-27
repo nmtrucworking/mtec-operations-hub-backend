@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -196,10 +197,31 @@ def review_transaction(
     if tx.type == "Chi" and not body.reviewNote:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="approvalNote khong duoc rong voi giao dich Chi")
 
+    before = {
+        "status": tx.status,
+        "reviewer": tx.reviewer,
+        "reviewedAt": tx.reviewed_at,
+        "approvalNote": tx.approval_note,
+    }
+
     tx.status = body.status
     tx.reviewer = current_user.full_name
     tx.reviewed_at = datetime.utcnow()
     tx.approval_note = body.reviewNote
+    create_audit_log(
+        db=db,
+        action="REVIEW_TRANSACTION",
+        resource_type="transaction",
+        resource_id=tx.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "status": tx.status,
+            "reviewer": tx.reviewer,
+            "reviewedAt": tx.reviewed_at,
+            "approvalNote": tx.approval_note,
+        },
+    )
     db.commit()
     db.refresh(tx)
     return api_response(data=_tx_out(tx))
@@ -218,9 +240,28 @@ def soft_delete_transaction(
     if not tx or tx.is_deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich")
 
+    before = {
+        "isDeleted": tx.is_deleted,
+        "deletedAt": tx.deleted_at,
+        "deletedBy": tx.deleted_by,
+    }
+
     tx.is_deleted = True
     tx.deleted_at = datetime.utcnow()
     tx.deleted_by = current_user.full_name
+    create_audit_log(
+        db=db,
+        action="SOFT_DELETE_TRANSACTION",
+        resource_type="transaction",
+        resource_id=tx.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "isDeleted": tx.is_deleted,
+            "deletedAt": tx.deleted_at,
+            "deletedBy": tx.deleted_by,
+        },
+    )
     db.commit()
     db.refresh(tx)
     return api_response(data=_tx_out(tx))

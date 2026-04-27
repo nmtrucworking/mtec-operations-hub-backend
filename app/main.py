@@ -5,6 +5,7 @@ from sqlalchemy import select
 from app.core.security import get_password_hash
 from app.db import Base, SessionLocal, engine
 from app.models import User
+from app.routers.ai import router as ai_router
 from app.routers.auth import router as auth_router
 from app.routers.assets import router as assets_router
 from app.routers.dashboard import router as dashboard_router
@@ -78,3 +79,4 @@ app.include_router(dashboard_router)
 app.include_router(assets_router)
 app.include_router(discipline_router)
 app.include_router(settings_router)
+app.include_router(ai_router)

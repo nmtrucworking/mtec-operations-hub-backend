@@ -189,3 +189,12 @@ class NotificationSettingsUpdate(BaseModel):
     noti2: bool | None = None
     noti3: bool | None = None
     noti4: bool | None = None
+
+
+class AIGenerateInsightBody(BaseModel):
+    prompt: str = Field(min_length=1)
+
+
+class AIGenerateDraftBody(BaseModel):
+    prompt: str = Field(min_length=1)
+    context: str | None = None

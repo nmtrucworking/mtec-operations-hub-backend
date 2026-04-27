@@ -73,7 +73,7 @@ Mat khau chung: `123456Abc!`
 - username: bcm, role: bcm
 - username: member, role: member
 
-## 5. Cac module da implement (Phase 1 + Phase 2)
+## 5. Cac module da implement (Phase 1 + Phase 2 + mot phan Phase 3)
 
 - Auth: login/logout/me/refresh
 - Users: list/create/update/reset-password/status
@@ -84,6 +84,7 @@ Mat khau chung: `123456Abc!`
 - Assets (Logistics): list/detail/create/update
 - Discipline records: list/create/update
 - Settings: profile/change-password/notifications
+- AI gateway: generate-insight/generate-draft + log metadata
 
 ## 6. Business rules da enforce
 
@@ -125,4 +126,5 @@ alembic upgrade head
 ## 8. Ghi chu
 
 - Database hien tai dung SQLite (`mtec_ops.db`) de MVP chay nhanh.
-- Co san model cho AI logs va Audit logs de mo rong Phase 3.
+- Da co audit log cho cac hanh dong: CREATE_MEMBER, REVIEW_REQUEST, REVIEW_TRANSACTION, SOFT_DELETE_TRANSACTION.
+- Da co rate limit memory-level cho login va AI endpoints.

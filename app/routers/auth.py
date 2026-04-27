@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.rate_limit import rate_limiter
 from app.core.response import api_response
 from app.core.security import (
     create_access_token,
@@ -27,7 +28,7 @@ def _user_payload(user: User) -> dict:
     }
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(rate_limiter(max_requests=5, window_seconds=60))])
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
     user = db.scalar(select(User).where(User.username == body.username))
     if not user or not verify_password(body.password, user.password_hash):

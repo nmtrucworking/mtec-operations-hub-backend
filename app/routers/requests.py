@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -173,6 +174,14 @@ def review_request(
     if req.status != "Cho duyet":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi duoc review request dang Cho duyet")
 
+    before = {
+        "status": req.status,
+        "reviewer": req.reviewer,
+        "reviewedAt": req.reviewed_at,
+        "reviewNote": req.review_note,
+        "linkedTransactionId": req.linked_transaction_id,
+    }
+
     req.status = body.status
     req.reviewer = current_user.full_name
     req.reviewed_at = datetime.utcnow()
@@ -212,6 +221,22 @@ def review_request(
         db.add(tx)
         db.flush()
         req.linked_transaction_id = tx.id
+
+    create_audit_log(
+        db=db,
+        action="REVIEW_REQUEST",
+        resource_type="request",
+        resource_id=req.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "status": req.status,
+            "reviewer": req.reviewer,
+            "reviewedAt": req.reviewed_at,
+            "reviewNote": req.review_note,
+            "linkedTransactionId": req.linked_transaction_id,
+        },
+    )
 
     db.commit()
     db.refresh(req)
