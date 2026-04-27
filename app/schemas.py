@@ -135,3 +135,57 @@ class TransactionUpdate(BaseModel):
 class ReviewTransactionBody(BaseModel):
     status: str
     reviewNote: str | None = None
+
+
+class AssetCreate(BaseModel):
+    name: str
+    quantity: int = Field(ge=0)
+    status: str
+    holder: str | None = None
+    category: str | None = None
+
+
+class AssetUpdate(BaseModel):
+    name: str | None = None
+    quantity: int | None = Field(default=None, ge=0)
+    status: str | None = None
+    holder: str | None = None
+    category: str | None = None
+
+
+class DisciplineRecordCreate(BaseModel):
+    memberId: str | None = None
+    mssv: str
+    name: str
+    committee: str | None = None
+    absents: int = Field(default=0, ge=0)
+    kpi: float = Field(default=0, ge=0)
+    disciplineLevel: str = "Khong"
+    note: str | None = None
+
+
+class DisciplineRecordUpdate(BaseModel):
+    committee: str | None = None
+    absents: int | None = Field(default=None, ge=0)
+    kpi: float | None = Field(default=None, ge=0)
+    disciplineLevel: str | None = None
+    note: str | None = None
+
+
+class SettingsProfileUpdate(BaseModel):
+    fullName: str | None = None
+    avatarInitials: str | None = None
+    email: EmailStr | None = None
+    phone: str | None = None
+
+
+class ChangePasswordBody(BaseModel):
+    currentPassword: str
+    newPassword: str = Field(min_length=8)
+
+
+class NotificationSettingsUpdate(BaseModel):
+    noti1: bool | None = None
+    noti2: bool | None = None
+    noti3: bool | None = None
+    noti4: bool | None = None

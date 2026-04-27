@@ -73,7 +73,7 @@ Mat khau chung: `123456Abc!`
 - username: bcm, role: bcm
 - username: member, role: member
 
-## 5. Cac module da implement (MVP)
+## 5. Cac module da implement (Phase 1 + Phase 2)
 
 - Auth: login/logout/me/refresh
 - Users: list/create/update/reset-password/status
@@ -81,6 +81,9 @@ Mat khau chung: `123456Abc!`
 - Requests: list/detail/create/update/review
 - Transactions: list/pending/create/update/review/soft delete
 - Dashboard: overview aggregates
+- Assets (Logistics): list/detail/create/update
+- Discipline records: list/create/update
+- Settings: profile/change-password/notifications
 
 ## 6. Business rules da enforce
 
@@ -122,4 +125,4 @@ alembic upgrade head
 ## 8. Ghi chu
 
 - Database hien tai dung SQLite (`mtec_ops.db`) de MVP chay nhanh.
-- Co san model cho Assets, Discipline, Settings notifications, AI logs, Audit logs de mo rong Phase 2/3.
+- Co san model cho AI logs va Audit logs de mo rong Phase 3.

@@ -6,9 +6,12 @@ from app.core.security import get_password_hash
 from app.db import Base, SessionLocal, engine
 from app.models import User
 from app.routers.auth import router as auth_router
+from app.routers.assets import router as assets_router
 from app.routers.dashboard import router as dashboard_router
+from app.routers.discipline import router as discipline_router
 from app.routers.members import router as members_router
 from app.routers.requests import router as requests_router
+from app.routers.settings import router as settings_router
 from app.routers.transactions import router as transactions_router
 from app.routers.users import router as users_router
 
@@ -72,3 +75,6 @@ app.include_router(members_router)
 app.include_router(requests_router)
 app.include_router(transactions_router)
 app.include_router(dashboard_router)
+app.include_router(assets_router)
+app.include_router(discipline_router)
+app.include_router(settings_router)
