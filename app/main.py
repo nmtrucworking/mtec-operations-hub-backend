@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
+from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
 from app.core.security import get_password_hash
 from app.db import Base, SessionLocal, engine
 from app.models import User
@@ -20,7 +21,7 @@ app = FastAPI(title="MTEC Operations Hub Backend", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,8 +30,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
-    _seed_users()
+    if AUTO_CREATE_TABLES:
+        Base.metadata.create_all(bind=engine)
+    if ENABLE_SEED_DATA:
+        _seed_users()
 
 
 def _seed_users() -> None:
