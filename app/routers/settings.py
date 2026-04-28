@@ -6,7 +6,11 @@ from app.core.security import get_password_hash, verify_password
 from app.db import get_db
 from app.deps import get_current_user
 from app.models import SettingsNotification, User
-from app.schemas import ChangePasswordBody, NotificationSettingsUpdate, SettingsProfileUpdate
+from app.schemas import (
+    ChangePasswordBody,
+    NotificationSettingsUpdate,
+    SettingsProfileUpdate,
+)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 

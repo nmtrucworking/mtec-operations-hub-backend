@@ -79,3 +79,44 @@ app.include_router(assets_router)
 app.include_router(discipline_router)
 app.include_router(settings_router)
 app.include_router(ai_router)
+
+def _seed_users() -> None:
+    """
+    Hàm nạp dữ liệu người dùng mặc định vào hệ thống.
+    """
+    from sqlalchemy import select
+
+    from app.core.security import get_password_hash
+    from app.db import get_session_factory
+    from app.models import User
+
+    defaults = [
+        ("bcn", "BCN Admin", "bcn"),
+        ("bvh_hr", "BVH HR", "bvh_hr"),
+        ("bvh_finance", "BVH Finance", "bvh_finance"),
+        ("bvh_discipline", "BVH Discipline", "bvh_discipline"),
+        ("bvh_logistics", "BVH Logistics", "bvh_logistics"),
+        ("bcm", "BCM", "bcm"),
+        ("member", "Member", "member"),
+    ]
+
+    factory = get_session_factory()
+    db = factory()
+    try:
+        for username, full_name, role in defaults:
+            existing = db.scalar(select(User).where(User.username == username))
+            if existing:
+                continue
+            db.add(
+                User(
+                    username=username,
+                    password_hash=get_password_hash("123456Abc!"),
+                    full_name=full_name,
+                    role=role,
+                    avatar_initials="".join(part[0] for part in full_name.split()[:2]).upper(),
+                    is_active=True,
+                )
+            )
+        db.commit()
+    finally:
+        db.close()

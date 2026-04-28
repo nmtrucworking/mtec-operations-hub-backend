@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool  # Bổ sung module này
 
+from app import models  # noqa: F401 (Dùng cho side-effect đăng ký metadata)
 from app.db import Base, get_db
 from app.main import app
 

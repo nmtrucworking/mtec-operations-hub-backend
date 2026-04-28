@@ -11,7 +11,11 @@ from app.db import get_db
 from app.deps import get_current_user
 from app.models import Request, Transaction, User
 from app.schemas import RequestCreate, RequestUpdate, ReviewRequestBody
-from app.utils import generate_prefixed_id, get_required_approval_role, sanitize_pagination
+from app.utils import (
+    generate_prefixed_id,
+    get_required_approval_role,
+    sanitize_pagination,
+)
 
 router = APIRouter(prefix="/api/requests", tags=["requests"])
 
