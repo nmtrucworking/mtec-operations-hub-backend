@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -11,15 +11,26 @@ from app.core.config import (
     SECRET_KEY,
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    """
+    Xác minh mật khẩu dựa trên chuỗi băm bcrypt.
+    Yêu cầu chuyển đổi kiểu dữ liệu String sang Bytes để bcrypt xử lý.
+    """
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8")
+    )
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    """
+    Tạo chuỗi băm mật khẩu sử dụng thuật toán bcrypt với salt tự động sinh.
+    Kết quả trả về được giải mã (decode) thành String để lưu trữ trong CSDL.
+    """
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def _create_token(subject: str, expires_delta: timedelta, token_type: str) -> str:
