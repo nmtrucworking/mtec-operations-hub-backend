@@ -16,7 +16,12 @@ def _as_list(value: str, default: list[str]) -> list[str]:
 APP_ENV = os.getenv("APP_ENV", "development")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db")
 AUTO_CREATE_TABLES = _as_bool(os.getenv("AUTO_CREATE_TABLES"), default=True)
-ENABLE_SEED_DATA = _as_bool(os.getenv("ENABLE_SEED_DATA"), default=True)
+# Disable seed data by default when running tests to avoid startup side-effects
+# (tests control seeding explicitly via env var). If ENABLE_SEED_DATA is set,
+# respect that value; otherwise default to False in test env, True otherwise.
+ENABLE_SEED_DATA = (
+	_as_bool(os.getenv("ENABLE_SEED_DATA"), default=(APP_ENV != "test"))
+)
 CORS_ORIGINS = _as_list(os.getenv("CORS_ORIGINS", "*"), default=["*"])
 
 SECRET_KEY = os.getenv("SECRET_KEY", "mtec-dev-secret-key")
