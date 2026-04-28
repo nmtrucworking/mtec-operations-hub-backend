@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date as dt_date
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -55,13 +55,13 @@ class MemberCreate(BaseModel):
     mssv: str
     name: str
     gender: str | None = None
-    dob: date | None = None
+    dob: dt_date | None = None
     ban: str | None = None
     roleTitle: str | None = None
     status: str = "Active"
     phone: str | None = None
     email: EmailStr | None = None
-    joinDate: date | None = None
+    joinDate: dt_date | None = None
     lop: str | None = None
     chuyenNganh: str | None = None
     khoa: str | None = None
@@ -74,13 +74,13 @@ class MemberCreate(BaseModel):
 class MemberUpdate(BaseModel):
     name: str | None = None
     gender: str | None = None
-    dob: date | None = None
+    dob: dt_date | None = None
     ban: str | None = None
     roleTitle: str | None = None
     status: str | None = None
     phone: str | None = None
     email: EmailStr | None = None
-    joinDate: date | None = None
+    joinDate: dt_date | None = None
     lop: str | None = None
     chuyenNganh: str | None = None
     khoa: str | None = None
@@ -94,7 +94,7 @@ class RequestCreate(BaseModel):
     mssv: str
     name: str
     type: str
-    date: date
+    date: dt_date
     reason: str
     financeDraftEnabled: bool = False
     financeDraftTitle: str | None = None
@@ -118,7 +118,7 @@ class ReviewRequestBody(BaseModel):
 
 
 class TransactionCreate(BaseModel):
-    date: date | None = None
+    date: dt_date | None = None
     title: str
     type: str
     amount: float
@@ -127,7 +127,7 @@ class TransactionCreate(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    date: date | None = None
+    date: dt_date | None = None
     title: str | None = None
     amount: float | None = None
     owner: str | None = None
