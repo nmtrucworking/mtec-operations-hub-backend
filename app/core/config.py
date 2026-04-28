@@ -7,6 +7,14 @@ def _as_bool(value: str, default: bool = False) -> bool:
 	return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def normalize_database_url(value: str) -> str:
+	if value.startswith("postgres://"):
+		return "postgresql+psycopg://" + value.removeprefix("postgres://")
+	if value.startswith("postgresql://"):
+		return "postgresql+psycopg://" + value.removeprefix("postgresql://")
+	return value
+
+
 def _as_list(value: str, default: list[str]) -> list[str]:
 	if not value:
 		return default
@@ -14,7 +22,7 @@ def _as_list(value: str, default: list[str]) -> list[str]:
 
 
 APP_ENV = os.getenv("APP_ENV", "development")
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db")
+DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db"))
 AUTO_CREATE_TABLES = _as_bool(os.getenv("AUTO_CREATE_TABLES"), default=True)
 # Disable seed data by default when running tests to avoid startup side-effects
 # (tests control seeding explicitly via env var). If ENABLE_SEED_DATA is set,
