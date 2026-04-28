@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.db import Base, get_db
 from app.main import app
-
+import app.models
 
 @pytest.fixture
 def test_db() -> Generator[Session, None, None]:
@@ -19,7 +19,6 @@ def test_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
-
 
 @pytest.fixture
 def client(test_db: Session) -> Generator[TestClient, None, None]:
