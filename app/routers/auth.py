@@ -1,3 +1,5 @@
+from datetime import timezone, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,6 +16,7 @@ from app.db import get_db
 from app.deps import get_current_user
 from app.models import User
 from app.schemas import LoginRequest, RefreshRequest
+from app.core.redis import redis_client
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -48,9 +51,20 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/logout")
-def logout() -> dict:
+def logout(body: RefreshRequest) -> dict:
+    """
+    Vô hiệu hóa Refresh Token hiện tại bằng cách đưa vào Redis Blacklist.
+    """
+    payload = decode_token(body.refreshToken)
+    if payload and payload.get("type") == "refresh":
+        exp = payload.get("exp")
+        now = int(datetime.now(timezone.utc).timestamp())
+        ttl = exp - now
+        if ttl > 0:
+            # Lưu token vào Redis với TTL tương ứng thời gian sống còn lại
+            redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
+            
     return api_response(data={"message": "Da dang xuat"})
-
 
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)) -> dict:
@@ -59,6 +73,11 @@ def me(current_user: User = Depends(get_current_user)) -> dict:
 
 @router.post("/refresh")
 def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
+    # 1. Kiểm tra Token có nằm trong danh sách Blacklist hay không
+    if redis_client.exists(f"blacklist:{body.refreshToken}"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token da bi thu hoi hoac het han")
+
+    # 2. Giải mã và xác thực Token
     payload = decode_token(body.refreshToken)
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token khong hop le")
@@ -67,6 +86,14 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Nguoi dung khong hop le")
 
+    # 3. Thu hồi (Blacklist) Token cũ ngay sau khi sử dụng để ngăn chặn Replay Attack
+    exp = payload.get("exp")
+    now = int(datetime.now(timezone.utc).timestamp())
+    ttl = exp - now
+    if ttl > 0:
+        redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
+
+    # 4. Cấp phát cặp Token mới (Token Rotation)
     return api_response(
         data={
             "accessToken": create_access_token(user.id),

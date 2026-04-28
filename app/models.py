@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
 
-
+# Utility function to generate UUIDs for primary keys
 def _uuid() -> str:
     return str(uuid4())
 
@@ -65,7 +65,7 @@ class MemberSkill(Base):
 class Request(Base):
     __tablename__ = "requests"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     mssv: Mapped[str] = mapped_column(String(20), index=True)
     name: Mapped[str] = mapped_column(String(120))
     type: Mapped[str] = mapped_column(String(60), index=True)
@@ -84,12 +84,12 @@ class Request(Base):
     created_by_user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-
+    
 
 class Transaction(Base):
     __tablename__ = "transactions"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     date: Mapped[date] = mapped_column(Date, index=True)
     title: Mapped[str] = mapped_column(String(180), index=True)
     type: Mapped[str] = mapped_column(String(10), index=True)
@@ -101,7 +101,7 @@ class Transaction(Base):
     reviewer: Mapped[str | None] = mapped_column(String(120), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     approval_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    linked_request_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    linked_request_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("requests.id"), nullable=True)
     linked_request_type: Mapped[str | None] = mapped_column(String(60), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -114,7 +114,7 @@ class Transaction(Base):
 class Asset(Base):
     __tablename__ = "assets"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(120), index=True)
     quantity: Mapped[int] = mapped_column(Integer)
     status: Mapped[str] = mapped_column(String(30), index=True)

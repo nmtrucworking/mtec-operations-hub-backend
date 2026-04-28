@@ -51,3 +51,5 @@ AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
 
 AI_GEMINI_BASE_URL = os.getenv("AI_GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
 AI_GEMINI_MODEL = os.getenv("AI_GEMINI_MODEL", "gemini-1.5-flash")
+
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

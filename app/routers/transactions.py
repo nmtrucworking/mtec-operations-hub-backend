@@ -1,6 +1,6 @@
 from datetime import datetime, date, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
@@ -273,9 +273,17 @@ def soft_delete_transaction(
         "deletedBy": tx.deleted_by,
     }
 
+    # Soft delete: set is_deleted flag and record deletion metadata
     tx.is_deleted = True
     tx.deleted_at = datetime.now(timezone.utc)
     tx.deleted_by = current_user.full_name
+
+    # If the transaction is linked to a request, we should also unlink it to maintain data integrity
+    if tx.linked_request_id:
+        req = db.get(Request, tx.linked_request_id)
+        if req and req.linked_transaction_id == tx.id:
+            req.linked_transaction_id = None
+
     create_audit_log(
         db=db,
         action="SOFT_DELETE_TRANSACTION",
