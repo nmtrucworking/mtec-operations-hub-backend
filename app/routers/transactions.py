@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, select
@@ -133,7 +133,7 @@ def create_transaction(
         status=status_value,
         required_approval_role=required_role,
         reviewer=current_user.full_name if body.type == "Thu" else None,
-        reviewed_at=datetime.utcnow() if body.type == "Thu" else None,
+        reviewed_at=datetime.now(timezone.utc) if body.type == "Thu" else None,
         created_by_user_id=current_user.id,
     )
     db.add(tx)
@@ -233,7 +233,7 @@ def review_transaction(
 
     tx.status = body.status
     tx.reviewer = current_user.full_name
-    tx.reviewed_at = datetime.utcnow()
+    tx.reviewed_at = datetime.now(timezone.utc)
     tx.approval_note = body.reviewNote
     create_audit_log(
         db=db,
@@ -274,7 +274,7 @@ def soft_delete_transaction(
     }
 
     tx.is_deleted = True
-    tx.deleted_at = datetime.utcnow()
+    tx.deleted_at = datetime.now(timezone.utc)
     tx.deleted_by = current_user.full_name
     create_audit_log(
         db=db,
