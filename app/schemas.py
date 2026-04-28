@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -17,9 +18,9 @@ class UserOut(BaseModel):
     username: str
     fullName: str
     role: str
-    avatarInitials: str | None = None
-    email: str | None = None
-    phone: str | None = None
+    avatarInitials: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     isActive: bool
 
 
@@ -28,17 +29,17 @@ class UserCreate(BaseModel):
     password: str = Field(min_length=8)
     fullName: str
     role: str
-    avatarInitials: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
+    avatarInitials: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
-    fullName: str | None = None
-    role: str | None = None
-    avatarInitials: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
+    fullName: Optional[str] = None
+    role: Optional[str] = None
+    avatarInitials: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
 
 
 class UserStatusUpdate(BaseModel):
@@ -52,40 +53,40 @@ class ResetPasswordRequest(BaseModel):
 class MemberCreate(BaseModel):
     mssv: str
     name: str
-    gender: str | None = None
+    gender: Optional[str] = None
     dob: date | None = None
-    ban: str | None = None
-    roleTitle: str | None = None
+    ban: Optional[str] = None
+    roleTitle: Optional[str] = None
     status: str = "Active"
-    phone: str | None = None
-    email: EmailStr | None = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
     joinDate: date | None = None
-    lop: str | None = None
-    chuyenNganh: str | None = None
-    khoa: str | None = None
-    address: str | None = None
-    experience: str | None = None
-    goal: str | None = None
-    orientation: str | None = None
+    lop: Optional[str] = None
+    chuyenNganh: Optional[str] = None
+    khoa: Optional[str] = None
+    address: Optional[str] = None
+    experience: Optional[str] = None
+    goal: Optional[str] = None
+    orientation: Optional[str] = None
 
 
 class MemberUpdate(BaseModel):
-    name: str | None = None
-    gender: str | None = None
+    name: Optional[str] = None
+    gender: Optional[str] = None
     dob: date | None = None
-    ban: str | None = None
-    roleTitle: str | None = None
-    status: str | None = None
-    phone: str | None = None
-    email: EmailStr | None = None
+    ban: Optional[str] = None
+    roleTitle: Optional[str] = None
+    status: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[EmailStr] = None
     joinDate: date | None = None
-    lop: str | None = None
-    chuyenNganh: str | None = None
-    khoa: str | None = None
-    address: str | None = None
-    experience: str | None = None
-    goal: str | None = None
-    orientation: str | None = None
+    lop: Optional[str] = None
+    chuyenNganh: Optional[str] = None
+    khoa: Optional[str] = None
+    address: Optional[str] = None
+    experience: Optional[str] = None
+    goal: Optional[str] = None
+    orientation: Optional[str] = None
 
 
 class RequestCreate(BaseModel):
@@ -95,28 +96,28 @@ class RequestCreate(BaseModel):
     date: date
     reason: str
     financeDraftEnabled: bool = False
-    financeDraftTitle: str | None = None
+    financeDraftTitle: Optional[str] = None
     financeDraftAmount: float | None = None
-    financeDraftType: str | None = None
-    financeDraftCategory: str | None = None
+    financeDraftType: Optional[str] = None
+    financeDraftCategory: Optional[str] = None
 
 
 class RequestUpdate(BaseModel):
-    reason: str | None = None
+    reason: Optional[str] = None
     financeDraftEnabled: bool | None = None
-    financeDraftTitle: str | None = None
+    financeDraftTitle: Optional[str] = None
     financeDraftAmount: float | None = None
-    financeDraftType: str | None = None
-    financeDraftCategory: str | None = None
+    financeDraftType: Optional[str] = None
+    financeDraftCategory: Optional[str] = None
 
 
 class ReviewRequestBody(BaseModel):
     status: str
-    reviewNote: str | None = None
+    reviewNote: Optional[str] = None
 
 
 class TransactionCreate(BaseModel):
-    date: date
+    date: Optional[date] = None
     title: str
     type: str
     amount: float
@@ -125,58 +126,58 @@ class TransactionCreate(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
-    date: date | None = None
-    title: str | None = None
+    date: Optional[date] = None
+    title: Optional[str] = None
     amount: float | None = None
-    owner: str | None = None
-    category: str | None = None
+    owner: Optional[str] = None
+    category: Optional[str] = None
 
 
 class ReviewTransactionBody(BaseModel):
     status: str
-    reviewNote: str | None = None
+    reviewNote: Optional[str] = None
 
 
 class AssetCreate(BaseModel):
     name: str
     quantity: int = Field(ge=0)
     status: str
-    holder: str | None = None
-    category: str | None = None
+    holder: Optional[str] = None
+    category: Optional[str] = None
 
 
 class AssetUpdate(BaseModel):
-    name: str | None = None
+    name: Optional[str] = None
     quantity: int | None = Field(default=None, ge=0)
-    status: str | None = None
-    holder: str | None = None
-    category: str | None = None
+    status: Optional[str] = None
+    holder: Optional[str] = None
+    category: Optional[str] = None
 
 
 class DisciplineRecordCreate(BaseModel):
-    memberId: str | None = None
+    memberId: Optional[str] = None
     mssv: str
     name: str
-    committee: str | None = None
+    committee: Optional[str] = None
     absents: int = Field(default=0, ge=0)
     kpi: float = Field(default=0, ge=0)
     disciplineLevel: str = "Khong"
-    note: str | None = None
+    note: Optional[str] = None
 
 
 class DisciplineRecordUpdate(BaseModel):
-    committee: str | None = None
+    committee: Optional[str] = None
     absents: int | None = Field(default=None, ge=0)
     kpi: float | None = Field(default=None, ge=0)
-    disciplineLevel: str | None = None
-    note: str | None = None
+    disciplineLevel: Optional[str] = None
+    note: Optional[str] = None
 
 
 class SettingsProfileUpdate(BaseModel):
-    fullName: str | None = None
-    avatarInitials: str | None = None
-    email: EmailStr | None = None
-    phone: str | None = None
+    fullName: Optional[str] = None
+    avatarInitials: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
 
 
 class ChangePasswordBody(BaseModel):
@@ -197,4 +198,4 @@ class AIGenerateInsightBody(BaseModel):
 
 class AIGenerateDraftBody(BaseModel):
     prompt: str = Field(min_length=1)
-    context: str | None = None
+    context: Optional[str] = None
