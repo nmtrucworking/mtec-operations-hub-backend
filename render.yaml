@@ -16,9 +16,9 @@ services:
       - key: CORS_ORIGINS
         value: "*"
       - key: AUTO_CREATE_TABLES
-        value: "false"
+        value: "true"
       - key: ENABLE_SEED_DATA
-        value: "false"
+        value: "true"
       - key: UVICORN_WORKERS
         value: "2"
     healthCheckPath: /health
