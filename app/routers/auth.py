@@ -1,10 +1,11 @@
-from datetime import timezone, datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.rate_limit import rate_limiter
+from app.core.redis import redis_client
 from app.core.response import api_response
 from app.core.security import (
     create_access_token,
@@ -16,7 +17,6 @@ from app.db import get_db
 from app.deps import get_current_user
 from app.models import User
 from app.schemas import LoginRequest, RefreshRequest
-from app.core.redis import redis_client
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -58,7 +58,7 @@ def logout(body: RefreshRequest) -> dict:
     payload = decode_token(body.refreshToken)
     if payload and payload.get("type") == "refresh":
         exp = payload.get("exp")
-        now = int(datetime.now(timezone.utc).timestamp())
+        now = int(datetime.now(UTC).timestamp())
         ttl = exp - now
         if ttl > 0:
             # Lưu token vào Redis với TTL tương ứng thời gian sống còn lại
@@ -88,7 +88,7 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
 
     # 3. Thu hồi (Blacklist) Token cũ ngay sau khi sử dụng để ngăn chặn Replay Attack
     exp = payload.get("exp")
-    now = int(datetime.now(timezone.utc).timestamp())
+    now = int(datetime.now(UTC).timestamp())
     ttl = exp - now
     if ttl > 0:
         redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")

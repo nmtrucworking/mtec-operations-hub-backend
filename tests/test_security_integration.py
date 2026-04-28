@@ -1,8 +1,7 @@
 # nmtrucworking/mtec-operations-hub-backend/mtec-operations-hub-backend-cc3a564342944b2409ea3505121159547923016f/tests/test_security_integration.py
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-import time
+
 
 def test_rate_limit_enforcement(client: TestClient):
     """
@@ -29,9 +28,8 @@ def test_token_rotation_and_blacklist(client: TestClient, test_db: Session):
     2. Sử dụng token để yêu cầu cấp lại (Refresh).
     3. Tái sử dụng token cũ, hệ thống phải chặn lại để chống Replay Attack.
     """
-    from app.core.security import create_refresh_token
+    from app.core.security import create_refresh_token, get_password_hash
     from app.models import User
-    from app.core.security import get_password_hash
 
     # Sử dụng trực tiếp test_db thay vì get_session_factory()
     test_user_id = "TEST-USER-ID"

@@ -1,4 +1,4 @@
-from datetime import datetime, date, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -203,7 +203,7 @@ def review_request(
 
     req.status = body.status
     req.reviewer = current_user.full_name
-    req.reviewed_at = datetime.now(timezone.utc)
+    req.reviewed_at = datetime.now(UTC)
     req.review_note = body.reviewNote
 
     if body.status == "Da duyet" and req.finance_draft_enabled:
@@ -250,7 +250,7 @@ def review_request(
             status=status_value,
             required_approval_role=required_role,
             reviewer=current_user.full_name if tx_type == "Thu" else None,
-            reviewed_at=datetime.now(timezone.utc) if tx_type == "Thu" else None,
+            reviewed_at=datetime.now(UTC) if tx_type == "Thu" else None,
             linked_request_id=req.id,
             linked_request_type=req.type,
             created_by_user_id=req.created_by_user_id,

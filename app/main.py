@@ -1,15 +1,13 @@
 import logging
-
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Response
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
 
 from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
-from app.core.security import get_password_hash
-from app.db import Base, get_engine, get_session_factory, ping_database
+from app.db import Base, get_engine
+
 # from app.main import _seed_users
-from app.models import User
 from app.routers.ai import router as ai_router
 from app.routers.assets import router as assets_router
 from app.routers.auth import router as auth_router

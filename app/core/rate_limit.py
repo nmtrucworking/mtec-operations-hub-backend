@@ -1,12 +1,10 @@
-from collections import defaultdict, deque
-from collections.abc import Callable
-from threading import Lock
-from time import monotonic
-
 import time
-from fastapi import HTTPException, Request, status
-from app.core.redis import redis_client
+from collections import defaultdict, deque
+from threading import Lock
 
+from fastapi import HTTPException, Request, status
+
+from app.core.redis import redis_client
 
 _bucket: dict[str, deque[float]] = defaultdict(deque)
 _lock = Lock()
