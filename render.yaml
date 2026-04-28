@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: mtec-operations-hub-backend
+    env: docker
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: AUTO_CREATE_TABLES
+        value: "false"
+      - key: ENABLE_SEED_DATA
+        value: "false"
+      - key: UVICORN_WORKERS
+        value: "2"
+    healthCheckPath: /health

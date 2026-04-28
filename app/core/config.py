@@ -8,10 +8,18 @@ def _as_bool(value: str, default: bool = False) -> bool:
 
 
 def normalize_database_url(value: str) -> str:
+	if not value:
+		return value
+	# Ensure psycopg3 driver is used for Postgres
 	if value.startswith("postgres://"):
-		return "postgresql+psycopg://" + value.removeprefix("postgres://")
-	if value.startswith("postgresql://"):
-		return "postgresql+psycopg://" + value.removeprefix("postgresql://")
+		value = "postgresql+psycopg://" + value.removeprefix("postgres://")
+	elif value.startswith("postgresql://"):
+		value = "postgresql+psycopg://" + value.removeprefix("postgresql://")
+	
+	# Add sslmode=require for Supabase if not present and not local
+	if "supabase.co" in value and "sslmode" not in value:
+		sep = "&" if "?" in value else "?"
+		value += f"{sep}sslmode=require"
 	return value
 
 
@@ -23,7 +31,7 @@ def _as_list(value: str, default: list[str]) -> list[str]:
 
 APP_ENV = os.getenv("APP_ENV", "development")
 DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db"))
-AUTO_CREATE_TABLES = _as_bool(os.getenv("AUTO_CREATE_TABLES"), default=True)
+AUTO_CREATE_TABLES = _as_bool(os.getenv("AUTO_CREATE_TABLES"), default=(APP_ENV == "development"))
 # Disable seed data by default when running tests to avoid startup side-effects
 # (tests control seeding explicitly via env var). If ENABLE_SEED_DATA is set,
 # respect that value; otherwise default to False in test env, True otherwise.
