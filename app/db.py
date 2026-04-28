@@ -12,9 +12,16 @@ if DATABASE_URL.startswith("sqlite"):
         pool_pre_ping=True,
     )
 else:
+    # For PostgreSQL, especially on Render/Supabase
     engine = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=5,
+        max_overflow=10,
+        connect_args={
+            "connect_timeout": 10,
+        }
     )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
