@@ -2,42 +2,44 @@ import os
 
 
 def _as_bool(value: str, default: bool = False) -> bool:
-	if value is None:
-		return default
-	return value.strip().lower() in {"1", "true", "yes", "on"}
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def normalize_database_url(value: str) -> str:
-	if not value:
-		return value
-	# Ensure psycopg3 driver is used for Postgres
-	if value.startswith("postgres://"):
-		value = "postgresql+psycopg://" + value.removeprefix("postgres://")
-	elif value.startswith("postgresql://"):
-		value = "postgresql+psycopg://" + value.removeprefix("postgresql://")
-	
-	# Add sslmode=require for Supabase if not present and not local
-	if "supabase.co" in value and "sslmode" not in value:
-		sep = "&" if "?" in value else "?"
-		value += f"{sep}sslmode=require"
-	return value
+    if not value:
+        return value
+    # Ensure psycopg3 driver is used for Postgres
+    if value.startswith("postgres://"):
+        value = "postgresql+psycopg://" + value.removeprefix("postgres://")
+    elif value.startswith("postgresql://"):
+        value = "postgresql+psycopg://" + value.removeprefix("postgresql://")
+
+    # Add sslmode=require for Supabase if not present and not local
+    if "supabase.co" in value and "sslmode" not in value:
+        sep = "&" if "?" in value else "?"
+        value += f"{sep}sslmode=require"
+    return value
 
 
 def _as_list(value: str, default: list[str]) -> list[str]:
-	if not value:
-		return default
-	return [item.strip() for item in value.split(",") if item.strip()]
+    if not value:
+        return default
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 APP_ENV = os.getenv("APP_ENV", "development")
-DATABASE_URL = normalize_database_url(os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db"))
-AUTO_CREATE_TABLES = _as_bool(os.getenv("AUTO_CREATE_TABLES"), default=(APP_ENV == "development"))
+DATABASE_URL = normalize_database_url(
+    os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db")
+)
+AUTO_CREATE_TABLES = _as_bool(
+    os.getenv("AUTO_CREATE_TABLES"), default=(APP_ENV == "development")
+)
 # Disable seed data by default when running tests to avoid startup side-effects
 # (tests control seeding explicitly via env var). If ENABLE_SEED_DATA is set,
 # respect that value; otherwise default to False in test env, True otherwise.
-ENABLE_SEED_DATA = (
-	_as_bool(os.getenv("ENABLE_SEED_DATA"), default=(APP_ENV != "test"))
-)
+ENABLE_SEED_DATA = _as_bool(os.getenv("ENABLE_SEED_DATA"), default=(APP_ENV != "test"))
 CORS_ORIGINS = _as_list(os.getenv("CORS_ORIGINS", "*"), default=["*"])
 
 SECRET_KEY = os.getenv("SECRET_KEY", "mtec-dev-secret-key")
@@ -49,7 +51,9 @@ AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini")
 AI_API_KEY = os.getenv("AI_API_KEY", "")
 AI_TIMEOUT_SECONDS = int(os.getenv("AI_TIMEOUT_SECONDS", "30"))
 
-AI_GEMINI_BASE_URL = os.getenv("AI_GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
+AI_GEMINI_BASE_URL = os.getenv(
+    "AI_GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta"
+)
 AI_GEMINI_MODEL = os.getenv("AI_GEMINI_MODEL", "gemini-1.5-flash")
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

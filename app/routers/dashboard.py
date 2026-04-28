@@ -20,41 +20,60 @@ def overview(
     fund_stmt = select(
         func.coalesce(
             func.sum(
-                case((Transaction.type == "Thu", Transaction.amount), else_=-Transaction.amount)
+                case(
+                    (Transaction.type == "Thu", Transaction.amount),
+                    else_=-Transaction.amount,
+                )
             ),
             0,
         )
     ).where(Transaction.status == "Da duyet", Transaction.is_deleted.is_(False))
     current_fund = db.scalar(fund_stmt) or 0
 
-    total_income = db.scalar(
-        select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            Transaction.type == "Thu",
-            Transaction.status == "Da duyet",
-            Transaction.is_deleted.is_(False),
+    total_income = (
+        db.scalar(
+            select(func.coalesce(func.sum(Transaction.amount), 0)).where(
+                Transaction.type == "Thu",
+                Transaction.status == "Da duyet",
+                Transaction.is_deleted.is_(False),
+            )
         )
-    ) or 0
+        or 0
+    )
 
-    total_expense = db.scalar(
-        select(func.coalesce(func.sum(Transaction.amount), 0)).where(
-            Transaction.type == "Chi",
-            Transaction.status == "Da duyet",
-            Transaction.is_deleted.is_(False),
+    total_expense = (
+        db.scalar(
+            select(func.coalesce(func.sum(Transaction.amount), 0)).where(
+                Transaction.type == "Chi",
+                Transaction.status == "Da duyet",
+                Transaction.is_deleted.is_(False),
+            )
         )
-    ) or 0
+        or 0
+    )
 
-    maintenance_count = db.scalar(
-        select(func.count()).select_from(Asset).where(Asset.status == "Can bao tri")
-    ) or 0
+    maintenance_count = (
+        db.scalar(
+            select(func.count()).select_from(Asset).where(Asset.status == "Can bao tri")
+        )
+        or 0
+    )
 
-    pending_requests_count = db.scalar(
-        select(func.count()).select_from(Request).where(Request.status == "Cho duyet")
-    ) or 0
+    pending_requests_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(Request)
+            .where(Request.status == "Cho duyet")
+        )
+        or 0
+    )
 
     dept_distribution = [
         {"ban": row[0], "count": row[1]}
         for row in db.execute(
-            select(Member.ban, func.count()).group_by(Member.ban).order_by(func.count().desc())
+            select(Member.ban, func.count())
+            .group_by(Member.ban)
+            .order_by(func.count().desc())
         )
     ]
 
@@ -66,7 +85,9 @@ def overview(
             "status": row.status,
             "createdAt": row.created_at,
         }
-        for row in db.scalars(select(Transaction).order_by(Transaction.created_at.desc()).limit(10)).all()
+        for row in db.scalars(
+            select(Transaction).order_by(Transaction.created_at.desc()).limit(10)
+        ).all()
     ]
 
     urgent_requests = [
@@ -78,7 +99,10 @@ def overview(
             "status": row.status,
         }
         for row in db.scalars(
-            select(Request).where(Request.status == "Cho duyet").order_by(Request.date.asc()).limit(5)
+            select(Request)
+            .where(Request.status == "Cho duyet")
+            .order_by(Request.date.asc())
+            .limit(5)
         ).all()
     ]
 

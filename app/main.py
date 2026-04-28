@@ -21,64 +21,6 @@ from app.routers.users import router as users_router
 
 logger = logging.getLogger(__name__)
 
-# Định nghĩa Lifespan Context Manager
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Quản lý vòng đời ứng dụng:
-    - Logic trước 'yield' tương đương với 'startup'.
-    - Logic sau 'yield' tương đương với 'shutdown'.
-    """
-    # --- PHẦN STARTUP ---
-    if AUTO_CREATE_TABLES:
-        try:
-            engine = get_engine()
-            # Sử dụng Base.metadata từ app.db
-            Base.metadata.create_all(bind=engine)
-            logger.info("[lifespan] Hệ thống bảng cơ sở dữ liệu đã được xác nhận/khởi tạo.")
-        except Exception as exc:
-            logger.error("[lifespan] Lỗi khởi tạo bảng: %s", exc)
-
-    if ENABLE_SEED_DATA:
-        try:
-            _seed_users()
-            logger.info("[lifespan] Quá trình nạp dữ liệu mẫu hoàn tất.")
-        except Exception as exc:
-            logger.error("[lifespan] Lỗi nạp dữ liệu mẫu: %s", exc)
-
-    yield  # Ứng dụng bắt đầu chạy và nhận request tại đây
-
-    # --- PHẦN SHUTDOWN ---
-    logger.info("[lifespan] Ứng dụng đang dừng và giải phóng tài nguyên.")
-
-# Create the FastAPI application instance. This is the main entry point for the app.
-app = FastAPI(
-    title="MTEC Operations Hub Backend", 
-    version="0.1.0"
-)
-
-
-# CORS middleware is required to allow the frontend (served from a different origin)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
-
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(members_router)
-app.include_router(requests_router)
-app.include_router(transactions_router)
-app.include_router(dashboard_router)
-app.include_router(assets_router)
-app.include_router(discipline_router)
-app.include_router(settings_router)
-app.include_router(ai_router)
 
 def _seed_users() -> None:
     """
@@ -113,10 +55,72 @@ def _seed_users() -> None:
                     password_hash=get_password_hash("123456Abc!"),
                     full_name=full_name,
                     role=role,
-                    avatar_initials="".join(part[0] for part in full_name.split()[:2]).upper(),
+                    avatar_initials="".join(
+                        part[0] for part in full_name.split()[:2]
+                    ).upper(),
                     is_active=True,
                 )
             )
         db.commit()
     finally:
         db.close()
+
+
+# Định nghĩa Lifespan Context Manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Quản lý vòng đời ứng dụng:
+    - Logic trước 'yield' tương đương với 'startup'.
+    - Logic sau 'yield' tương đương với 'shutdown'.
+    """
+    # --- PHẦN STARTUP ---
+    if AUTO_CREATE_TABLES:
+        try:
+            engine = get_engine()
+            # Sử dụng Base.metadata từ app.db
+            Base.metadata.create_all(bind=engine)
+            logger.info(
+                "[lifespan] Hệ thống bảng cơ sở dữ liệu đã được xác nhận/khởi tạo."
+            )
+        except Exception as exc:
+            logger.error("[lifespan] Lỗi khởi tạo bảng: %s", exc)
+
+    if ENABLE_SEED_DATA:
+        try:
+            _seed_users()
+            logger.info("[lifespan] Quá trình nạp dữ liệu mẫu hoàn tất.")
+        except Exception as exc:
+            logger.error("[lifespan] Lỗi nạp dữ liệu mẫu: %s", exc)
+
+    yield  # Ứng dụng bắt đầu chạy và nhận request tại đây
+
+    # --- PHẦN SHUTDOWN ---
+    logger.info("[lifespan] Ứng dụng đang dừng và giải phóng tài nguyên.")
+
+
+# Create the FastAPI application instance. This is the main entry point for the app.
+app = FastAPI(title="MTEC Operations Hub Backend", version="0.1.0")
+
+
+# CORS middleware is required to allow the frontend (served from a different origin)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
+
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(members_router)
+app.include_router(requests_router)
+app.include_router(transactions_router)
+app.include_router(dashboard_router)
+app.include_router(assets_router)
+app.include_router(discipline_router)
+app.include_router(settings_router)
+app.include_router(ai_router)

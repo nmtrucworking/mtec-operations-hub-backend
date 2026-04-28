@@ -25,7 +25,9 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class Member(Base):
@@ -50,14 +52,18 @@ class Member(Base):
     goal: Mapped[str | None] = mapped_column(Text, nullable=True)
     orientation: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class MemberSkill(Base):
     __tablename__ = "member_skills"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("members.id"), index=True)
+    member_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("members.id"), index=True
+    )
     type: Mapped[str] = mapped_column(String(10))
     name: Mapped[str] = mapped_column(String(80))
     level: Mapped[str] = mapped_column(String(20))
@@ -81,11 +87,17 @@ class Request(Base):
     finance_draft_title: Mapped[str | None] = mapped_column(String(180), nullable=True)
     finance_draft_amount: Mapped[float | None] = mapped_column(Float, nullable=True)
     finance_draft_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    finance_draft_category: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    created_by_user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
+    finance_draft_category: Mapped[str | None] = mapped_column(
+        String(80), nullable=True
+    )
+    created_by_user_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("users.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
-    
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
+
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -98,18 +110,26 @@ class Transaction(Base):
     owner: Mapped[str] = mapped_column(String(120))
     category: Mapped[str] = mapped_column(String(80), index=True)
     status: Mapped[str] = mapped_column(String(20), index=True)
-    required_approval_role: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    required_approval_role: Mapped[str | None] = mapped_column(
+        String(30), nullable=True
+    )
     reviewer: Mapped[str | None] = mapped_column(String(120), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     approval_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    linked_request_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("requests.id"), nullable=True)
+    linked_request_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("requests.id"), nullable=True
+    )
     linked_request_type: Mapped[str | None] = mapped_column(String(60), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     deleted_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    created_by_user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
+    created_by_user_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("users.id"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class Asset(Base):
@@ -122,14 +142,18 @@ class Asset(Base):
     holder: Mapped[str | None] = mapped_column(String(120), nullable=True)
     category: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class DisciplineRecord(Base):
     __tablename__ = "discipline_records"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    member_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("members.id"), nullable=True)
+    member_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("members.id"), nullable=True
+    )
     mssv: Mapped[str] = mapped_column(String(20), index=True)
     name: Mapped[str] = mapped_column(String(120))
     committee: Mapped[str | None] = mapped_column(String(120), nullable=True)
@@ -138,18 +162,24 @@ class DisciplineRecord(Base):
     discipline_level: Mapped[str] = mapped_column(String(40), default="Khong")
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class SettingsNotification(Base):
     __tablename__ = "settings_notifications"
 
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("users.id"), primary_key=True
+    )
     noti1: Mapped[bool] = mapped_column(Boolean, default=True)
     noti2: Mapped[bool] = mapped_column(Boolean, default=True)
     noti3: Mapped[bool] = mapped_column(Boolean, default=True)
     noti4: Mapped[bool] = mapped_column(Boolean, default=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
+    )
 
 
 class AIGenerationLog(Base):
@@ -169,7 +199,9 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    actor_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    actor_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True
+    )
     action: Mapped[str] = mapped_column(String(60), index=True)
     resource_type: Mapped[str] = mapped_column(String(40), index=True)
     resource_id: Mapped[str] = mapped_column(String(36), index=True)

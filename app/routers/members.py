@@ -50,7 +50,17 @@ def list_members(
     page: int = Query(default=1),
     pageSize: int = Query(default=20),
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
+    _: User = Depends(
+        require_roles(
+            "bcn",
+            "bvh_hr",
+            "bcm",
+            "member",
+            "bvh_finance",
+            "bvh_discipline",
+            "bvh_logistics",
+        )
+    ),
 ) -> dict:
     page, pageSize = sanitize_pagination(page, pageSize)
     stmt = select(Member)
@@ -59,7 +69,9 @@ def list_members(
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where((Member.name.ilike(pattern)) | (Member.mssv.ilike(pattern)))
-        count_stmt = count_stmt.where((Member.name.ilike(pattern)) | (Member.mssv.ilike(pattern)))
+        count_stmt = count_stmt.where(
+            (Member.name.ilike(pattern)) | (Member.mssv.ilike(pattern))
+        )
     if ban:
         stmt = stmt.where(Member.ban == ban)
         count_stmt = count_stmt.where(Member.ban == ban)
@@ -80,11 +92,23 @@ def list_members(
 def get_member(
     member_id: str,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
+    _: User = Depends(
+        require_roles(
+            "bcn",
+            "bvh_hr",
+            "bcm",
+            "member",
+            "bvh_finance",
+            "bvh_discipline",
+            "bvh_logistics",
+        )
+    ),
 ) -> dict:
     member = db.get(Member, member_id)
     if not member:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
+        )
     return api_response(data=_member_out(member))
 
 
@@ -95,7 +119,9 @@ def create_member(
     current_user: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
     if db.scalar(select(Member).where(Member.mssv == body.mssv)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="mssv da ton tai")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="mssv da ton tai"
+        )
 
     member = Member(
         mssv=body.mssv,
@@ -123,7 +149,12 @@ def create_member(
         resource_type="member",
         resource_id=member.id,
         actor=current_user,
-        after_snapshot={"mssv": member.mssv, "name": member.name, "ban": member.ban, "status": member.status},
+        after_snapshot={
+            "mssv": member.mssv,
+            "name": member.name,
+            "ban": member.ban,
+            "status": member.status,
+        },
     )
     db.commit()
     db.refresh(member)
@@ -139,7 +170,9 @@ def update_member(
 ) -> dict:
     member = db.get(Member, member_id)
     if not member:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
+        )
 
     payload = body.model_dump(exclude_none=True)
     mapping = {
@@ -164,11 +197,15 @@ def update_member_status(
 ) -> dict:
     member = db.get(Member, member_id)
     if not member:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
+        )
 
     new_status = body.get("status")
     if new_status not in {"Active", "Inactive"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="status khong hop le")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="status khong hop le"
+        )
 
     member.status = new_status
     db.commit()
@@ -185,7 +222,9 @@ def export_members(
     _: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> StreamingResponse:
     if format != "csv":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv"
+        )
 
     stmt = select(Member)
     if ban:
@@ -203,4 +242,6 @@ def export_members(
 
     buffer.seek(0)
     headers = {"Content-Disposition": "attachment; filename=members.csv"}
-    return StreamingResponse(iter([buffer.getvalue()]), media_type="text/csv", headers=headers)
+    return StreamingResponse(
+        iter([buffer.getvalue()]), media_type="text/csv", headers=headers
+    )

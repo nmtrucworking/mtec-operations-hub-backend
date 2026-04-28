@@ -20,6 +20,7 @@ def mock_redis(monkeypatch):
     yield fake_redis_client
     fake_redis_client.flushall()
 
+
 @pytest.fixture
 def test_db() -> Generator[Session, None, None]:
     # Thiết lập poolclass=StaticPool để dùng chung bộ nhớ giữa các thread
@@ -35,6 +36,7 @@ def test_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
 
 @pytest.fixture
 def client(test_db: Session) -> Generator[TestClient, None, None]:

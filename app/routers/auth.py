@@ -31,13 +31,19 @@ def _user_payload(user: User) -> dict:
     }
 
 
-@router.post("/login", dependencies=[Depends(rate_limiter(max_requests=5, window_seconds=60))])
+@router.post(
+    "/login", dependencies=[Depends(rate_limiter(max_requests=5, window_seconds=60))]
+)
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
     user = db.scalar(select(User).where(User.username == body.username))
     if not user or not verify_password(body.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sai thong tin dang nhap")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Sai thong tin dang nhap"
+        )
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tai khoan da bi khoa")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Tai khoan da bi khoa"
+        )
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
@@ -63,8 +69,9 @@ def logout(body: RefreshRequest) -> dict:
         if ttl > 0:
             # Lưu token vào Redis với TTL tương ứng thời gian sống còn lại
             redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
-            
+
     return api_response(data={"message": "Da dang xuat"})
+
 
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)) -> dict:
@@ -75,16 +82,24 @@ def me(current_user: User = Depends(get_current_user)) -> dict:
 def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
     # 1. Kiểm tra Token có nằm trong danh sách Blacklist hay không
     if redis_client.exists(f"blacklist:{body.refreshToken}"):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token da bi thu hoi hoac het han")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token da bi thu hoi hoac het han",
+        )
 
     # 2. Giải mã và xác thực Token
     payload = decode_token(body.refreshToken)
     if payload is None or payload.get("type") != "refresh":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token khong hop le")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token khong hop le",
+        )
 
     user = db.get(User, payload.get("sub"))
     if not user or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Nguoi dung khong hop le")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Nguoi dung khong hop le"
+        )
 
     # 3. Thu hồi (Blacklist) Token cũ ngay sau khi sử dụng để ngăn chặn Replay Attack
     exp = payload.get("exp")

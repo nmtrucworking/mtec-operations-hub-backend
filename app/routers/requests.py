@@ -65,7 +65,9 @@ def list_requests(
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where((Request.name.ilike(pattern)) | (Request.mssv.ilike(pattern)))
-        count_stmt = count_stmt.where((Request.name.ilike(pattern)) | (Request.mssv.ilike(pattern)))
+        count_stmt = count_stmt.where(
+            (Request.name.ilike(pattern)) | (Request.mssv.ilike(pattern))
+        )
     if type:
         stmt = stmt.where(Request.type == type)
         count_stmt = count_stmt.where(Request.type == type)
@@ -89,9 +91,13 @@ def get_request(
 ) -> dict:
     req = db.get(Request, request_id)
     if not req:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request"
+        )
     if current_user.role == "member" and req.created_by_user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep xem")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep xem"
+        )
     return api_response(data=_request_out(req))
 
 
@@ -102,7 +108,10 @@ def create_request(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if body.financeDraftAmount is not None and body.financeDraftAmount <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="financeDraftAmount phai lon hon 0")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="financeDraftAmount phai lon hon 0",
+        )
 
     req = Request(
         id=generate_prefixed_id("REQ"),
@@ -134,12 +143,19 @@ def update_request(
 ) -> dict:
     req = db.get(Request, request_id)
     if not req:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request"
+        )
 
     if current_user.role == "member" and req.created_by_user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep sua")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep sua"
+        )
     if req.status != "Cho duyet":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi duoc sua khi dang Cho duyet")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chi duoc sua khi dang Cho duyet",
+        )
 
     payload = body.model_dump(exclude_none=True)
     mapping = {
@@ -150,7 +166,10 @@ def update_request(
         "financeDraftCategory": "finance_draft_category",
     }
     if "financeDraftAmount" in payload and payload["financeDraftAmount"] <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="financeDraftAmount phai lon hon 0")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="financeDraftAmount phai lon hon 0",
+        )
 
     for key, value in payload.items():
         setattr(req, mapping.get(key, key), value)
@@ -224,7 +243,11 @@ def review_request(
                 code="REQUEST_FINANCE_DRAFT_INVALID_AMOUNT",
                 message="Finance draft amount khong hop le",
             )
-        if not req.finance_draft_type or not req.finance_draft_category or not req.finance_draft_title:
+        if (
+            not req.finance_draft_type
+            or not req.finance_draft_category
+            or not req.finance_draft_title
+        ):
             raise_api_error(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 code="REQUEST_FINANCE_DRAFT_INCOMPLETE",
@@ -241,7 +264,11 @@ def review_request(
             )
 
         status_value = "Da duyet" if tx_type == "Thu" else "Cho duyet"
-        required_role = None if tx_type == "Thu" else get_required_approval_role(req.finance_draft_category)
+        required_role = (
+            None
+            if tx_type == "Thu"
+            else get_required_approval_role(req.finance_draft_category)
+        )
 
         tx = Transaction(
             id=generate_prefixed_id("TX"),

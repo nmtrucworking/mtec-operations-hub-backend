@@ -36,7 +36,10 @@ def _persist_ai_log(
     return log
 
 
-@router.post("/generate-insight", dependencies=[Depends(rate_limiter(max_requests=10, window_seconds=60))])
+@router.post(
+    "/generate-insight",
+    dependencies=[Depends(rate_limiter(max_requests=10, window_seconds=60))],
+)
 def generate_insight(
     body: AIGenerateInsightBody,
     db: Session = Depends(get_db),
@@ -74,7 +77,10 @@ def generate_insight(
     )
 
 
-@router.post("/generate-draft", dependencies=[Depends(rate_limiter(max_requests=10, window_seconds=60))])
+@router.post(
+    "/generate-draft",
+    dependencies=[Depends(rate_limiter(max_requests=10, window_seconds=60))],
+)
 def generate_draft(
     body: AIGenerateDraftBody,
     db: Session = Depends(get_db),

@@ -67,7 +67,9 @@ def list_transactions(
         filters.append(Transaction.is_deleted.is_(False))
     if search:
         pattern = f"%{search}%"
-        filters.append((Transaction.title.ilike(pattern)) | (Transaction.owner.ilike(pattern)))
+        filters.append(
+            (Transaction.title.ilike(pattern)) | (Transaction.owner.ilike(pattern))
+        )
     if type:
         filters.append(Transaction.type == type)
     if status_filter:
@@ -103,7 +105,9 @@ def list_pending(
     if current_user.role == "bcn":
         rows = db.scalars(stmt).all()
     elif current_user.role == "bvh_finance":
-        rows = db.scalars(stmt.where(Transaction.required_approval_role == "bvh_finance")).all()
+        rows = db.scalars(
+            stmt.where(Transaction.required_approval_role == "bvh_finance")
+        ).all()
     else:
         rows = []
 
@@ -117,14 +121,22 @@ def create_transaction(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if current_user.role not in {"bcn", "bvh_finance"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao giao dich")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao giao dich"
+        )
     if body.amount <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="amount phai lon hon 0")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="amount phai lon hon 0"
+        )
     if body.type not in {"Thu", "Chi"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="type khong hop le")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="type khong hop le"
+        )
 
     status_value = "Da duyet" if body.type == "Thu" else "Cho duyet"
-    required_role = None if body.type == "Thu" else get_required_approval_role(body.category)
+    required_role = (
+        None if body.type == "Thu" else get_required_approval_role(body.category)
+    )
 
     tx = Transaction(
         id=generate_prefixed_id("TX"),
@@ -155,16 +167,25 @@ def update_transaction(
 ) -> dict:
     tx = db.get(Transaction, tx_id)
     if not tx or tx.is_deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich"
+        )
 
     if current_user.role not in {"bcn", "bvh_finance"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen sua giao dich")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen sua giao dich"
+        )
     if tx.status != "Cho duyet":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Chi duoc sua giao dich Cho duyet")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chi duoc sua giao dich Cho duyet",
+        )
 
     payload = body.model_dump(exclude_none=True)
     if "amount" in payload and payload["amount"] <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="amount phai lon hon 0")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="amount phai lon hon 0"
+        )
 
     for key, value in payload.items():
         setattr(tx, key, value)
@@ -214,7 +235,10 @@ def review_transaction(
             message="Chi BCN duoc duyet giao dich nay",
         )
 
-    if tx.required_approval_role == "bvh_finance" and current_user.role not in {"bvh_finance", "bcn"}:
+    if tx.required_approval_role == "bvh_finance" and current_user.role not in {
+        "bvh_finance",
+        "bcn",
+    }:
         raise_api_error(
             status_code=status.HTTP_403_FORBIDDEN,
             code="TRANSACTION_REVIEW_ROLE_DENIED_FINANCE",
@@ -265,11 +289,15 @@ def soft_delete_transaction(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if current_user.role not in {"bcn", "bvh_finance"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen xoa giao dich")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen xoa giao dich"
+        )
 
     tx = db.get(Transaction, tx_id)
     if not tx or tx.is_deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich"
+        )
 
     before = {
         "isDeleted": tx.is_deleted,

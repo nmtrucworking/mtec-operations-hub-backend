@@ -44,14 +44,20 @@ def list_records(
 
     if search:
         pattern = f"%{search}%"
-        stmt = stmt.where((DisciplineRecord.name.ilike(pattern)) | (DisciplineRecord.mssv.ilike(pattern)))
+        stmt = stmt.where(
+            (DisciplineRecord.name.ilike(pattern))
+            | (DisciplineRecord.mssv.ilike(pattern))
+        )
         count_stmt = count_stmt.where(
-            (DisciplineRecord.name.ilike(pattern)) | (DisciplineRecord.mssv.ilike(pattern))
+            (DisciplineRecord.name.ilike(pattern))
+            | (DisciplineRecord.mssv.ilike(pattern))
         )
 
     if disciplineLevel:
         stmt = stmt.where(DisciplineRecord.discipline_level == disciplineLevel)
-        count_stmt = count_stmt.where(DisciplineRecord.discipline_level == disciplineLevel)
+        count_stmt = count_stmt.where(
+            DisciplineRecord.discipline_level == disciplineLevel
+        )
 
     if committee:
         stmt = stmt.where(DisciplineRecord.committee == committee)
@@ -109,7 +115,10 @@ def update_record(
 
     record = db.get(DisciplineRecord, record_id)
     if not record:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay discipline record")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Khong tim thay discipline record",
+        )
 
     payload = body.model_dump(exclude_none=True)
     mapping = {"disciplineLevel": "discipline_level"}

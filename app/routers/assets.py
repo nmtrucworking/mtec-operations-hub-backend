@@ -64,7 +64,9 @@ def get_asset(
 ) -> dict:
     asset = db.get(Asset, asset_id)
     if not asset:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay tai san")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay tai san"
+        )
     return api_response(data=_asset_out(asset))
 
 
@@ -75,7 +77,9 @@ def create_asset(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if current_user.role not in {"bcn", "bvh_logistics"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao tai san")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao tai san"
+        )
 
     asset = Asset(
         id=generate_prefixed_id("TS"),
@@ -99,11 +103,16 @@ def update_asset(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if current_user.role not in {"bcn", "bvh_logistics"}:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen cap nhat tai san")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Khong co quyen cap nhat tai san",
+        )
 
     asset = db.get(Asset, asset_id)
     if not asset:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay tai san")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay tai san"
+        )
 
     payload = body.model_dump(exclude_none=True)
     for key, value in payload.items():

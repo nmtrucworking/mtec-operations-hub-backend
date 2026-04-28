@@ -67,10 +67,16 @@ def change_password(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if not verify_password(body.currentPassword, current_user.password_hash):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mat khau hien tai khong dung")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mat khau hien tai khong dung",
+        )
 
     if body.currentPassword == body.newPassword:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mat khau moi khong duoc trung")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mat khau moi khong duoc trung",
+        )
 
     current_user.password_hash = get_password_hash(body.newPassword)
     db.commit()
@@ -82,7 +88,9 @@ def _ensure_notification_row(db: Session, user_id: str) -> SettingsNotification:
     if row:
         return row
 
-    row = SettingsNotification(user_id=user_id, noti1=True, noti2=True, noti3=True, noti4=True)
+    row = SettingsNotification(
+        user_id=user_id, noti1=True, noti2=True, noti3=True, noti4=True
+    )
     db.add(row)
     db.commit()
     db.refresh(row)

@@ -44,8 +44,12 @@ def list_users(
 
     if search:
         pattern = f"%{search}%"
-        stmt = stmt.where((User.username.ilike(pattern)) | (User.full_name.ilike(pattern)))
-        count_stmt = count_stmt.where((User.username.ilike(pattern)) | (User.full_name.ilike(pattern)))
+        stmt = stmt.where(
+            (User.username.ilike(pattern)) | (User.full_name.ilike(pattern))
+        )
+        count_stmt = count_stmt.where(
+            (User.username.ilike(pattern)) | (User.full_name.ilike(pattern))
+        )
 
     if role:
         stmt = stmt.where(User.role == role)
@@ -66,7 +70,9 @@ def create_user(
     _: User = Depends(require_roles("bcn")),
 ) -> dict:
     if db.scalar(select(User).where(User.username == body.username)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="username da ton tai")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="username da ton tai"
+        )
 
     user = User(
         username=body.username,
@@ -93,7 +99,9 @@ def update_user(
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user"
+        )
 
     payload = body.model_dump(exclude_none=True)
     mapping = {
@@ -118,7 +126,9 @@ def reset_password(
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user"
+        )
 
     user.password_hash = get_password_hash(body.newPassword)
     db.commit()
@@ -134,7 +144,9 @@ def update_status(
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user"
+        )
 
     user.is_active = body.isActive
     db.commit()

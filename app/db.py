@@ -89,7 +89,9 @@ def get_engine() -> Engine:
             "Configure it in the Render dashboard under Environment → DATABASE_URL."
         )
 
-    logger.info("[db] Initialising database engine for URL scheme: %s", url.split(":")[0])
+    logger.info(
+        "[db] Initialising database engine for URL scheme: %s", url.split(":")[0]
+    )
     _engine = _build_engine(url)
     _SessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
     return _engine
