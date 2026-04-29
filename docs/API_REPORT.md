@@ -457,12 +457,19 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 ---
 
-### 5. Export Members to CSV
-**GET** `/api/members/export?format=csv`
+### 5. Export Members (CSV/ZIP)
+**GET** `/api/members/export?format={csv|zip}`
 
-**Authentication:** Required
+**Authentication:** Required (bcn, bvh_hr roles)
 
-**Response:** CSV file download
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `format` | string | `csv` | `csv` for spreadsheet, `zip` for folder of DOCX profiles |
+| `ban` | string | null | Filter by department |
+| `status` | string | null | Filter by status |
+
+**Response:** File download (CSV or ZIP)
 
 ---
 

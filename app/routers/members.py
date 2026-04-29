@@ -13,7 +13,7 @@ from app.db import get_db
 from app.models import Member, User, MemberSkill
 from app.schemas import MemberCreate, MemberUpdate
 from app.utils import sanitize_pagination
-from app.services.report_service import generate_member_profile_docx
+from app.services.report_service import generate_member_profile_docx, generate_members_zip
 
 router = APIRouter(prefix="/api/members", tags=["members"])
 
@@ -222,9 +222,9 @@ def export_members(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> StreamingResponse:
-    if format != "csv":
+    if format not in {"csv", "zip"}:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv hoac zip"
         )
 
     stmt = select(Member)
@@ -234,18 +234,35 @@ def export_members(
         stmt = stmt.where(Member.status == status_filter)
 
     members = db.scalars(stmt).all()
-    buffer = io.StringIO()
-    writer = csv.writer(buffer)
-    writer.writerow(["id", "mssv", "name", "ban", "status", "phone", "email"])
 
-    for m in members:
-        writer.writerow([m.id, m.mssv, m.name, m.ban, m.status, m.phone, m.email])
+    if format == "csv":
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(["id", "mssv", "name", "ban", "status", "phone", "email"])
 
-    buffer.seek(0)
-    headers = {"Content-Disposition": "attachment; filename=members.csv"}
-    return StreamingResponse(
-        iter([buffer.getvalue()]), media_type="text/csv", headers=headers
-    )
+        for m in members:
+            writer.writerow([m.id, m.mssv, m.name, m.ban, m.status, m.phone, m.email])
+
+        buffer.seek(0)
+        headers = {"Content-Disposition": "attachment; filename=members.csv"}
+        return StreamingResponse(
+            iter([buffer.getvalue()]), media_type="text/csv", headers=headers
+        )
+    else:  # zip
+        members_with_skills = []
+        for m in members:
+            skills = db.scalars(
+                select(MemberSkill).where(MemberSkill.member_id == m.id)
+            ).all()
+            members_with_skills.append((m, list(skills)))
+
+        buffer = generate_members_zip(members_with_skills)
+        headers = {"Content-Disposition": "attachment; filename=members_profiles.zip"}
+        return StreamingResponse(
+            buffer,
+            media_type="application/zip",
+            headers=headers,
+        )
 
 
 @router.get("/{member_id}/profile")

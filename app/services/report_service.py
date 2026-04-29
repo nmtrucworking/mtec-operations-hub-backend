@@ -1,4 +1,5 @@
 import os
+import zipfile
 from datetime import date
 from io import BytesIO
 from docxtpl import DocxTemplate, RichText
@@ -91,3 +92,21 @@ def generate_member_profile_docx(member: Member, skills: list[MemberSkill]) -> B
     target_stream.seek(0)
     
     return target_stream
+
+def generate_members_zip(members_with_skills: list[tuple[Member, list[MemberSkill]]]) -> BytesIO:
+    """
+    Generates a ZIP file containing multiple member profile DOCX files.
+    """
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for member, skills in members_with_skills:
+            try:
+                docx_buffer = generate_member_profile_docx(member, skills)
+                filename = f"HOSO_{member.mssv}_{member.name.replace(' ', '_')}.docx"
+                zip_file.writestr(filename, docx_buffer.getvalue())
+            except Exception as e:
+                # Log or handle individual file errors if needed
+                continue
+    
+    zip_buffer.seek(0)
+    return zip_buffer
