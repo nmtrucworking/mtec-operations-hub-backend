@@ -1,7 +1,7 @@
 # MTEC Operations Hub - API Documentation Report
 
-**Version:** 1.0  
-**Last Updated:** April 29, 2026  
+**Version:** 2.0  
+**Last Updated:** April 30, 2026  
 **Backend URL:** `http://localhost:8000` (Development) | `https://your-production-url.com` (Production)
 
 ---
@@ -458,7 +458,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Export Members to CSV
-**GET** `/api/members/export/csv`
+**GET** `/api/members/export?format=csv`
 
 **Authentication:** Required
 
@@ -466,7 +466,16 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 ---
 
-### 6. Delete Member
+### 6. Export Member Profile (DOCX)
+**GET** `/api/members/{member_id}/profile`
+
+**Authentication:** Required
+
+**Response:** DOCX file download (Hồ sơ thành viên)
+
+---
+
+### 7. Delete Member
 **DELETE** `/api/members/{member_id}`
 
 **Authentication:** Required (bcn, bvh_hr roles)

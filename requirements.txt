@@ -8,3 +8,4 @@ email-validator==2.2.0
 psycopg[binary]==3.2.13
 alembic==1.13.3
 fakeredis>=2.20.0
+docxtpl==0.16.8

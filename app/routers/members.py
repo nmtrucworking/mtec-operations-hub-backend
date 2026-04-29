@@ -10,9 +10,10 @@ from app.core.audit import create_audit_log
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.db import get_db
-from app.models import Member, User
+from app.models import Member, User, MemberSkill
 from app.schemas import MemberCreate, MemberUpdate
 from app.utils import sanitize_pagination
+from app.services.report_service import generate_member_profile_docx
 
 router = APIRouter(prefix="/api/members", tags=["members"])
 
@@ -245,3 +246,43 @@ def export_members(
     return StreamingResponse(
         iter([buffer.getvalue()]), media_type="text/csv", headers=headers
     )
+
+
+@router.get("/{member_id}/profile")
+def export_member_profile(
+    member_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(
+        require_roles(
+            "bcn",
+            "bvh_hr",
+            "bcm",
+            "member",
+            "bvh_finance",
+            "bvh_discipline",
+            "bvh_logistics",
+        )
+    ),
+) -> StreamingResponse:
+    member = db.get(Member, member_id)
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
+        )
+
+    skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member_id)).all()
+
+    try:
+        buffer = generate_member_profile_docx(member, skills)
+        filename = f"HOSO_{member.mssv}_{member.name.replace(' ', '_')}.docx"
+        headers = {"Content-Disposition": f"attachment; filename={filename}"}
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers=headers,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Loi khi tao ho so: {str(e)}",
+        )
