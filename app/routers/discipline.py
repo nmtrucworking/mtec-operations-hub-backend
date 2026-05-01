@@ -10,7 +10,7 @@ from app.models import DisciplineRecord, User
 from app.schemas import DisciplineRecordCreate, DisciplineRecordUpdate
 from app.utils import sanitize_pagination
 
-router = APIRouter(prefix="/api/discipline-records", tags=["discipline"])
+router = APIRouter(prefix="/discipline-records", tags=["discipline"])
 
 
 def _record_out(record: DisciplineRecord) -> dict:

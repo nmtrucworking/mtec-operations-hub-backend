@@ -10,7 +10,7 @@ from app.models import Asset, User
 from app.schemas import AssetCreate, AssetUpdate
 from app.utils import generate_prefixed_id, sanitize_pagination
 
-router = APIRouter(prefix="/api/assets", tags=["assets"])
+router = APIRouter(prefix="/assets", tags=["assets"])
 
 
 def _asset_out(asset: Asset) -> dict:

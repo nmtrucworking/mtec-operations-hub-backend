@@ -11,7 +11,7 @@ from app.models import User
 from app.schemas import ResetPasswordRequest, UserCreate, UserStatusUpdate, UserUpdate
 from app.utils import sanitize_pagination
 
-router = APIRouter(prefix="/api/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _user_out(user: User) -> dict:

@@ -12,7 +12,7 @@ from app.models import AIGenerationLog, User
 from app.schemas import AIGenerateDraftBody, AIGenerateInsightBody, AIProcessContextBody, AIExportDocumentBody
 from app.services.ai_provider import AIProviderError, generate_text
 
-router = APIRouter(prefix="/api/ai", tags=["ai"])
+router = APIRouter(prefix="/ai", tags=["ai"])
 
 
 def _persist_ai_log(

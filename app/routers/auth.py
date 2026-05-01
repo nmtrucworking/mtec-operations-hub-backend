@@ -19,7 +19,7 @@ from app.deps import get_current_user
 from app.models import User
 from app.schemas import LoginRequest, RefreshRequest
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _user_payload(user: User) -> dict:

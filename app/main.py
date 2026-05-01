@@ -97,11 +97,12 @@ app = FastAPI(title="MTEC Operations Hub Backend", version="1.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=("*" not in CORS_ORIGINS),
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
 
-app.include_router(api_v1_router, prefix="/api")
+app.include_router(api_v1_router, prefix="/api/v1")
+app.include_router(api_v1_router, prefix="/api/v1/api")

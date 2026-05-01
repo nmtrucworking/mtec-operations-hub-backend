@@ -7,7 +7,7 @@ from app.db import get_db
 from app.deps import get_current_user
 from app.models import Asset, Member, Request, Transaction, User
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/overview")

@@ -11,7 +11,7 @@ from app.routers.settings import router as settings_router
 from app.routers.ai import router as ai_router
 from app.routers.logs import router as logs_router
 
-api_v1_router = APIRouter(prefix="/v1")
+api_v1_router = APIRouter()
 
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(users_router)

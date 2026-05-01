@@ -17,7 +17,7 @@ from app.utils import (
     sanitize_pagination,
 )
 
-router = APIRouter(prefix="/api/transactions", tags=["transactions"])
+router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 
 def _tx_out(tx: Transaction) -> dict:

@@ -17,7 +17,7 @@ from app.utils import (
     sanitize_pagination,
 )
 
-router = APIRouter(prefix="/api/requests", tags=["requests"])
+router = APIRouter(prefix="/requests", tags=["requests"])
 
 
 def _request_out(req: Request) -> dict:

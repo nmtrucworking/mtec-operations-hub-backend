@@ -13,7 +13,7 @@ from app.schemas import (
     SettingsProfileUpdate,
 )
 
-router = APIRouter(prefix="/api/settings", tags=["settings"])
+router = APIRouter(prefix="/settings", tags=["settings"])
 
 
 @router.get("/profile")

@@ -12,7 +12,7 @@ from app.models import AuditLog, User
 from app.core.response import api_response
 from app.utils import sanitize_pagination
 
-router = APIRouter(prefix="/api/logs", tags=["logs"])
+router = APIRouter(prefix="/logs", tags=["logs"])
 
 def _log_out(log: AuditLog, actor_name: str | None) -> dict:
     return {

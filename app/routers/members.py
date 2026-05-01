@@ -15,7 +15,7 @@ from app.schemas import MemberCreate, MemberUpdate
 from app.utils import sanitize_pagination
 from app.services.report_service import generate_member_profile_docx, generate_members_zip
 
-router = APIRouter(prefix="/api/members", tags=["members"])
+router = APIRouter(prefix="/members", tags=["members"])
 
 
 def _member_out(member: Member) -> dict:
@@ -167,7 +167,7 @@ def update_member(
     member_id: str,
     body: MemberUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr")),
+    current_user: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
     member = db.get(Member, member_id)
     if not member:
