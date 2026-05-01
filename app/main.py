@@ -7,18 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
 from app.db import Base, get_engine
 
-# from app.main import _seed_users
-from app.routers.ai import router as ai_router
-from app.routers.assets import router as assets_router
-from app.routers.auth import router as auth_router
-from app.routers.dashboard import router as dashboard_router
-from app.routers.discipline import router as discipline_router
-from app.routers.logs import router as logs_router
-from app.routers.members import router as members_router
-from app.routers.requests import router as requests_router
-from app.routers.settings import router as settings_router
-from app.routers.transactions import router as transactions_router
-from app.routers.users import router as users_router
+from app.routers import api_v1_router
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +90,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create the FastAPI application instance. This is the main entry point for the app.
-app = FastAPI(title="MTEC Operations Hub Backend", version="0.1.0")
+app = FastAPI(title="MTEC Operations Hub Backend", version="1.2.0")
 
 
 # CORS middleware is required to allow the frontend (served from a different origin)
@@ -115,14 +104,4 @@ app.add_middleware(
 
 # Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
 
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(members_router)
-app.include_router(requests_router)
-app.include_router(transactions_router)
-app.include_router(dashboard_router)
-app.include_router(assets_router)
-app.include_router(discipline_router)
-app.include_router(logs_router)
-app.include_router(settings_router)
-app.include_router(ai_router)
+app.include_router(api_v1_router, prefix="/api")

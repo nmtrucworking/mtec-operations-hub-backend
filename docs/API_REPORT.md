@@ -1,8 +1,8 @@
 # MTEC Operations Hub - API Documentation Report
 
-**Version:** 3.0  
+**Version:** 1.2.0  
 **Last Updated:** May 01, 2026  
-**Backend URL:** `http://localhost:8000` (Development) | `https://your-production-url.com` (Production)
+**Backend URL:** `http://localhost:8000/api/v1` (Development) | `https://your-production-url.com/api/v1` (Production)
 
 ---
 
@@ -108,7 +108,7 @@ HTTP/1.1 429 Too Many Requests
 ## Auth Endpoints
 
 ### 1. Login
-**POST** `/api/auth/login`
+**POST** `/api/v1/auth/login`
 
 **Rate Limit:** 5 requests/60s
 
@@ -146,7 +146,7 @@ HTTP/1.1 429 Too Many Requests
 ---
 
 ### 2. Logout
-**POST** `/api/auth/logout`
+**POST** `/api/v1/auth/logout`
 
 **Authentication:** Required
 
@@ -170,7 +170,7 @@ HTTP/1.1 429 Too Many Requests
 ---
 
 ### 3. Get Current User Info
-**GET** `/api/auth/me`
+**GET** `/api/v1/auth/me`
 
 **Authentication:** Required
 
@@ -193,7 +193,7 @@ HTTP/1.1 429 Too Many Requests
 ## User Management Endpoints
 
 ### 1. List Users
-**GET** `/api/users`
+**GET** `/api/v1/users`
 
 **Authentication:** Required (bcn role)
 
@@ -207,7 +207,7 @@ HTTP/1.1 429 Too Many Requests
 
 **Example Request:**
 ```
-GET /api/users?search=admin&role=bcn&page=1&pageSize=20
+GET /api/v1/users?search=admin&role=bcn&page=1&pageSize=20
 ```
 
 **Response:**
@@ -239,7 +239,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Create User
-**POST** `/api/users`
+**POST** `/api/v1/users`
 
 **Authentication:** Required (bcn role)
 
@@ -261,14 +261,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 3. Get User Details
-**GET** `/api/users/{user_id}`
+**GET** `/api/v1/users/{user_id}`
 
 **Authentication:** Required (bcn role)
 
 ---
 
 ### 4. Update User
-**PATCH** `/api/users/{user_id}`
+**PATCH** `/api/v1/users/{user_id}`
 
 **Authentication:** Required (bcn role)
 
@@ -286,7 +286,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Update User Status
-**PATCH** `/api/users/{user_id}/status`
+**PATCH** `/api/v1/users/{user_id}/status`
 
 **Authentication:** Required (bcn role)
 
@@ -300,7 +300,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 6. Reset User Password
-**POST** `/api/users/{user_id}/reset-password`
+**POST** `/api/v1/users/{user_id}/reset-password`
 
 **Authentication:** Required (bcn role)
 
@@ -314,7 +314,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 7. Delete User
-**DELETE** `/api/users/{user_id}`
+**DELETE** `/api/v1/users/{user_id}`
 
 **Authentication:** Required (bcn role)
 
@@ -323,7 +323,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Dashboard Endpoints
 
 ### 1. Get Dashboard Overview
-**GET** `/api/dashboard/overview`
+**GET** `/api/v1/dashboard/overview`
 
 **Authentication:** Required
 
@@ -361,7 +361,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Member Management Endpoints
 
 ### 1. List Members
-**GET** `/api/members`
+**GET** `/api/v1/members`
 
 **Authentication:** Required
 
@@ -413,14 +413,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Get Member Details
-**GET** `/api/members/{member_id}`
+**GET** `/api/v1/members/{member_id}`
 
 **Authentication:** Required
 
 ---
 
 ### 3. Create Member
-**POST** `/api/members`
+**POST** `/api/v1/members`
 
 **Authentication:** Required (bcn, bvh_hr roles)
 
@@ -450,7 +450,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Update Member
-**PATCH** `/api/members/{member_id}`
+**PATCH** `/api/v1/members/{member_id}`
 
 **Authentication:** Required (bcn, bvh_hr roles)
 
@@ -459,7 +459,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Export Members (CSV/ZIP)
-**GET** `/api/members/export?format={csv|zip}`
+**GET** `/api/v1/members/export?format={csv|zip}`
 
 **Authentication:** Required (bcn, bvh_hr roles)
 
@@ -475,7 +475,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 6. Export Member Profile (DOCX)
-**GET** `/api/members/{member_id}/profile`
+**GET** `/api/v1/members/{member_id}/profile`
 
 **Authentication:** Required
 
@@ -484,7 +484,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 7. Delete Member
-**DELETE** `/api/members/{member_id}`
+**DELETE** `/api/v1/members/{member_id}`
 
 **Authentication:** Required (bcn, bvh_hr roles)
 
@@ -493,7 +493,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Transaction Management Endpoints
 
 ### 1. List Transactions
-**GET** `/api/transactions`
+**GET** `/api/v1/transactions`
 
 **Authentication:** Required
 
@@ -548,7 +548,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Get Pending Transactions
-**GET** `/api/transactions/pending`
+**GET** `/api/v1/transactions/pending`
 
 **Authentication:** Required
 
@@ -557,14 +557,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 3. Get Transaction Details
-**GET** `/api/transactions/{transaction_id}`
+**GET** `/api/v1/transactions/{transaction_id}`
 
 **Authentication:** Required
 
 ---
 
 ### 4. Create Transaction
-**POST** `/api/transactions`
+**POST** `/api/v1/transactions`
 
 **Authentication:** Required
 
@@ -585,7 +585,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Update Transaction
-**PATCH** `/api/transactions/{transaction_id}`
+**PATCH** `/api/v1/transactions/{transaction_id}`
 
 **Authentication:** Required
 
@@ -594,7 +594,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 6. Review/Approve Transaction
-**POST** `/api/transactions/{transaction_id}/review`
+**POST** `/api/v1/transactions/{transaction_id}/review`
 
 **Authentication:** Required
 
@@ -609,7 +609,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 7. Soft Delete Transaction
-**DELETE** `/api/transactions/{transaction_id}`
+**DELETE** `/api/v1/transactions/{transaction_id}`
 
 **Authentication:** Required
 
@@ -620,7 +620,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Request Management Endpoints
 
 ### 1. List Requests
-**GET** `/api/requests`
+**GET** `/api/v1/requests`
 
 **Authentication:** Required
 
@@ -673,14 +673,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Get Request Details
-**GET** `/api/requests/{request_id}`
+**GET** `/api/v1/requests/{request_id}`
 
 **Authentication:** Required
 
 ---
 
 ### 3. Create Request
-**POST** `/api/requests`
+**POST** `/api/v1/requests`
 
 **Authentication:** Required
 
@@ -703,7 +703,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Update Request
-**PATCH** `/api/requests/{request_id}`
+**PATCH** `/api/v1/requests/{request_id}`
 
 **Authentication:** Required
 
@@ -712,7 +712,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Review Request
-**POST** `/api/requests/{request_id}/review`
+**POST** `/api/v1/requests/{request_id}/review`
 
 **Authentication:** Required
 
@@ -727,7 +727,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 6. Delete Request
-**DELETE** `/api/requests/{request_id}`
+**DELETE** `/api/v1/requests/{request_id}`
 
 **Authentication:** Required
 
@@ -736,7 +736,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Asset Management Endpoints
 
 ### 1. List Assets
-**GET** `/api/assets`
+**GET** `/api/v1/assets`
 
 **Authentication:** Required
 
@@ -775,14 +775,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Get Asset Details
-**GET** `/api/assets/{asset_id}`
+**GET** `/api/v1/assets/{asset_id}`
 
 **Authentication:** Required
 
 ---
 
 ### 3. List Asset Categories
-**GET** `/api/assets/categories`
+**GET** `/api/v1/assets/categories`
 
 **Authentication:** Required
 
@@ -791,7 +791,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Get Asset Statistics
-**GET** `/api/assets/stats`
+**GET** `/api/v1/assets/stats`
 
 **Authentication:** Required
 
@@ -810,7 +810,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Create Asset
-**POST** `/api/assets`
+**POST** `/api/v1/assets`
 
 **Authentication:** Required (bcn, bvh_logistics)
 
@@ -828,7 +828,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Update Asset
-**PATCH** `/api/assets/{asset_id}`
+**PATCH** `/api/v1/assets/{asset_id}`
 
 **Authentication:** Required (bcn, bvh_logistics)
 
@@ -837,7 +837,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Delete Asset
-**DELETE** `/api/assets/{asset_id}`
+**DELETE** `/api/v1/assets/{asset_id}`
 
 **Authentication:** Required (bcn, bvh_logistics)
 
@@ -846,7 +846,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Discipline Records Endpoints
 
 ### 1. List Discipline Records
-**GET** `/api/discipline-records`
+**GET** `/api/v1/discipline-records`
 
 **Authentication:** Required
 
@@ -889,14 +889,14 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Get Discipline Record Details
-**GET** `/api/discipline-records/{record_id}`
+**GET** `/api/v1/discipline-records/{record_id}`
 
 **Authentication:** Required
 
 ---
 
 ### 3. Get Discipline Statistics
-**GET** `/api/discipline-records/stats`
+**GET** `/api/v1/discipline-records/stats`
 
 **Authentication:** Required
 
@@ -915,7 +915,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Create Discipline Record
-**POST** `/api/discipline-records`
+**POST** `/api/v1/discipline-records`
 
 **Authentication:** Required (bcn, bvh_discipline)
 
@@ -936,7 +936,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Update Discipline Record
-**PATCH** `/api/discipline-records/{record_id}`
+**PATCH** `/api/v1/discipline-records/{record_id}`
 
 **Authentication:** Required (bcn, bvh_discipline)
 
@@ -945,7 +945,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Delete Discipline Record
-**DELETE** `/api/discipline-records/{record_id}`
+**DELETE** `/api/v1/discipline-records/{record_id}`
 
 **Authentication:** Required (bcn, bvh_discipline)
 
@@ -954,7 +954,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## AI Features Endpoints
 
 ### 1. Generate Insight
-**POST** `/api/ai/generate-insight`
+**POST** `/api/v1/ai/generate-insight`
 
 **Authentication:** Required
 
@@ -983,7 +983,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Generate Draft
-**POST** `/api/ai/generate-draft`
+**POST** `/api/v1/ai/generate-draft`
 
 **Authentication:** Required
 
@@ -1002,7 +1002,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 3. List AI Templates
-**GET** `/api/ai/templates`
+**GET** `/api/v1/ai/templates`
 
 **Authentication:** Required
 
@@ -1011,7 +1011,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Process Context
-**POST** `/api/ai/process-context`
+**POST** `/api/v1/ai/process-context`
 
 **Authentication:** Required
 
@@ -1038,7 +1038,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Export Document
-**POST** `/api/ai/export-document`
+**POST** `/api/v1/ai/export-document`
 
 **Authentication:** Required
 
@@ -1063,7 +1063,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Activity Logs Endpoints
 
 ### 1. List Activity Logs
-**GET** `/api/logs`
+**GET** `/api/v1/logs`
 
 **Authentication:** Required (bcn, bcm roles)
 
@@ -1102,7 +1102,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Export Activity Logs
-**GET** `/api/logs/export`
+**GET** `/api/v1/logs/export`
 
 **Authentication:** Required (bcn, bcm roles)
 
@@ -1113,7 +1113,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ## Settings Endpoints
 
 ### 1. Get Profile
-**GET** `/api/settings/profile`
+**GET** `/api/v1/settings/profile`
 
 **Authentication:** Required
 
@@ -1136,7 +1136,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 2. Update Profile
-**PATCH** `/api/settings/profile`
+**PATCH** `/api/v1/settings/profile`
 
 **Authentication:** Required
 
@@ -1153,7 +1153,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 3. Change Password
-**POST** `/api/settings/change-password`
+**POST** `/api/v1/settings/change-password`
 
 **Authentication:** Required
 
@@ -1172,7 +1172,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 4. Get Notification Settings
-**GET** `/api/settings/notifications`
+**GET** `/api/v1/settings/notifications`
 
 **Authentication:** Required
 
@@ -1191,7 +1191,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 ---
 
 ### 5. Update Notification Settings
-**PATCH** `/api/settings/notifications`
+**PATCH** `/api/v1/settings/notifications`
 
 **Authentication:** Required
 
@@ -1255,7 +1255,7 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 ```typescript
 async function login(username: string, password: string) {
-  const response = await fetch('http://localhost:8000/api/auth/login', {
+  const response = await fetch('http://localhost:8000/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
@@ -1280,7 +1280,7 @@ async function getMembers(page: number = 1, pageSize: number = 20) {
   const token = localStorage.getItem('accessToken');
   
   const response = await fetch(
-    `http://localhost:8000/api/members?page=${page}&pageSize=${pageSize}`,
+    `http://localhost:8000/api/v1/members?page=${page}&pageSize=${pageSize}`,
     {
       method: 'GET',
       headers: {
@@ -1358,4 +1358,4 @@ Some endpoints support soft deletes (marked with `isDeleted: true`). Use `includ
 
 For API-related questions or issues, please contact the backend development team or check the project documentation.
 
-**Last Updated:** April 29, 2026
+**Last Updated:** May 01, 2026
