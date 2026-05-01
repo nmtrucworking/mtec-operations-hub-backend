@@ -1,5 +1,9 @@
 import csv
 import io
+import os
+import re
+import unicodedata
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
@@ -16,6 +20,22 @@ from app.utils import sanitize_pagination
 from app.services.report_service import generate_member_profile_docx, generate_members_zip
 
 router = APIRouter(prefix="/members", tags=["members"])
+
+
+def _ascii_fallback_filename(filename: str) -> str:
+    base, ext = os.path.splitext(filename)
+    normalized = unicodedata.normalize("NFKD", base)
+    ascii_base = normalized.encode("ascii", "ignore").decode("ascii")
+    ascii_base = re.sub(r"[^A-Za-z0-9._-]+", "_", ascii_base).strip("._-")
+    if not ascii_base:
+        ascii_base = "download"
+    return f"{ascii_base}{ext}"
+
+
+def _attachment_content_disposition(filename: str) -> str:
+    ascii_filename = _ascii_fallback_filename(filename)
+    utf8_filename = quote(filename, safe="")
+    return f"attachment; filename=\"{ascii_filename}\"; filename*=UTF-8''{utf8_filename}"
 
 
 def _member_out(member: Member) -> dict:
@@ -313,7 +333,7 @@ def export_member_profile(
     try:
         buffer = generate_member_profile_docx(member, skills)
         filename = f"HOSO_{member.mssv}_{member.name.replace(' ', '_')}.docx"
-        headers = {"Content-Disposition": f"attachment; filename={filename}"}
+        headers = {"Content-Disposition": _attachment_content_disposition(filename)}
         return StreamingResponse(
             buffer,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
