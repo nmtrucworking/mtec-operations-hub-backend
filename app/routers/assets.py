@@ -56,6 +56,49 @@ def list_assets(
     )
 
 
+@router.get("/categories")
+def list_categories(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> dict:
+    stmt = select(Asset.category).distinct().where(Asset.category.is_not(None))
+    categories = db.scalars(stmt).all()
+    return api_response(data=categories)
+
+
+@router.get("/stats")
+def get_stats(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> dict:
+    # Tổng tài sản (tổng số lượng)
+    total_assets = db.scalar(select(func.sum(Asset.quantity))) or 0
+
+    # Đang mượn (giả sử status là 'In Use' hoặc tương đương)
+    borrowed_assets = (
+        db.scalar(
+            select(func.sum(Asset.quantity)).where(Asset.status.ilike("%In Use%"))
+        )
+        or 0
+    )
+
+    # Cần bảo trì (giả sử status là 'Maintenance')
+    maintenance_assets = (
+        db.scalar(
+            select(func.sum(Asset.quantity)).where(Asset.status.ilike("%Maintenance%"))
+        )
+        or 0
+    )
+
+    return api_response(
+        data={
+            "total": total_assets,
+            "borrowed": borrowed_assets,
+            "maintenance": maintenance_assets,
+        }
+    )
+
+
 @router.get("/{asset_id}")
 def get_asset(
     asset_id: str,

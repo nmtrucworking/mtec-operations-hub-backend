@@ -13,6 +13,7 @@ from app.routers.assets import router as assets_router
 from app.routers.auth import router as auth_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.discipline import router as discipline_router
+from app.routers.logs import router as logs_router
 from app.routers.members import router as members_router
 from app.routers.requests import router as requests_router
 from app.routers.settings import router as settings_router
@@ -122,5 +123,6 @@ app.include_router(transactions_router)
 app.include_router(dashboard_router)
 app.include_router(assets_router)
 app.include_router(discipline_router)
+app.include_router(logs_router)
 app.include_router(settings_router)
 app.include_router(ai_router)

@@ -200,3 +200,14 @@ class AIGenerateInsightBody(BaseModel):
 class AIGenerateDraftBody(BaseModel):
     prompt: str = Field(min_length=1)
     context: str | None = None
+
+
+class AIProcessContextBody(BaseModel):
+    source: str  # 'file' or 'link'
+    content: str
+
+
+class AIExportDocumentBody(BaseModel):
+    content: str
+    templateId: str
+    metadata: dict | None = None

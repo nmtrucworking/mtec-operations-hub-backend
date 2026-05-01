@@ -1,7 +1,7 @@
 # MTEC Operations Hub - API Documentation Report
 
-**Version:** 2.0  
-**Last Updated:** April 30, 2026  
+**Version:** 3.0  
+**Last Updated:** May 01, 2026  
 **Backend URL:** `http://localhost:8000` (Development) | `https://your-production-url.com` (Production)
 
 ---
@@ -21,9 +21,10 @@
 11. [Asset Management Endpoints](#asset-management-endpoints)
 12. [Discipline Records Endpoints](#discipline-records-endpoints)
 13. [AI Features Endpoints](#ai-features-endpoints)
-14. [Settings Endpoints](#settings-endpoints)
-15. [Error Handling](#error-handling)
-16. [Test Credentials](#test-credentials)
+14. [Activity Logs Endpoints](#activity-logs-endpoints)
+15. [Settings Endpoints](#settings-endpoints)
+16. [Error Handling](#error-handling)
+17. [Test Credentials](#test-credentials)
 
 ---
 
@@ -99,7 +100,7 @@ HTTP/1.1 429 Too Many Requests
 | `bvh_finance` | BVH Finance | Transaction approval & management |
 | `bvh_discipline` | BVH Discipline | Discipline records management |
 | `bvh_logistics` | BVH Logistics | Asset management |
-| `bcm` | BCM | Member management, dashboard view |
+| `bcm` | BCM | Member management, dashboard view, View Logs |
 | `member` | Regular Member | View requests, dashboard, own data |
 
 ---
@@ -780,7 +781,35 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 ---
 
-### 3. Create Asset
+### 3. List Asset Categories
+**GET** `/api/assets/categories`
+
+**Authentication:** Required
+
+**Response:** List of unique category strings
+
+---
+
+### 4. Get Asset Statistics
+**GET** `/api/assets/stats`
+
+**Authentication:** Required
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "total": 150,
+    "borrowed": 25,
+    "maintenance": 5
+  }
+}
+```
+
+---
+
+### 5. Create Asset
 **POST** `/api/assets`
 
 **Authentication:** Required (bcn, bvh_logistics)
@@ -866,7 +895,26 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 ---
 
-### 3. Create Discipline Record
+### 3. Get Discipline Statistics
+**GET** `/api/discipline-records/stats`
+
+**Authentication:** Required
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalMembers": 150,
+    "warnedCases": 12,
+    "averageKPI": 8.5
+  }
+}
+```
+
+---
+
+### 4. Create Discipline Record
 **POST** `/api/discipline-records`
 
 **Authentication:** Required (bcn, bvh_discipline)
@@ -951,10 +999,114 @@ GET /api/users?search=admin&role=bcn&page=1&pageSize=20
 
 **Response:** Same structure as Generate Insight
 
+---
+
+### 3. List AI Templates
+**GET** `/api/ai/templates`
+
+**Authentication:** Required
+
+**Response:** List of templates with `id`, `name`, `description`
+
+---
+
+### 4. Process Context
+**POST** `/api/ai/process-context`
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "source": "file|link",
+  "content": "string"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "string",
+    "extractedLength": 1000,
+    "preview": "string"
+  }
+}
+```
+
+---
+
+### 5. Export Document
+**POST** `/api/ai/export-document`
+
+**Authentication:** Required
+
+**Request Body:**
+```json
+{
+  "content": "string",
+  "templateId": "string",
+  "metadata": {}
+}
+```
+
+**Response:** DOCX file stream
+
 **Status Codes:**
 - `200`: Success
 - `429`: Rate limit exceeded
 - `500`: AI service error
+
+---
+
+## Activity Logs Endpoints
+
+### 1. List Activity Logs
+**GET** `/api/logs`
+
+**Authentication:** Required (bcn, bcm roles)
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `search` | string | null | Search in resource ID or action |
+| `module` | string | null | Filter by module (members, finance, etc.) |
+| `action` | string | null | Filter by action (CREATE, UPDATE, etc.) |
+| `page` | integer | 1 | Page number |
+| `pageSize` | integer | 20 | Items per page |
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "LOG-001",
+      "actorId": "USER-001",
+      "actorName": "BCN Admin",
+      "action": "UPDATE",
+      "module": "MEMBERS",
+      "resourceId": "MEM-001",
+      "createdAt": "2024-05-01T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1000
+  }
+}
+```
+
+---
+
+### 2. Export Activity Logs
+**GET** `/api/logs/export`
+
+**Authentication:** Required (bcn, bcm roles)
+
+**Response:** CSV file stream
 
 ---
 

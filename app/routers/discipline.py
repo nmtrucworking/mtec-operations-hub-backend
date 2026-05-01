@@ -71,6 +71,36 @@ def list_records(
     )
 
 
+@router.get("/stats")
+def get_stats(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> dict:
+    # Tổng số bản ghi (mỗi bản ghi tương ứng 1 thành viên có record kỷ luật/KPI)
+    total_records = db.scalar(select(func.count()).select_from(DisciplineRecord)) or 0
+
+    # Số ca cảnh cáo (giả sử level không phải 'Khong')
+    warned_cases = (
+        db.scalar(
+            select(func.count())
+            .select_from(DisciplineRecord)
+            .where(DisciplineRecord.discipline_level != "Khong")
+        )
+        or 0
+    )
+
+    # KPI trung bình
+    avg_kpi = db.scalar(select(func.avg(DisciplineRecord.kpi))) or 0
+
+    return api_response(
+        data={
+            "totalMembers": total_records,
+            "warnedCases": warned_cases,
+            "averageKPI": round(float(avg_kpi), 2),
+        }
+    )
+
+
 @router.post("")
 def create_record(
     body: DisciplineRecordCreate,
