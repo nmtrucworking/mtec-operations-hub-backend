@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.core.security import get_password_hash
@@ -67,7 +68,7 @@ def list_users(
 def create_user(
     body: UserCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("bcn")),
 ) -> dict:
     if db.scalar(select(User).where(User.username == body.username)):
         raise HTTPException(
@@ -85,6 +86,19 @@ def create_user(
         is_active=True,
     )
     db.add(user)
+    db.flush()
+    create_audit_log(
+        db=db,
+        action="CREATE_USER",
+        resource_type="user",
+        resource_id=user.id,
+        actor=current_user,
+        after_snapshot={
+            "username": user.username,
+            "full_name": user.full_name,
+            "role": user.role,
+        },
+    )
     db.commit()
     db.refresh(user)
     return api_response(data=_user_out(user))
@@ -95,7 +109,7 @@ def update_user(
     user_id: str,
     body: UserUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("bcn")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -104,6 +118,12 @@ def update_user(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "full_name": user.full_name,
+        "role": user.role,
+        "email": user.email,
+    }
+
     mapping = {
         "fullName": "full_name",
         "avatarInitials": "avatar_initials",
@@ -112,6 +132,19 @@ def update_user(
     for key, value in payload.items():
         setattr(user, mapping.get(key, key), value)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_USER",
+        resource_type="user",
+        resource_id=user.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "full_name": user.full_name,
+            "role": user.role,
+            "email": user.email,
+        },
+    )
     db.commit()
     db.refresh(user)
     return api_response(data=_user_out(user))
@@ -122,7 +155,7 @@ def reset_password(
     user_id: str,
     body: ResetPasswordRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("bcn")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -131,6 +164,13 @@ def reset_password(
         )
 
     user.password_hash = get_password_hash(body.newPassword)
+    create_audit_log(
+        db=db,
+        action="RESET_PASSWORD",
+        resource_type="user",
+        resource_id=user.id,
+        actor=current_user,
+    )
     db.commit()
     return api_response(data={"message": "Dat lai mat khau thanh cong"})
 
@@ -140,7 +180,7 @@ def update_status(
     user_id: str,
     body: UserStatusUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("bcn")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -148,7 +188,17 @@ def update_status(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user"
         )
 
+    before = {"is_active": user.is_active}
     user.is_active = body.isActive
+    create_audit_log(
+        db=db,
+        action="UPDATE_USER_STATUS",
+        resource_type="user",
+        resource_id=user.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={"is_active": user.is_active},
+    )
     db.commit()
     db.refresh(user)
     return api_response(data=_user_out(user))

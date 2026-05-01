@@ -129,6 +129,20 @@ def create_request(
         created_by_user_id=current_user.id,
     )
     db.add(req)
+    db.flush()  # To get the ID
+    create_audit_log(
+        db=db,
+        action="CREATE_REQUEST",
+        resource_type="request",
+        resource_id=req.id,
+        actor=current_user,
+        after_snapshot={
+            "mssv": req.mssv,
+            "name": req.name,
+            "type": req.type,
+            "status": req.status,
+        },
+    )
     db.commit()
     db.refresh(req)
     return api_response(data=_request_out(req))
@@ -158,6 +172,12 @@ def update_request(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "reason": req.reason,
+        "finance_draft_enabled": req.finance_draft_enabled,
+        "finance_draft_amount": req.finance_draft_amount,
+    }
+
     mapping = {
         "financeDraftEnabled": "finance_draft_enabled",
         "financeDraftTitle": "finance_draft_title",
@@ -174,6 +194,19 @@ def update_request(
     for key, value in payload.items():
         setattr(req, mapping.get(key, key), value)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_REQUEST",
+        resource_type="request",
+        resource_id=req.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "reason": req.reason,
+            "finance_draft_enabled": req.finance_draft_enabled,
+            "finance_draft_amount": req.finance_draft_amount,
+        },
+    )
     db.commit()
     db.refresh(req)
     return api_response(data=_request_out(req))

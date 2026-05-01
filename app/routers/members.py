@@ -176,6 +176,13 @@ def update_member(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "name": member.name,
+        "ban": member.ban,
+        "status": member.status,
+        "role_title": member.role_title,
+    }
+
     mapping = {
         "roleTitle": "role_title",
         "joinDate": "join_date",
@@ -184,6 +191,20 @@ def update_member(
     for key, value in payload.items():
         setattr(member, mapping.get(key, key), value)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_MEMBER",
+        resource_type="member",
+        resource_id=member.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "name": member.name,
+            "ban": member.ban,
+            "status": member.status,
+            "role_title": member.role_title,
+        },
+    )
     db.commit()
     db.refresh(member)
     return api_response(data=_member_out(member))

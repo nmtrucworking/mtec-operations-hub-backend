@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.core.security import get_password_hash, verify_password
 from app.db import get_db
@@ -37,6 +38,13 @@ def update_profile(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "full_name": current_user.full_name,
+        "avatar_initials": current_user.avatar_initials,
+        "email": current_user.email,
+        "phone": current_user.phone,
+    }
+
     mapping = {
         "fullName": "full_name",
         "avatarInitials": "avatar_initials",
@@ -45,6 +53,20 @@ def update_profile(
     for key, value in payload.items():
         setattr(current_user, mapping.get(key, key), value)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_PROFILE",
+        resource_type="settings",
+        resource_id=current_user.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "full_name": current_user.full_name,
+            "avatar_initials": current_user.avatar_initials,
+            "email": current_user.email,
+            "phone": current_user.phone,
+        },
+    )
     db.commit()
     db.refresh(current_user)
     return api_response(
@@ -79,6 +101,13 @@ def change_password(
         )
 
     current_user.password_hash = get_password_hash(body.newPassword)
+    create_audit_log(
+        db=db,
+        action="CHANGE_PASSWORD",
+        resource_type="settings",
+        resource_id=current_user.id,
+        actor=current_user,
+    )
     db.commit()
     return api_response(data={"message": "Doi mat khau thanh cong"})
 

@@ -153,6 +153,20 @@ def create_transaction(
         created_by_user_id=current_user.id,
     )
     db.add(tx)
+    db.flush()
+    create_audit_log(
+        db=db,
+        action="CREATE_TRANSACTION",
+        resource_type="transaction",
+        resource_id=tx.id,
+        actor=current_user,
+        after_snapshot={
+            "title": tx.title,
+            "type": tx.type,
+            "amount": tx.amount,
+            "status": tx.status,
+        },
+    )
     db.commit()
     db.refresh(tx)
     return api_response(data=_tx_out(tx))
@@ -182,6 +196,12 @@ def update_transaction(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "title": tx.title,
+        "amount": tx.amount,
+        "category": tx.category,
+    }
+
     if "amount" in payload and payload["amount"] <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="amount phai lon hon 0"
@@ -193,6 +213,19 @@ def update_transaction(
     if "category" in payload and tx.type == "Chi":
         tx.required_approval_role = get_required_approval_role(tx.category)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_TRANSACTION",
+        resource_type="transaction",
+        resource_id=tx.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "title": tx.title,
+            "amount": tx.amount,
+            "category": tx.category,
+        },
+    )
     db.commit()
     db.refresh(tx)
     return api_response(data=_tx_out(tx))

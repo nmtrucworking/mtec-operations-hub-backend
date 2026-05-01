@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -133,6 +134,19 @@ def create_asset(
         category=body.category,
     )
     db.add(asset)
+    db.flush()
+    create_audit_log(
+        db=db,
+        action="CREATE_ASSET",
+        resource_type="asset",
+        resource_id=asset.id,
+        actor=current_user,
+        after_snapshot={
+            "name": asset.name,
+            "quantity": asset.quantity,
+            "status": asset.status,
+        },
+    )
     db.commit()
     db.refresh(asset)
     return api_response(data=_asset_out(asset))
@@ -158,9 +172,28 @@ def update_asset(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "name": asset.name,
+        "quantity": asset.quantity,
+        "status": asset.status,
+    }
+
     for key, value in payload.items():
         setattr(asset, key, value)
 
+    create_audit_log(
+        db=db,
+        action="UPDATE_ASSET",
+        resource_type="asset",
+        resource_id=asset.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "name": asset.name,
+            "quantity": asset.quantity,
+            "status": asset.status,
+        },
+    )
     db.commit()
     db.refresh(asset)
     return api_response(data=_asset_out(asset))

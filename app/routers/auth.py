@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.rate_limit import rate_limiter
 from app.core.redis import redis_client
 from app.core.response import api_response
@@ -47,6 +48,16 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
+
+    create_audit_log(
+        db=db,
+        action="LOGIN",
+        resource_type="auth",
+        resource_id=user.id,
+        actor=user,
+    )
+    db.commit()
+
     return api_response(
         data={
             "accessToken": access_token,
@@ -57,18 +68,30 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/logout")
-def logout(body: RefreshRequest) -> dict:
+def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
     """
     Vô hiệu hóa Refresh Token hiện tại bằng cách đưa vào Redis Blacklist.
     """
     payload = decode_token(body.refreshToken)
     if payload and payload.get("type") == "refresh":
+        user_id = payload.get("sub")
         exp = payload.get("exp")
         now = int(datetime.now(UTC).timestamp())
         ttl = exp - now
         if ttl > 0:
             # Lưu token vào Redis với TTL tương ứng thời gian sống còn lại
             redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
+
+        user = db.get(User, user_id)
+        if user:
+            create_audit_log(
+                db=db,
+                action="LOGOUT",
+                resource_type="auth",
+                resource_id=user.id,
+                actor=user,
+            )
+            db.commit()
 
     return api_response(data={"message": "Da dang xuat"})
 

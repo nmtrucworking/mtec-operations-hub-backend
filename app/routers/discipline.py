@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -125,6 +126,20 @@ def create_record(
         updated_by=current_user.full_name,
     )
     db.add(record)
+    db.flush()
+    create_audit_log(
+        db=db,
+        action="CREATE_DISCIPLINE_RECORD",
+        resource_type="discipline",
+        resource_id=record.id,
+        actor=current_user,
+        after_snapshot={
+            "mssv": record.mssv,
+            "name": record.name,
+            "discipline_level": record.discipline_level,
+            "kpi": record.kpi,
+        },
+    )
     db.commit()
     db.refresh(record)
     return api_response(data=_record_out(record))
@@ -151,12 +166,31 @@ def update_record(
         )
 
     payload = body.model_dump(exclude_none=True)
+    before = {
+        "discipline_level": record.discipline_level,
+        "kpi": record.kpi,
+        "absents": record.absents,
+    }
+
     mapping = {"disciplineLevel": "discipline_level"}
 
     for key, value in payload.items():
         setattr(record, mapping.get(key, key), value)
 
     record.updated_by = current_user.full_name
+    create_audit_log(
+        db=db,
+        action="UPDATE_DISCIPLINE_RECORD",
+        resource_type="discipline",
+        resource_id=record.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "discipline_level": record.discipline_level,
+            "kpi": record.kpi,
+            "absents": record.absents,
+        },
+    )
     db.commit()
     db.refresh(record)
     return api_response(data=_record_out(record))
