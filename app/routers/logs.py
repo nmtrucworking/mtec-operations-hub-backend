@@ -3,6 +3,7 @@ from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 import csv
 import io
+import json
 from fastapi.responses import StreamingResponse
 from datetime import datetime
 
@@ -14,6 +15,15 @@ from app.utils import sanitize_pagination
 
 router = APIRouter(prefix="/logs", tags=["logs"])
 
+def _parse_snapshot(value: str | None) -> dict | None:
+    if not value:
+        return None
+    try:
+        parsed = json.loads(value)
+        return parsed if isinstance(parsed, dict) else {"value": parsed}
+    except Exception:
+        return None
+
 def _log_out(log: AuditLog, actor_name: str | None) -> dict:
     return {
         "id": log.id,
@@ -22,6 +32,8 @@ def _log_out(log: AuditLog, actor_name: str | None) -> dict:
         "action": log.action,
         "module": log.resource_type.upper(),
         "resourceId": log.resource_id,
+        "beforeSnapshot": _parse_snapshot(log.before_snapshot),
+        "afterSnapshot": _parse_snapshot(log.after_snapshot),
         "createdAt": log.created_at,
     }
 

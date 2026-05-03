@@ -197,10 +197,23 @@ def update_member(
 
     payload = body.model_dump(exclude_none=True)
     before = {
+        "mssv": member.mssv,
         "name": member.name,
+        "gender": member.gender,
+        "dob": member.dob,
         "ban": member.ban,
         "status": member.status,
         "role_title": member.role_title,
+        "phone": member.phone,
+        "email": member.email,
+        "join_date": member.join_date,
+        "lop": member.lop,
+        "chuyen_nganh": member.chuyen_nganh,
+        "khoa": member.khoa,
+        "address": member.address,
+        "experience": member.experience,
+        "goal": member.goal,
+        "orientation": member.orientation,
     }
 
     mapping = {
@@ -219,10 +232,23 @@ def update_member(
         actor=current_user,
         before_snapshot=before,
         after_snapshot={
+            "mssv": member.mssv,
             "name": member.name,
+            "gender": member.gender,
+            "dob": member.dob,
             "ban": member.ban,
             "status": member.status,
             "role_title": member.role_title,
+            "phone": member.phone,
+            "email": member.email,
+            "join_date": member.join_date,
+            "lop": member.lop,
+            "chuyen_nganh": member.chuyen_nganh,
+            "khoa": member.khoa,
+            "address": member.address,
+            "experience": member.experience,
+            "goal": member.goal,
+            "orientation": member.orientation,
         },
     )
     db.commit()
