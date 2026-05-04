@@ -47,12 +47,40 @@ def _apply_filters(stmt, count_stmt, search, module, action):
         count_stmt = count_stmt.where(or_(AuditLog.resource_id.ilike(pattern), AuditLog.action.ilike(pattern)))
     
     if module:
-        stmt = stmt.where(AuditLog.resource_type == module.lower())
-        count_stmt = count_stmt.where(AuditLog.resource_type == module.lower())
+        module_key = module.strip().lower()
+        module_map = {
+            "member": "member",
+            "members": "member",
+            "user": "user",
+            "users": "user",
+            "request": "request",
+            "requests": "request",
+            "transaction": "transaction",
+            "transactions": "transaction",
+            "finance": "transaction",
+            "asset": "asset",
+            "assets": "asset",
+            "logistics": "asset",
+            "discipline": "discipline",
+            "settings": "settings",
+            "auth": "auth",
+        }
+        resource_type = module_map.get(module_key, module_key)
+        stmt = stmt.where(AuditLog.resource_type == resource_type)
+        count_stmt = count_stmt.where(AuditLog.resource_type == resource_type)
         
     if action:
-        stmt = stmt.where(AuditLog.action == action.upper())
-        count_stmt = count_stmt.where(AuditLog.action == action.upper())
+        action_key = action.strip().upper()
+        if action_key == "PASSWORD_CHANGE":
+            action_key = "CHANGE_PASSWORD"
+
+        if action_key in {"CREATE", "UPDATE", "DELETE", "REVIEW"}:
+            pattern = f"{action_key}_%"
+            stmt = stmt.where(AuditLog.action.ilike(pattern))
+            count_stmt = count_stmt.where(AuditLog.action.ilike(pattern))
+        else:
+            stmt = stmt.where(AuditLog.action == action_key)
+            count_stmt = count_stmt.where(AuditLog.action == action_key)
         
     return stmt, count_stmt
 

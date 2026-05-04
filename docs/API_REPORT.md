@@ -202,8 +202,11 @@ HTTP/1.1 429 Too Many Requests
 |-----------|------|---------|-------------|
 | `search` | string | null | Search by username or full name |
 | `role` | string | null | Filter by user role |
+| `includeInactive` | boolean | false | Include inactive (disabled) accounts |
 | `page` | integer | 1 | Page number |
 | `pageSize` | integer | 20 | Items per page |
+
+**Note:** By default, this endpoint returns only active accounts (`isActive: true`). Set `includeInactive=true` to include disabled accounts.
 
 **Example Request:**
 ```
@@ -317,6 +320,23 @@ GET /api/v1/users?search=admin&role=bcn&page=1&pageSize=20
 **DELETE** `/api/v1/users/{user_id}`
 
 **Authentication:** Required (bcn role)
+
+**Behavior:** Soft-delete (disable) the account by setting `isActive=false`. The account will not appear in List Users unless `includeInactive=true`.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Da vo hieu hoa tai khoan"
+  }
+}
+```
+
+**Status Codes:**
+- `200`: Deleted (disabled) successfully
+- `400`: Attempt to delete the currently logged-in account
+- `404`: User not found
 
 ---
 

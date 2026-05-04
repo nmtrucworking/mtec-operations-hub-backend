@@ -33,6 +33,7 @@ def _user_out(user: User) -> dict:
 def list_users(
     search: str | None = None,
     role: str | None = None,
+    includeInactive: bool = Query(default=False),
     page: int = Query(default=1),
     pageSize: int = Query(default=20),
     db: Session = Depends(get_db),
@@ -42,6 +43,10 @@ def list_users(
 
     stmt = select(User)
     count_stmt = select(func.count()).select_from(User)
+
+    if not includeInactive:
+        stmt = stmt.where(User.is_active.is_(True))
+        count_stmt = count_stmt.where(User.is_active.is_(True))
 
     if search:
         pattern = f"%{search}%"
@@ -202,3 +207,44 @@ def update_status(
     db.commit()
     db.refresh(user)
     return api_response(data=_user_out(user))
+
+
+@router.delete("/{user_id}")
+def delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("bcn")),
+) -> dict:
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay user"
+        )
+
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Khong the xoa tai khoan dang dang nhap",
+        )
+
+    before = {
+        "username": user.username,
+        "full_name": user.full_name,
+        "role": user.role,
+        "email": user.email,
+        "is_active": user.is_active,
+    }
+
+    user.is_active = False
+    create_audit_log(
+        db=db,
+        action="DELETE_USER",
+        resource_type="user",
+        resource_id=user.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={"is_active": user.is_active},
+    )
+    db.commit()
+
+    return api_response(data={"message": "Da vo hieu hoa tai khoan"})
