@@ -9,3 +9,4 @@ psycopg[binary]==3.2.13
 alembic==1.13.3
 fakeredis>=2.20.0
 docxtpl==0.16.8
+python-multipart>=0.0.9
