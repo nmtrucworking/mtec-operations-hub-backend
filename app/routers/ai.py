@@ -93,6 +93,11 @@ def list_templates(_: User = Depends(get_current_user)) -> dict:
             "name": "Đơn xin nghỉ phép",
             "description": "Dùng cho thành viên xin nghỉ phép có lý do.",
         },
+        {
+            "id": "BM-MTEC-NS-07",
+            "name": "Hồ sơ thành viên",
+            "description": "Dùng để tạo hồ sơ thành viên.",
+        }
     ]
     return api_response(data=templates)
 
