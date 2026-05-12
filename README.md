@@ -1,6 +1,6 @@
 # MTEC Operations Hub Backend (Python)
 
-Backend duoc scaffold bang FastAPI + SQLAlchemy + SQLite theo tai lieu yeu cau trong `docs/BACKEND_REPORT.md`.
+Backend duoc scaffold bang FastAPI + SQLAlchemy + SQLite theo tai lieu yeu cau trong `../../docs/backend/BACKEND_REPORT.md`.
 
 ## Yeu cau Python
 
@@ -58,14 +58,14 @@ Hoac dung script:
 |  |- script.py.mako
 |- tests/
 |- scripts/
-|- docs/
+|- docs/  # Tài liệu kỹ thuật được tập trung ở docs/backend của monorepo
 |- requirements.txt
 |- requirements-dev.txt
 |- pyproject.toml
 |- alembic.ini
 ```
 
-Chi tiet: xem `docs/PROJECT_STRUCTURE.md`.
+Chi tiet: xem `../../docs/backend/PROJECT_STRUCTURE.md`.
 
 ## 4. Tai khoan seed mac dinh
 
@@ -160,4 +160,4 @@ docker compose -f compose.prod.yml pull
 docker compose -f compose.prod.yml up -d
 ```
 
-Chi tiet van hanh: xem `docs/DEPLOYMENT.md`.
+Chi tiet van hanh: xem `../../docs/backend/DEPLOYMENT.md`.
