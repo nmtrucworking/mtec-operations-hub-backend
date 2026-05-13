@@ -129,7 +129,7 @@ def update_competition_results(
         resource_type="competition",
         resource_id=competition_id,
         actor=current_user,
-        details=f"Cập nhật danh sách kết quả cho {len(new_results)} thành viên."
+        after_snapshot={"details": f"Cập nhật danh sách kết quả cho {len(new_results)} thành viên."}
     )
     
     db.commit()

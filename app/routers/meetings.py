@@ -136,7 +136,7 @@ def update_attendance(
         resource_type="meeting",
         resource_id=meeting_id,
         actor=current_user,
-        details=f"Cập nhật danh sách điểm danh cho {new_records_count} thành viên."
+        after_snapshot={"details": f"Cập nhật danh sách điểm danh cho {new_records_count} thành viên."}
     )
     
     db.commit()
