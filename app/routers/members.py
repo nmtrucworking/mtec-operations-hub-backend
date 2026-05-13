@@ -41,7 +41,7 @@ def _attachment_content_disposition(filename: str) -> str:
     return f"attachment; filename=\"{ascii_filename}\"; filename*=UTF-8''{utf8_filename}"
 
 
-def _member_out(member: Member) -> dict:
+def _member_out(member: Member, disc: DisciplineRecord | None = None) -> dict:
     return {
         "id": member.id,
         "mssv": member.mssv,
@@ -548,7 +548,7 @@ def get_member(
         select(DisciplineRecord).where(DisciplineRecord.member_id == member_id)
     )
     
-    return api_response(data=_member_out(member))
+    return api_response(data=_member_out(member, disc=disc))
 
 
 @router.post("")
