@@ -17,7 +17,7 @@ from app.core.audit import create_audit_log
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.db import get_db
-from app.models import Member, User, MemberSkill
+from app.models import DisciplineRecord, Member, User, MemberSkill
 from app.schemas import MemberCreate, MemberUpdate
 from app.utils import sanitize_pagination
 from app.services.report_service import generate_member_profile_docx, generate_members_zip
@@ -61,6 +61,9 @@ def _member_out(member: Member) -> dict:
         "experience": member.experience,
         "goal": member.goal,
         "orientation": member.orientation,
+        "absents": disc.absents if disc else 0,
+        "kpi": disc.kpi if disc else 100.0,
+        "disciplineLevel": disc.discipline_level if disc else "Không",
         "createdAt": member.created_at,
         "updatedAt": member.updated_at,
     }
@@ -540,6 +543,11 @@ def get_member(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
         )
+    
+    disc = db.scalar(
+        select(DisciplineRecord).where(DisciplineRecord.member_id == member_id)
+    )
+    
     return api_response(data=_member_out(member))
 
 

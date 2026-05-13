@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date as dt_date
 
-from alembic.environment import Optional, List
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 
 
