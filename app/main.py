@@ -8,6 +8,7 @@ from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
 from app.db import Base, get_engine
 
 from app.routers import api_v1_router
+from app.routers.v2 import api_v2_router
 
 logger = logging.getLogger(__name__)
 
@@ -105,4 +106,9 @@ app.add_middleware(
 # Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
 
 app.include_router(api_v1_router, prefix="/api/v1")
-app.include_router(api_v1_router, prefix="/api/v1/api")
+app.include_router(api_v2_router, prefix="/api/v2")
+
+
+@app.get("/health")
+def health_check() -> dict:
+    return {"status": "ok"}

@@ -58,7 +58,7 @@ def list_requests(
     stmt = select(Request)
     count_stmt = select(func.count()).select_from(Request)
 
-    if current_user.role == "member":
+    if current_user.has_role("member"):
         stmt = stmt.where(Request.created_by_user_id == current_user.id)
         count_stmt = count_stmt.where(Request.created_by_user_id == current_user.id)
 
@@ -94,7 +94,7 @@ def get_request(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request"
         )
-    if current_user.role == "member" and req.created_by_user_id != current_user.id:
+    if current_user.has_role("member") and req.created_by_user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep xem"
         )
@@ -161,7 +161,7 @@ def update_request(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay request"
         )
 
-    if current_user.role == "member" and req.created_by_user_id != current_user.id:
+    if current_user.has_role("member") and req.created_by_user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong duoc phep sua"
         )
@@ -219,7 +219,7 @@ def review_request(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_hr"}:
+    if not current_user.has_any_roles({"bcn", "bvh_hr"}):
         raise_api_error(
             status_code=status.HTTP_403_FORBIDDEN,
             code="REQUEST_REVIEW_FORBIDDEN",

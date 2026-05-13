@@ -95,7 +95,7 @@ def list_logs(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     # Authorization: BCN and BCM can view logs
-    if current_user.role not in {"bcn", "bcm"}:
+    if not current_user.has_any_roles({"bcn", "bcm"}):
         from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen xem nhat ky")
 
@@ -127,7 +127,7 @@ def export_logs(
     current_user: User = Depends(get_current_user),
 ):
     # Authorization: BCN and BCM can export logs
-    if current_user.role not in {"bcn", "bcm"}:
+    if not current_user.has_any_roles({"bcn", "bcm"}):
         from fastapi import HTTPException, status
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen xuat nhat ky")
 

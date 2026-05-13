@@ -27,7 +27,8 @@ def _user_payload(user: User) -> dict:
         "id": user.id,
         "username": user.username,
         "fullName": user.full_name,
-        "role": user.role,
+        "role": user.primary_role,
+        "roles": user.role_names,
         "avatarInitials": user.avatar_initials,
     }
 

@@ -108,7 +108,7 @@ def create_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_discipline"}:
+    if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Khong co quyen tao discipline record",
@@ -152,7 +152,7 @@ def update_record(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_discipline"}:
+    if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Khong co quyen cap nhat discipline record",

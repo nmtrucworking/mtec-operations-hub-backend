@@ -9,7 +9,7 @@ from app.core.errors import raise_api_error
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
-from app.models import Transaction, User
+from app.models import Request, Transaction, User
 from app.schemas import ReviewTransactionBody, TransactionCreate, TransactionUpdate
 from app.utils import (
     generate_prefixed_id,
@@ -102,9 +102,9 @@ def list_pending(
         Transaction.type == "Chi",
     )
 
-    if current_user.role == "bcn":
+    if current_user.has_role("bcn"):
         rows = db.scalars(stmt).all()
-    elif current_user.role == "bvh_finance":
+    elif current_user.has_role("bvh_finance"):
         rows = db.scalars(
             stmt.where(Transaction.required_approval_role == "bvh_finance")
         ).all()
@@ -120,7 +120,7 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_finance"}:
+    if not current_user.has_any_roles({"bcn", "bvh_finance"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao giao dich"
         )
@@ -185,7 +185,7 @@ def update_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich"
         )
 
-    if current_user.role not in {"bcn", "bvh_finance"}:
+    if not current_user.has_any_roles({"bcn", "bvh_finance"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen sua giao dich"
         )
@@ -261,17 +261,16 @@ def review_transaction(
             details={"currentStatus": tx.status},
         )
 
-    if tx.required_approval_role == "bcn" and current_user.role != "bcn":
+    if tx.required_approval_role == "bcn" and not current_user.has_role("bcn"):
         raise_api_error(
             status_code=status.HTTP_403_FORBIDDEN,
             code="TRANSACTION_REVIEW_ROLE_DENIED_BCN",
             message="Chi BCN duoc duyet giao dich nay",
         )
 
-    if tx.required_approval_role == "bvh_finance" and current_user.role not in {
-        "bvh_finance",
-        "bcn",
-    }:
+    if tx.required_approval_role == "bvh_finance" and not current_user.has_any_roles(
+        {"bvh_finance", "bcn"}
+    ):
         raise_api_error(
             status_code=status.HTTP_403_FORBIDDEN,
             code="TRANSACTION_REVIEW_ROLE_DENIED_FINANCE",
@@ -321,7 +320,7 @@ def soft_delete_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_finance"}:
+    if not current_user.has_any_roles({"bcn", "bvh_finance"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen xoa giao dich"
         )

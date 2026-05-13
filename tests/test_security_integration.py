@@ -6,15 +6,15 @@ from sqlalchemy.orm import Session
 def test_rate_limit_enforcement(client: TestClient):
     """
     Xác thực cơ chế Sliding Window Log trên Redis.
-    Điểm cuối (Endpoint) /api/auth/login giới hạn 5 requests / 60 giây.
+    Điểm cuối (Endpoint) /api/v1/auth/login giới hạn 5 requests / 60 giây.
     """
     payload = {"username": "admin_test", "password": "password_test"}
 
     for _ in range(5):
-        response = client.post("/api/auth/login", json=payload)
+        response = client.post("/api/v1/auth/login", json=payload)
         assert response.status_code in [200, 401]
 
-    response_blocked = client.post("/api/auth/login", json=payload)
+    response_blocked = client.post("/api/v1/auth/login", json=payload)
     assert response_blocked.status_code == 429
     assert (
         response_blocked.json()["detail"]
@@ -53,14 +53,14 @@ def test_token_rotation_and_blacklist(client: TestClient, test_db: Session):
 
     # 1. Gọi API Refresh lần 1 (Phải thành công và trả về cặp token mới)
     res_success = client.post(
-        "/api/auth/refresh", json={"refreshToken": valid_refresh_token}
+        "/api/v1/auth/refresh", json={"refreshToken": valid_refresh_token}
     )
     assert res_success.status_code == 200
     assert "accessToken" in res_success.json()["data"]
 
     # 2. Gọi API Refresh lần 2 với cùng token cũ (Phải thất bại do token đã bị đưa vào Redis Blacklist)
     res_blocked = client.post(
-        "/api/auth/refresh", json={"refreshToken": valid_refresh_token}
+        "/api/v1/auth/refresh", json={"refreshToken": valid_refresh_token}
     )
     assert res_blocked.status_code == 401
     assert res_blocked.json()["detail"] == "Token da bi thu hoi hoac het han"

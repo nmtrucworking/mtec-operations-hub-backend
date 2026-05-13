@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
 from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
 
@@ -28,6 +30,63 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
+    user_roles: Mapped[list[UserRole]] = relationship(
+        "UserRole", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    @property
+    def role_names(self) -> list[str]:
+        role_names = [user_role.role.name for user_role in self.user_roles if user_role.role]
+        if role_names:
+            return sorted(set(role_names))
+        return [self.role] if self.role else []
+
+    @property
+    def primary_role(self) -> str:
+        priorities = {
+            "bcn": 0,
+            "bvh_finance": 1,
+            "bvh_hr": 2,
+            "bvh_discipline": 3,
+            "bvh_logistics": 4,
+            "bcm": 5,
+            "member": 6,
+        }
+        role_names = self.role_names
+        if not role_names:
+            return "member"
+        return min(role_names, key=lambda item: priorities.get(item, 999))
+
+    def has_role(self, role: str) -> bool:
+        return role in self.role_names
+
+    def has_any_roles(self, roles: set[str] | list[str] | tuple[str, ...]) -> bool:
+        if not roles:
+            return False
+        role_set = set(self.role_names)
+        return bool(role_set.intersection(set(roles)))
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(30), unique=True, index=True)
+    user_roles: Mapped[list[UserRole]] = relationship(
+        "UserRole", back_populates="role", cascade="all, delete-orphan"
+    )
+
+
+class UserRole(Base):
+    __tablename__ = "user_roles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
+    role_id: Mapped[str] = mapped_column(String(36), ForeignKey("roles.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
+
+    user: Mapped[User] = relationship("User", back_populates="user_roles")
+    role: Mapped[Role] = relationship("Role", back_populates="user_roles")
 
 
 class Member(Base):

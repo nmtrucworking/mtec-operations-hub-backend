@@ -120,7 +120,7 @@ def create_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_logistics"}:
+    if not current_user.has_any_roles({"bcn", "bvh_logistics"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao tai san"
         )
@@ -159,7 +159,7 @@ def update_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if current_user.role not in {"bcn", "bvh_logistics"}:
+    if not current_user.has_any_roles({"bcn", "bvh_logistics"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Khong co quyen cap nhat tai san",

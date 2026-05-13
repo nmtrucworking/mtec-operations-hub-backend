@@ -19,6 +19,7 @@ class UserOut(BaseModel):
     username: str
     fullName: str
     role: str
+    roles: list[str] = Field(default_factory=list)
     avatarInitials: str | None = None
     email: str | None = None
     phone: str | None = None
@@ -29,7 +30,8 @@ class UserCreate(BaseModel):
     username: str
     password: str = Field(min_length=8)
     fullName: str
-    role: str
+    role: str | None = None
+    roles: list[str] | None = None
     avatarInitials: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
@@ -38,6 +40,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     fullName: str | None = None
     role: str | None = None
+    roles: list[str] | None = None
     avatarInitials: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
