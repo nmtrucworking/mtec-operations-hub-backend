@@ -68,6 +68,7 @@ async def lifespan(app: FastAPI):
     # --- PHẦN STARTUP ---
     if AUTO_CREATE_TABLES:
         try:
+            import app.models  # Đảm bảo tất cả models đã được load trước khi create_all
             engine = get_engine()
             # Sử dụng Base.metadata từ app.db
             Base.metadata.create_all(bind=engine)
