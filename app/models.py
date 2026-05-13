@@ -114,6 +114,8 @@ class Member(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
+    # add relationship to attendance records
+    attendances: Mapped[list[Attendance]] = relationship("Attendance", back_populates="member")
 
 
 class MemberSkill(Base):
@@ -267,3 +269,45 @@ class AuditLog(Base):
     before_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
     after_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
+
+class Meeting(Base):
+    """
+    Model lưu trữ thông tin các cuộc họp hoặc hoạt động tập trung của CLB.
+    Dùng làm căn cứ để thực hiện điểm danh.
+    """
+    __tablename__ = "meetings"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(200), index=True)
+    date: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    meeting_type: Mapped[str] = mapped_column(String(50), index=True) # VD: 'Họp định kỳ', 'Họp Ban'
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="Scheduled") # Scheduled, Completed, Cancelled
+    
+    # Quan hệ với bảng điểm danh
+    attendances: Mapped[list[Attendance]] = relationship(
+        "Attendance", back_populates="meeting", cascade="all, delete-orphan"
+    )
+
+class Attendance(Base):
+    """
+    Bảng chi tiết điểm danh thành viên cho từng cuộc họp.
+    Dữ liệu từ bảng này sẽ được dùng để tự động cập nhật kỷ luật chuyên cần.
+    """
+    __tablename__ = "attendances"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    meeting_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("meetings.id"), index=True
+    )
+    member_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("members.id"), index=True
+    )
+    # Trạng thái: 'Present' (Có mặt), 'Absent' (Vắng không phép), 'Excused' (Vắng có phép)
+    status: Mapped[str] = mapped_column(String(20), default="Absent")
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+    # Định nghĩa quan hệ ngược lại
+    meeting: Mapped[Meeting] = relationship("Meeting", back_populates="attendances")
+    member: Mapped[Member] = relationship("Member")

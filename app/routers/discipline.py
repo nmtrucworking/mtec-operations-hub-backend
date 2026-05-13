@@ -6,7 +6,7 @@ from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
-from app.models import DisciplineRecord, User
+from app.models import DisciplineRecord, User, Meeting, Attendance, Member
 from app.schemas import DisciplineRecordCreate, DisciplineRecordUpdate
 from app.utils import sanitize_pagination
 
@@ -194,3 +194,112 @@ def update_record(
     db.commit()
     db.refresh(record)
     return api_response(data=_record_out(record))
+
+@router.post("/sync-attendance/{meeting_id}")
+def sync_attendance_to_discipline(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """
+    Đồng bộ dữ liệu điểm danh từ một cuộc họp sang hồ sơ kỷ luật của thành viên.
+    Quy trình:
+    1. Lọc các thành viên có trạng thái "Absent" trong cuộc họp.
+    2. Cộng dồn số buổi vắng vào DisciplineRecord.
+    3. Tự động nội suy mức độ kỷ luật (discipline_level) dựa trên tổng số buổi vắng.
+    """
+    
+    # Kiểm tra phân quyền (RBAC) - Tránh việc thành viên tự ý kích hoạt đồng bộ
+    if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Không có quyền đồng bộ dữ liệu điểm danh",
+        )
+
+    # 1. Xác thực tính hợp lệ của cuộc họp
+    meeting = db.get(Meeting, meeting_id)
+    if not meeting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy dữ liệu cuộc họp tương ứng",
+        )
+
+    # 2. Truy xuất danh sách vắng mặt không phép
+    absent_records = db.scalars(
+        select(Attendance).where(
+            Attendance.meeting_id == meeting_id,
+            Attendance.status == "Absent"
+        )
+    ).all()
+
+    if not absent_records:
+        return api_response(data={"message": "Không có thành viên vắng mặt không phép.", "syncedCount": 0})
+
+    synced_count = 0
+    for attendance in absent_records:
+        member = db.get(Member, attendance.member_id)
+        if not member:
+            continue
+
+        # 3. Tra cứu hoặc khởi tạo bản ghi kỷ luật hiện tại
+        discipline_record = db.scalar(
+            select(DisciplineRecord).where(DisciplineRecord.member_id == member.id)
+        )
+
+        before_snapshot = {}
+        if discipline_record:
+            # Lưu lại trạng thái trước khi thay đổi để ghi Audit Log
+            before_snapshot = {
+                "absents": discipline_record.absents,
+                "discipline_level": discipline_record.discipline_level
+            }
+            discipline_record.absents += 1
+        else:
+            # Khởi tạo bản ghi mới với KPI tiêu chuẩn 100
+            discipline_record = DisciplineRecord(
+                member_id=member.id,
+                mssv=member.mssv,
+                name=member.name,
+                committee=member.ban,
+                absents=1,
+                kpi=100.0,
+                discipline_level="Không",
+                updated_by=current_user.full_name
+            )
+            db.add(discipline_record)
+            db.flush() # Đẩy vào session để lấy UUID sinh tự động
+
+        # 4. Thuật toán phân cấp kỷ luật (Logic khoa học)
+        # Hệ thống tự động ánh xạ số buổi vắng với hình thức kỷ luật
+        if discipline_record.absents >= 3:
+            discipline_record.discipline_level = "Cảnh cáo Lần 1"
+        elif discipline_record.absents > 0:
+            discipline_record.discipline_level = "Nhắc nhở"
+        
+        discipline_record.updated_by = current_user.full_name
+
+        # 5. Ghi nhận nhật ký hệ thống (Audit Trail)
+        create_audit_log(
+            db=db,
+            action="AUTO_SYNC_ABSENCE",
+            resource_type="discipline",
+            resource_id=discipline_record.id,
+            actor=current_user,
+            before_snapshot=before_snapshot if before_snapshot else None,
+            after_snapshot={
+                "absents": discipline_record.absents,
+                "discipline_level": discipline_record.discipline_level,
+                "meeting_id": meeting_id
+            },
+        )
+        synced_count += 1
+        
+    # Xác nhận transaction vào cơ sở dữ liệu
+    db.commit()
+
+    return api_response(
+        data={
+            "message": f"Quá trình đồng bộ hoàn tất. Hệ thống đã cập nhật {synced_count} hồ sơ.",
+            "syncedCount": synced_count
+        }
+    )
