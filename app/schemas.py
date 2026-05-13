@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date as dt_date
+from datetime import datetime as dt_datetime
 
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
@@ -218,7 +219,7 @@ class AIExportDocumentBody(BaseModel):
 
 class CompetitionCreate(BaseModel):
     title: str
-    date: str
+    date: dt_date
     scale: str
     status: Optional[str] = "Ongoing"
 
@@ -229,7 +230,7 @@ class CompetitionResultCreate(BaseModel):
 
 class MeetingCreate(BaseModel):
     title: str
-    date: str
+    date: dt_datetime
     meetingType: str
     description: Optional[str] = None
     status: Optional[str] = "Scheduled"
