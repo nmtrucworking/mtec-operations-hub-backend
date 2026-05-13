@@ -21,8 +21,8 @@ def _meeting_out(meeting: Meeting) -> dict:
         "meetingType": meeting.meeting_type,
         "description": meeting.description,
         "status": meeting.status,
-        "createdAt": meeting.created_at,
-        "updatedAt": meeting.updated_at,
+        "createdAt": getattr(meeting, "created_at", None),
+        "updatedAt": getattr(meeting, "updated_at", None),
     }
 
 

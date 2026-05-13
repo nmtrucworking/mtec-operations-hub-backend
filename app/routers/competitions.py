@@ -20,8 +20,8 @@ def _competition_out(comp: Competition) -> dict:
         "date": comp.date,
         "scale": comp.scale,
         "status": comp.status,
-        "createdAt": comp.created_at,
-        "updatedAt": comp.updated_at,
+        "createdAt": getattr(comp, "created_at", None),
+        "updatedAt": getattr(comp, "updated_at", None),
     }
 
 @router.get("")
