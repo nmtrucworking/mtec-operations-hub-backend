@@ -311,3 +311,29 @@ def delete_user(
     db.commit()
 
     return api_response(data={"message": "Da vo hieu hoa tai khoan"})
+
+@router.get("/{user_id}")
+def get_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles("bcn")),
+) -> dict:
+    """
+    Truy xuất thông tin chi tiết của một tài khoản người dùng cụ thể từ cơ sở dữ liệu.
+    
+    Quy trình xử lý:
+    1. Tiếp nhận tham số định danh user_id từ yêu cầu của người dùng.
+    2. Thực hiện truy vấn trực tiếp vào bảng User thông qua cơ chế ORM của SQLAlchemy.
+    3. Kiểm tra tính hiện hữu của bản ghi: Nếu không tồn tại, hệ thống phản hồi lỗi 404 (Not Found).
+    4. Trả về dữ liệu đã được chuẩn hóa thông qua hàm hỗ trợ _user_out.
+    
+    Yêu cầu quyền hạn: Chỉ các tài khoản thuộc Ban Chủ nhiệm (bcn) mới được phép thực thi tác vụ này.
+    """
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Không tìm thấy tài khoản người dùng yêu cầu"
+        )
+    
+    return api_response(data=_user_out(user))

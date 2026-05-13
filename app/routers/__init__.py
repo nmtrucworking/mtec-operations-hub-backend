@@ -10,6 +10,8 @@ from app.routers.discipline import router as discipline_router
 from app.routers.settings import router as settings_router
 from app.routers.ai import router as ai_router
 from app.routers.logs import router as logs_router
+from app.routers.competitions import router as competitions_router
+from app.routers.meetings import router as meetings_router
 
 api_v1_router = APIRouter()
 
@@ -24,3 +26,5 @@ api_v1_router.include_router(discipline_router)
 api_v1_router.include_router(settings_router)
 api_v1_router.include_router(ai_router)
 api_v1_router.include_router(logs_router)
+api_v1_router.include_router(competitions_router)
+api_v1_router.include_router(meetings_router)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date as dt_date
 
+from alembic.environment import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -214,3 +215,29 @@ class AIExportDocumentBody(BaseModel):
     content: str
     templateId: str
     metadata: dict | None = None
+
+class CompetitionCreate(BaseModel):
+    title: str
+    date: str
+    scale: str
+    status: Optional[str] = "Ongoing"
+
+class CompetitionResultCreate(BaseModel):
+    memberId: str
+    achievement: str
+    bonusKpi: float
+
+class MeetingCreate(BaseModel):
+    title: str
+    date: str
+    meetingType: str
+    description: Optional[str] = None
+    status: Optional[str] = "Scheduled"
+
+class AttendanceUpdateItem(BaseModel):
+    memberId: str
+    status: str
+    note: Optional[str] = None
+
+class AttendanceListUpdate(BaseModel):
+    attendances: List[AttendanceUpdateItem]
