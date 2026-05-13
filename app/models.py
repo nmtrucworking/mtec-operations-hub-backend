@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -310,4 +310,43 @@ class Attendance(Base):
 
     # Định nghĩa quan hệ ngược lại
     meeting: Mapped[Meeting] = relationship("Meeting", back_populates="attendances")
+    member: Mapped[Member] = relationship("Member")
+
+class Competition(Base):
+    """
+    Model lưu trữ thông tin các cuộc thi, sự kiện học thuật hoặc phong trào.
+    """
+    __tablename__ = "competitions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    title: Mapped[str] = mapped_column(String(200), index=True)
+    date: Mapped[date] = mapped_column(Date)
+    scale: Mapped[str] = mapped_column(String(50))  # Cấp CLB, Cấp Khoa, Cấp Trường, Quốc gia
+    status: Mapped[str] = mapped_column(String(20), default="Ongoing") # Ongoing, Completed
+    
+    # Quan hệ với bảng kết quả
+    results: Mapped[list["CompetitionResult"]] = relationship(
+        "CompetitionResult", back_populates="competition", cascade="all, delete-orphan"
+    )
+
+class CompetitionResult(Base):
+    """
+    Bảng lưu trữ kết quả tham gia và mức điểm KPI thưởng tương ứng của thành viên.
+    """
+    __tablename__ = "competition_results"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    competition_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("competitions.id"), index=True
+    )
+    member_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("members.id"), index=True
+    )
+    achievement: Mapped[str] = mapped_column(String(100)) # VD: 'Giải Nhất', 'Top 5', 'Tham gia'
+    bonus_kpi: Mapped[float] = mapped_column(Float, default=0.0) # Điểm hiệu suất được cộng
+    is_synced: Mapped[bool] = mapped_column(Boolean, default=False) # Cờ đánh dấu đã đồng bộ KPI chưa
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+
+    competition: Mapped[Competition] = relationship("Competition", back_populates="results")
     member: Mapped[Member] = relationship("Member")

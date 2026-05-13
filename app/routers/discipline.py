@@ -6,7 +6,7 @@ from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
-from app.models import DisciplineRecord, User, Meeting, Attendance, Member
+from app.models import DisciplineRecord, User, Meeting, Attendance, Member, Competition, CompetitionResult
 from app.schemas import DisciplineRecordCreate, DisciplineRecordUpdate
 from app.utils import sanitize_pagination
 
@@ -300,6 +300,100 @@ def sync_attendance_to_discipline(
     return api_response(
         data={
             "message": f"Quá trình đồng bộ hoàn tất. Hệ thống đã cập nhật {synced_count} hồ sơ.",
+            "syncedCount": synced_count
+        }
+    )
+
+@router.post("/sync-competition-kpi/{competition_id}")
+def sync_competition_to_kpi(
+    competition_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """
+    Đồng bộ điểm thưởng (bonus_kpi) từ kết quả cuộc thi vào hồ sơ Kỷ luật & Hiệu suất.
+    Hệ thống chỉ xử lý những bản ghi chưa được đồng bộ (is_synced == False).
+    """
+    
+    if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Không có quyền cập nhật KPI hiệu suất.",
+        )
+
+    competition = db.get(Competition, competition_id)
+    if not competition:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Không tìm thấy dữ liệu cuộc thi.",
+        )
+
+    # Truy xuất các kết quả hợp lệ có điểm thưởng > 0 và chưa được đồng bộ
+    unsynced_results = db.scalars(
+        select(CompetitionResult).where(
+            CompetitionResult.competition_id == competition_id,
+            CompetitionResult.bonus_kpi > 0,
+            CompetitionResult.is_synced == False
+        )
+    ).all()
+
+    if not unsynced_results:
+        return api_response(data={"message": "Không có điểm KPI mới nào cần đồng bộ.", "syncedCount": 0})
+
+    synced_count = 0
+    for result in unsynced_results:
+        member = db.get(Member, result.member_id)
+        if not member:
+            continue
+
+        discipline_record = db.scalar(
+            select(DisciplineRecord).where(DisciplineRecord.member_id == member.id)
+        )
+
+        before_snapshot = {}
+        if discipline_record:
+            before_snapshot = {"kpi": discipline_record.kpi}
+            # Cộng dồn điểm thưởng vào KPI hiện tại
+            discipline_record.kpi += result.bonus_kpi
+        else:
+            # Nếu thành viên chưa có record, khởi tạo với mốc cơ bản 100 + điểm thưởng
+            discipline_record = DisciplineRecord(
+                member_id=member.id,
+                mssv=member.mssv,
+                name=member.name,
+                committee=member.ban,
+                absents=0,
+                kpi=100.0 + result.bonus_kpi,
+                discipline_level="Không",
+                updated_by=current_user.full_name
+            )
+            db.add(discipline_record)
+            db.flush()
+
+        # Đánh dấu bản ghi này đã được đồng bộ thành công
+        result.is_synced = True
+        discipline_record.updated_by = current_user.full_name
+
+        # Ghi Audit Log minh bạch lý do cộng điểm
+        create_audit_log(
+            db=db,
+            action="AUTO_SYNC_COMPETITION_KPI",
+            resource_type="discipline",
+            resource_id=discipline_record.id,
+            actor=current_user,
+            before_snapshot=before_snapshot if before_snapshot else None,
+            after_snapshot={
+                "kpi": discipline_record.kpi,
+                "reason": f"Cộng {result.bonus_kpi} điểm từ cuộc thi: {competition.title} ({result.achievement})"
+            },
+        )
+        synced_count += 1
+
+    db.commit()
+
+    return api_response(
+        data={
+            "message": f"Đồng bộ hiệu suất thành công. Đã cập nhật KPI cho {synced_count} thành viên.",
             "syncedCount": synced_count
         }
     )
