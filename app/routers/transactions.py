@@ -120,7 +120,7 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    if not current_user.has_any_roles({"bcn", "bvh_finance"}):
+    if not current_user.has_any_roles({"bcn", "bvh_finance", "bvh_logistics", "bcm"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen tao giao dich"
         )
@@ -185,7 +185,7 @@ def update_transaction(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay giao dich"
         )
 
-    if not current_user.has_any_roles({"bcn", "bvh_finance"}):
+    if not current_user.has_any_roles({"bcn", "bvh_finance", "bvh_logistics", "bcm"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Khong co quyen sua giao dich"
         )
