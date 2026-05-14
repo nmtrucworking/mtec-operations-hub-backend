@@ -18,6 +18,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
 
+def _is_missing_relation_error(exc: Exception) -> bool:
+    """Detect PostgreSQL undefined_table (SQLSTATE 42P01)."""
+    current: Exception | None = exc
+    while current is not None:
+        if getattr(current, "pgcode", None) == "42P01":
+            return True
+
+        sqlstate = getattr(current, "sqlstate", None)
+        if sqlstate == "42P01":
+            return True
+
+        current = getattr(current, "orig", None)
+
+    return False
+
+
 def _meeting_out(meeting: Meeting) -> dict:
     return {
         "id": meeting.id,
@@ -40,7 +56,13 @@ def list_meetings(
         stmt = select(Meeting).order_by(Meeting.date.desc())
         rows = db.scalars(stmt).all()
         return api_response(data=[_meeting_out(row) for row in rows])
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
+        if _is_missing_relation_error(exc):
+            logger.warning("Meetings table is missing in database")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu meetings/attendances chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
         logger.exception("Failed to list meetings")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -88,8 +110,14 @@ def create_meeting(
         db.commit()
         db.refresh(meeting)
         return api_response(data=_meeting_out(meeting))
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
         db.rollback()
+        if _is_missing_relation_error(exc):
+            logger.warning("Meetings table is missing in database")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu meetings/attendances chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
         logger.exception("Failed to create meeting")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -110,29 +138,29 @@ def update_attendance(
             detail="Không có quyền cập nhật trạng thái điểm danh."
         )
 
-    meeting = db.get(Meeting, meeting_id)
-    if not meeting:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Không tìm thấy dữ liệu cuộc họp tương ứng."
-        )
-
-    member_ids = {item.memberId for item in body.attendances}
-    if member_ids:
-        existing_member_ids = set(
-            db.scalars(select(Member.id).where(Member.id.in_(member_ids))).all()
-        )
-        missing_member_ids = sorted(member_ids - existing_member_ids)
-        if missing_member_ids:
+    try:
+        meeting = db.get(Meeting, meeting_id)
+        if not meeting:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "message": "Có thành viên không tồn tại trong hệ thống.",
-                    "missingMemberIds": missing_member_ids,
-                },
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy dữ liệu cuộc họp tương ứng."
             )
 
-    try:
+        member_ids = {item.memberId for item in body.attendances}
+        if member_ids:
+            existing_member_ids = set(
+                db.scalars(select(Member.id).where(Member.id.in_(member_ids))).all()
+            )
+            missing_member_ids = sorted(member_ids - existing_member_ids)
+            if missing_member_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "message": "Có thành viên không tồn tại trong hệ thống.",
+                        "missingMemberIds": missing_member_ids,
+                    },
+                )
+
         existing_attendances = db.scalars(
             select(Attendance).where(Attendance.meeting_id == meeting_id)
         ).all()
@@ -168,8 +196,14 @@ def update_attendance(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Dữ liệu điểm danh không hợp lệ.",
         )
-    except SQLAlchemyError:
+    except SQLAlchemyError as exc:
         db.rollback()
+        if _is_missing_relation_error(exc):
+            logger.warning("Meetings or attendances table is missing in database")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu meetings/attendances chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
         logger.exception("Failed to update attendance for meeting_id=%s", meeting_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -12,6 +13,22 @@ from app.schemas import CompetitionCreate, CompetitionResultCreate
 from app.utils import generate_prefixed_id
 
 router = APIRouter(prefix="/competitions", tags=["competitions"])
+
+
+def _is_missing_relation_error(exc: Exception) -> bool:
+    """Detect PostgreSQL undefined_table (SQLSTATE 42P01)."""
+    current: Exception | None = exc
+    while current is not None:
+        if getattr(current, "pgcode", None) == "42P01":
+            return True
+
+        sqlstate = getattr(current, "sqlstate", None)
+        if sqlstate == "42P01":
+            return True
+
+        current = getattr(current, "orig", None)
+
+    return False
 
 def _competition_out(comp: Competition) -> dict:
     return {
@@ -32,9 +49,17 @@ def list_competitions(
     """
     Truy xuất danh sách các cuộc thi hiện có trong hệ thống.
     """
-    stmt = select(Competition).order_by(Competition.date.desc())
-    rows = db.scalars(stmt).all()
-    return api_response(data=[_competition_out(row) for row in rows])
+    try:
+        stmt = select(Competition).order_by(Competition.date.desc())
+        rows = db.scalars(stmt).all()
+        return api_response(data=[_competition_out(row) for row in rows])
+    except SQLAlchemyError as exc:
+        if _is_missing_relation_error(exc):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu competitions/competition_results chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
+        raise
 
 @router.post("")
 def create_competition(
@@ -59,23 +84,32 @@ def create_competition(
         scale=body.scale,
         status=body.status or "Ongoing",
     )
-    db.add(competition)
-    db.flush()
+    try:
+        db.add(competition)
+        db.flush()
 
-    create_audit_log(
-        db=db,
-        action="CREATE_COMPETITION",
-        resource_type="competition",
-        resource_id=competition.id,
-        actor=current_user,
-        after_snapshot={
-            "title": competition.title,
-            "status": competition.status
-        },
-    )
-    db.commit()
-    db.refresh(competition)
-    return api_response(data=_competition_out(competition))
+        create_audit_log(
+            db=db,
+            action="CREATE_COMPETITION",
+            resource_type="competition",
+            resource_id=competition.id,
+            actor=current_user,
+            after_snapshot={
+                "title": competition.title,
+                "status": competition.status
+            },
+        )
+        db.commit()
+        db.refresh(competition)
+        return api_response(data=_competition_out(competition))
+    except SQLAlchemyError as exc:
+        db.rollback()
+        if _is_missing_relation_error(exc):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu competitions/competition_results chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
+        raise
 
 @router.put("/{competition_id}/results")
 def update_competition_results(
@@ -93,44 +127,49 @@ def update_competition_results(
             detail="Không có quyền cập nhật kết quả cuộc thi"
         )
 
-    competition = db.get(Competition, competition_id)
-    if not competition:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Không tìm thấy dữ liệu cuộc thi tương ứng"
+    try:
+        competition = db.get(Competition, competition_id)
+        if not competition:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Không tìm thấy dữ liệu cuộc thi tương ứng"
+            )
+
+        # Loại bỏ các kết quả cũ để ghi nhận tập kết quả mới (Idempotent)
+        existing_results = db.scalars(
+            select(CompetitionResult).where(CompetitionResult.competition_id == competition_id)
+        ).all()
+        for res in existing_results:
+            db.delete(res)
+
+        new_results = []
+        for item in results:
+            res_obj = CompetitionResult(
+                competition_id=competition_id,
+                member_id=item.memberId,
+                achievement=item.achievement,
+                bonus_kpi=item.bonusKpi,
+                is_synced=False
+            )
+            db.add(res_obj)
+            new_results.append(res_obj)
+
+        create_audit_log(
+            db=db,
+            action="UPDATE_COMPETITION_RESULTS",
+            resource_type="competition",
+            resource_id=competition_id,
+            actor=current_user,
+            after_snapshot={"details": f"Cập nhật danh sách kết quả cho {len(new_results)} thành viên."}
         )
 
-    # Loại bỏ các kết quả cũ để ghi nhận tập kết quả mới (Idempotent)
-    db.execute(
-        select(CompetitionResult).where(CompetitionResult.competition_id == competition_id)
-    )
-    # Triển khai logic ghi đè kết quả
-    existing_results = db.scalars(
-        select(CompetitionResult).where(CompetitionResult.competition_id == competition_id)
-    ).all()
-    for res in existing_results:
-        db.delete(res)
-
-    new_results = []
-    for item in results:
-        res_obj = CompetitionResult(
-            competition_id=competition_id,
-            member_id=item.memberId,
-            achievement=item.achievement,
-            bonus_kpi=item.bonusKpi,
-            is_synced=False
-        )
-        db.add(res_obj)
-        new_results.append(res_obj)
-
-    create_audit_log(
-        db=db,
-        action="UPDATE_COMPETITION_RESULTS",
-        resource_type="competition",
-        resource_id=competition_id,
-        actor=current_user,
-        after_snapshot={"details": f"Cập nhật danh sách kết quả cho {len(new_results)} thành viên."}
-    )
-    
-    db.commit()
-    return api_response(data={"message": "Cập nhật kết quả thành công", "count": len(new_results)})
+        db.commit()
+        return api_response(data={"message": "Cập nhật kết quả thành công", "count": len(new_results)})
+    except SQLAlchemyError as exc:
+        db.rollback()
+        if _is_missing_relation_error(exc):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Bảng dữ liệu competitions/competition_results chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+            )
+        raise
