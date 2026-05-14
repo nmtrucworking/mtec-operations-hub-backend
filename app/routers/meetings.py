@@ -10,7 +10,7 @@ from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
 from app.models import Meeting, Attendance, User, Member
-from app.schemas import MeetingCreate, AttendanceListUpdate
+from app.schemas import MeetingCreate, AttendanceListUpdate, MeetingUpdate
 from app.utils import generate_prefixed_id
 
 logger = logging.getLogger(__name__)
@@ -42,6 +42,18 @@ def _meeting_out(meeting: Meeting) -> dict:
         "meetingType": meeting.meeting_type,
         "description": meeting.description,
         "status": meeting.status,
+        "createdAt": getattr(meeting, "created_at", None),
+        "updatedAt": getattr(meeting, "updated_at", None),
+    }
+def _meeting_out(meeting: Meeting) -> dict:
+    return {
+        "id": meeting.id,
+        "title": meeting.title,
+        "date": meeting.date,
+        "meetingType": meeting.meeting_type,
+        "description": meeting.description,
+        "status": meeting.status,
+        "minutesUrl": meeting.minutes_url,
         "createdAt": getattr(meeting, "created_at", None),
         "updatedAt": getattr(meeting, "updated_at", None),
     }
@@ -89,6 +101,7 @@ def create_meeting(
         meeting_type=body.meetingType,
         description=body.description,
         status=body.status or "Scheduled",
+        minutes_url=body.minutesUrl,
     )
 
     try:
@@ -208,4 +221,100 @@ def update_attendance(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Không thể cập nhật dữ liệu điểm danh.",
+
+        @router.get("/{meeting_id}")
+        def get_meeting(
+            meeting_id: str,
+            db: Session = Depends(get_db),
+            _: User = Depends(get_current_user),
+        ) -> dict:
+            try:
+                meeting = db.get(Meeting, meeting_id)
+                if not meeting:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Không tìm thấy dữ liệu cuộc họp tương ứng."
+                    )
+                return api_response(data=_meeting_out(meeting))
+            except SQLAlchemyError as exc:
+                if _is_missing_relation_error(exc):
+                    logger.warning("Meetings table is missing in database")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Bảng dữ liệu meetings/attendances chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+                    )
+                logger.exception("Failed to get meeting %s", meeting_id)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Không thể truy xuất dữ liệu cuộc họp.",
+                )
+
+
+        @router.put("/{meeting_id}")
+        def update_meeting(
+            meeting_id: str,
+            body: MeetingUpdate,
+            db: Session = Depends(get_db),
+            current_user: User = Depends(get_current_user),
+        ) -> dict:
+            if not current_user.has_any_roles({"bcn", "bcm"}):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Không có quyền cập nhật dữ liệu cuộc họp."
+                )
+
+            try:
+                meeting = db.get(Meeting, meeting_id)
+                if not meeting:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Không tìm thấy dữ liệu cuộc họp tương ứng."
+                    )
+
+                # Cập nhật các trường nếu được cung cấp
+                if body.title is not None:
+                    meeting.title = body.title
+                if body.date is not None:
+                    meeting.date = body.date
+                if body.meetingType is not None:
+                    meeting.meeting_type = body.meetingType
+                if body.description is not None:
+                    meeting.description = body.description
+                if body.status is not None:
+                    meeting.status = body.status
+                if body.minutesUrl is not None:
+                    meeting.minutes_url = body.minutesUrl
+
+                before_snapshot = {
+                    "title": meeting.title,
+                    "meetingType": meeting.meeting_type,
+                    "status": meeting.status,
+                    "minutesUrl": meeting.minutes_url,
+                }
+
+                create_audit_log(
+                    db=db,
+                    action="UPDATE_MEETING",
+                    resource_type="meeting",
+                    resource_id=meeting_id,
+                    actor=current_user,
+                    after_snapshot=before_snapshot,
+                )
+
+                db.commit()
+                db.refresh(meeting)
+                return api_response(data=_meeting_out(meeting))
+            except SQLAlchemyError as exc:
+                db.rollback()
+                if _is_missing_relation_error(exc):
+                    logger.warning("Meetings table is missing in database")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Bảng dữ liệu meetings/attendances chưa tồn tại trên CSDL. Vui lòng chạy migration backend.",
+                    )
+                logger.exception("Failed to update meeting %s", meeting_id)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Không thể cập nhật dữ liệu cuộc họp.",
+                )
         )
