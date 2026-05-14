@@ -283,7 +283,7 @@ class Meeting(Base):
     meeting_type: Mapped[str] = mapped_column(String(50), index=True) # VD: 'Họp định kỳ', 'Họp Ban'
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="Scheduled") # Scheduled, Completed, Cancelled
-        minutes_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # URL biên bản từ Google Drive
+    minutes_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # URL biên bản từ Google Drive
     
     # Quan hệ với bảng điểm danh
     attendances: Mapped[list[Attendance]] = relationship(
