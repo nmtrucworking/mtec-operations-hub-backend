@@ -33,18 +33,6 @@ def _is_missing_relation_error(exc: Exception) -> bool:
 
     return False
 
-
-def _meeting_out(meeting: Meeting) -> dict:
-    return {
-        "id": meeting.id,
-        "title": meeting.title,
-        "date": meeting.date,
-        "meetingType": meeting.meeting_type,
-        "description": meeting.description,
-        "status": meeting.status,
-        "createdAt": getattr(meeting, "created_at", None),
-        "updatedAt": getattr(meeting, "updated_at", None),
-    }
 def _meeting_out(meeting: Meeting) -> dict:
     return {
         "id": meeting.id,

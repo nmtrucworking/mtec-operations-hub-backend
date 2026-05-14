@@ -234,15 +234,16 @@ class MeetingCreate(BaseModel):
     meetingType: str
     description: Optional[str] = None
     status: Optional[str] = "Scheduled"
-        minutesUrl: Optional[str] = None
+    minutesUrl: Optional[str] = None
 
-    class MeetingUpdate(BaseModel):
-        title: Optional[str] = None
-        date: Optional[dt_datetime] = None
-        meetingType: Optional[str] = None
-        description: Optional[str] = None
-        status: Optional[str] = None
-        minutesUrl: Optional[str] = None
+class MeetingUpdate(BaseModel):
+    title: Optional[str] = None
+    date: Optional[dt_datetime] = None
+    meetingType: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    minutesUrl: Optional[str] = None
+
 class AttendanceUpdateItem(BaseModel):
     memberId: str
     status: str
