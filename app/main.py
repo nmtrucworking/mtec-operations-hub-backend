@@ -92,7 +92,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create the FastAPI application instance. This is the main entry point for the app.
-app = FastAPI(title="MTEC Operations Hub Backend", version="1.2.0")
+app = FastAPI(title="MTEC Operations Hub Backend", version="2.1.0")
 
 
 # CORS middleware is required to allow the frontend (served from a different origin)
