@@ -631,6 +631,21 @@ Phase 6 hoàn thành khi:
 - Dashboard không tính sai với dữ liệu trong `member_evaluations`.
 - API v1 legacy không bị thay đổi hành vi.
 
+### 20.1. Trạng thái triển khai
+
+- [x] Có `EvaluationReportService` cho dashboard, summary, member report, unit report, risk report và appeal report.
+- [x] Có API read-only dưới `/api/v2/evaluations/reports`.
+- [x] Có export CSV/XLSX danh sách điểm thành viên.
+- [x] Có export DOCX cho official report và member report; PDF để sau khi có pipeline ổn định.
+- [x] Có template strategy placeholder tại `app/templates/evaluations/README.md`.
+- [x] Export toàn kỳ ghi audit log.
+- [x] RBAC manager/member/BCM unit scope đã có test tự động.
+- [x] Member chỉ xem/export báo cáo của chính mình.
+- [x] Dashboard locked cycle có cache in-process.
+- [x] Có test tự động cho aggregation, export, RBAC và cache.
+- [ ] Manual QA trên DB dev/staging chưa được thực hiện trong bước code này.
+- [ ] PDF export chưa bật trong Phase 6 code pass này.
+
 ## 21. Thứ tự triển khai đề xuất
 
 1. Tạo `EvaluationReportService`.
