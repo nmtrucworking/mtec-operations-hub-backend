@@ -763,6 +763,18 @@ Phase 2 hoàn thành khi:
 - API v1 legacy không bị thay đổi hành vi.
 - Kết quả tính thử có thể ghi vào `member_evaluations` và `member_evaluation_breakdowns`.
 
+### 19.1. Trạng thái triển khai
+
+- [x] Có `EvaluationCalculatorService` tính điểm theo member và cycle.
+- [x] Có `ClassificationPolicyService` áp dụng ngưỡng xếp loại và blocker.
+- [x] Có `EvidenceValidationService` kiểm tra minh chứng theo mode.
+- [x] Có `EvaluationCriteriaSeedService` seed tiêu chí lõi I, II, III-A.
+- [x] Có `EvaluationSyncService` tạo score events idempotent từ attendance/competition.
+- [x] Có unit test cho calculator, classification, evidence và sync policy.
+- [x] Service không phụ thuộc FastAPI router.
+- [x] API v1 legacy không bị thay đổi hành vi.
+- [x] Kết quả tính thử ghi được vào `member_evaluations` và `member_evaluation_breakdowns`.
+
 ## 20. Thứ tự triển khai đề xuất
 
 1. Tạo `app/core/evaluation_constants.py`.

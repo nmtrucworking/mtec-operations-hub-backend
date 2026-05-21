@@ -566,37 +566,37 @@ Không đặt DB constraint cho tổng trọng số bằng 1.0. Kiểm tra này 
 
 ### 11.1. Model
 
-- [ ] Thêm import cần thiết trong `app/models.py` nếu thiếu: `UniqueConstraint`, `Index`.
-- [ ] Thêm class `EvaluationCycle`.
-- [ ] Thêm class `EvaluationCriterion`.
-- [ ] Thêm class `EvaluationScoreEvent`.
-- [ ] Thêm class `EvaluationEvidence`.
-- [ ] Thêm class `MemberEvaluation`.
-- [ ] Thêm class `MemberEvaluationBreakdown`.
-- [ ] Thêm class `MemberCycleRole`.
-- [ ] Thêm class `EvaluationAppeal`.
-- [ ] Thêm class `DisciplineCase`.
-- [ ] Kiểm tra import quan hệ với `Member`, `User` không tạo circular error.
+- [x] Thêm import cần thiết trong `app/models.py` nếu thiếu: `UniqueConstraint`, `Index`.
+- [x] Thêm class `EvaluationCycle`.
+- [x] Thêm class `EvaluationCriterion`.
+- [x] Thêm class `EvaluationScoreEvent`.
+- [x] Thêm class `EvaluationEvidence`.
+- [x] Thêm class `MemberEvaluation`.
+- [x] Thêm class `MemberEvaluationBreakdown`.
+- [x] Thêm class `MemberCycleRole`.
+- [x] Thêm class `EvaluationAppeal`.
+- [x] Thêm class `DisciplineCase`.
+- [x] Kiểm tra import quan hệ với `Member`, `User` không tạo circular error.
 
 ### 11.2. Migration
 
-- [ ] Tạo revision Alembic mới.
-- [ ] Tạo bảng đúng thứ tự FK.
-- [ ] Tạo index cho các cột truy vấn chính.
-- [ ] Tạo unique constraint cần thiết.
-- [ ] Viết downgrade theo thứ tự ngược.
-- [ ] Chạy `alembic upgrade head` trên database rỗng.
-- [ ] Chạy `alembic downgrade -1` để kiểm tra rollback.
-- [ ] Chạy lại `alembic upgrade head` sau rollback.
+- [x] Tạo revision Alembic mới.
+- [x] Tạo bảng đúng thứ tự FK.
+- [x] Tạo index cho các cột truy vấn chính.
+- [x] Tạo unique constraint cần thiết.
+- [x] Viết downgrade theo thứ tự ngược.
+- [x] Chạy `alembic upgrade head` trên database rỗng.
+- [x] Chạy `alembic downgrade -1` để kiểm tra rollback.
+- [x] Chạy lại `alembic upgrade head` sau rollback.
 
 ### 11.3. Test
 
-- [ ] Test migration tạo đủ bảng.
-- [ ] Test unique `evaluation_cycles.code`.
-- [ ] Test unique `member_evaluations(cycle_id, member_id)`.
-- [ ] Test FK cơ bản tới `members`, `users`, `evaluation_cycles`, `evaluation_criteria`.
-- [ ] Test insert một cycle, một criterion, một member role, một score event, một evidence.
-- [ ] Test rollback migration nếu môi trường CI cho phép.
+- [x] Test migration tạo đủ bảng.
+- [x] Test unique `evaluation_cycles.code`.
+- [x] Test unique `member_evaluations(cycle_id, member_id)`.
+- [x] Test FK cơ bản tới `members`, `users`, `evaluation_cycles`, `evaluation_criteria`.
+- [x] Test insert một cycle, một criterion, một member role, một score event, một evidence.
+- [x] Test rollback migration nếu môi trường CI cho phép.
 
 ## 12. Test case tối thiểu
 
