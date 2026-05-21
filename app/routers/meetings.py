@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func, case
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -33,8 +33,8 @@ def _is_missing_relation_error(exc: Exception) -> bool:
 
     return False
 
-def _meeting_out(meeting: Meeting) -> dict:
-    return {
+def _meeting_out(meeting: Meeting, stats: dict = None) -> dict:
+    data = {
         "id": meeting.id,
         "title": meeting.title,
         "date": meeting.date,
@@ -45,7 +45,9 @@ def _meeting_out(meeting: Meeting) -> dict:
         "createdAt": getattr(meeting, "created_at", None),
         "updatedAt": getattr(meeting, "updated_at", None),
     }
-
+    if stats is not None:
+        data["stats"] = stats
+    return data
 
 @router.get("")
 def list_meetings(
@@ -53,9 +55,31 @@ def list_meetings(
     _: User = Depends(get_current_user),
 ) -> dict:
     try:
-        stmt = select(Meeting).order_by(Meeting.date.desc())
-        rows = db.scalars(stmt).all()
-        return api_response(data=[_meeting_out(row) for row in rows])
+        stmt = (
+            select(
+                Meeting,
+                func.count(case((Attendance.status == "Present", 1))).label("present_count"),
+                func.count(case((Attendance.status == "Absent", 1))).label("absent_count"),
+                func.count(case((Attendance.status == "Excused", 1))).label("excused_count")
+            )
+            .outerjoin(Attendance, Meeting.id == Attendance.meeting_id)
+            .group_by(Meeting.id)
+            .order_by(Meeting.date.desc())
+        )
+        
+        rows = db.execute(stmt).all()
+        
+        results = []
+        for row in rows:
+            meeting_obj = row[0]
+            stats = {
+                "present": row.present_count,
+                "absent": row.absent_count,
+                "excused": row.excused_count
+            }
+            results.append(_meeting_out(meeting_obj, stats=stats))
+            
+        return api_response(data=results)
     except SQLAlchemyError as exc:
         if _is_missing_relation_error(exc):
             logger.warning("Meetings table is missing in database")

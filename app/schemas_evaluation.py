@@ -89,6 +89,10 @@ class MemberCycleRoleCreate(BaseModel):
     metadata: dict[str, Any] | None = None
 
 
+class MemberCycleRoleBulkCreate(BaseModel):
+    roles: list[MemberCycleRoleCreate]
+
+
 class MemberCycleRoleUpdate(BaseModel):
     unitCode: str | None = None
     roleType: str | None = None

@@ -47,6 +47,7 @@ from app.schemas_evaluation import (
     EvaluationScoreEventBulkCreate,
     EvaluationScoreEventVoidRequest,
     MemberCycleRoleCreate,
+    MemberCycleRoleBulkCreate,
     MemberCycleRoleUpdate,
 )
 from app.services.evaluation_appeal import EvaluationAppealService
@@ -1035,6 +1036,66 @@ def update_criterion_status(
     db.commit()
     db.refresh(criterion)
     return api_response(data=_criterion_out(criterion))
+
+
+@router.post("/cycles/{cycle_id}/member-roles/bulk")
+def create_member_roles_bulk(
+    cycle_id: str,
+    body: MemberCycleRoleBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    cycle = _get_cycle_or_404(db, cycle_id)
+    _ensure_cycle_not_locked(cycle)
+    
+    created_count = 0
+    updated_count = 0
+    
+    for role_body in body.roles:
+        _get_member_or_404(db, role_body.memberId)
+        
+        # Determine isPrimary: if this is the only role, make it primary.
+        is_primary = role_body.isPrimary
+        if is_primary:
+            _ensure_single_primary_role(db, cycle_id=cycle_id, member_id=role_body.memberId)
+            
+        existing_role = db.scalar(
+            select(MemberCycleRole).where(
+                MemberCycleRole.cycle_id == cycle_id,
+                MemberCycleRole.member_id == role_body.memberId,
+                MemberCycleRole.unit_code == role_body.unitCode,
+                MemberCycleRole.role_type == role_body.roleType
+            )
+        )
+        
+        if existing_role:
+            existing_role.role_title = role_body.roleTitle
+            existing_role.participation_weight = role_body.participationWeight
+            if is_primary:
+                existing_role.is_primary = True
+            if role_body.note is not None:
+                existing_role.note = role_body.note
+            if role_body.metadata is not None:
+                existing_role.metadata_json = _metadata_dump(role_body.metadata)
+            updated_count += 1
+        else:
+            new_role = MemberCycleRole(
+                cycle_id=cycle_id,
+                member_id=role_body.memberId,
+                unit_code=role_body.unitCode,
+                role_type=role_body.roleType,
+                role_title=role_body.roleTitle,
+                participation_weight=role_body.participationWeight,
+                is_primary=is_primary,
+                note=role_body.note,
+                metadata_json=_metadata_dump(role_body.metadata),
+            )
+            db.add(new_role)
+            created_count += 1
+            
+    db.commit()
+    return api_response(data={"createdCount": created_count, "updatedCount": updated_count}, message=f"Đã lưu thành công. Tạo mới: {created_count}, Cập nhật: {updated_count}.")
 
 
 @router.post("/cycles/{cycle_id}/member-roles")
