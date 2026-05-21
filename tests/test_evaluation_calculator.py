@@ -19,7 +19,10 @@ from app.models import (
     MemberEvaluation,
 )
 from app.services.evaluation_calculator import EvaluationCalculatorService
-from app.services.evaluation_criteria_seed import EvaluationCriteriaSeedService
+from app.services.evaluation_criteria_seed import (
+    DEFAULT_EVALUATION_CRITERIA_2026,
+    EvaluationCriteriaSeedService,
+)
 from app.services.evaluation_errors import EvaluationWeightError
 
 
@@ -299,7 +302,7 @@ def test_seed_default_criteria_is_idempotent(test_db: Session):
     second = service.seed_default_criteria_2026()
     count = test_db.scalar(select(func.count()).select_from(EvaluationCriterion))
 
-    assert first["insertedCount"] == 13
+    assert first["insertedCount"] == len(DEFAULT_EVALUATION_CRITERIA_2026)
     assert second["insertedCount"] == 0
-    assert second["updatedCount"] == 13
-    assert count == 13
+    assert second["updatedCount"] == len(DEFAULT_EVALUATION_CRITERIA_2026)
+    assert count == len(DEFAULT_EVALUATION_CRITERIA_2026)

@@ -15,6 +15,7 @@ from app.models import (
     MemberEvaluation,
     User,
 )
+from app.services.evaluation_criteria_seed import DEFAULT_EVALUATION_CRITERIA_2026
 
 
 def _auth_header(user_id: str) -> dict[str, str]:
@@ -214,9 +215,13 @@ def test_seed_criteria_is_idempotent(client: TestClient, test_db: Session):
 
     assert first.status_code == 200
     assert second.status_code == 200
-    assert first.json()["data"]["insertedCount"] == 13
+    assert first.json()["data"]["insertedCount"] == len(
+        DEFAULT_EVALUATION_CRITERIA_2026
+    )
     assert second.json()["data"]["insertedCount"] == 0
-    assert second.json()["data"]["updatedCount"] == 13
+    assert second.json()["data"]["updatedCount"] == len(
+        DEFAULT_EVALUATION_CRITERIA_2026
+    )
 
 
 def test_create_criterion_requires_admin_or_discipline(client: TestClient, test_db: Session):

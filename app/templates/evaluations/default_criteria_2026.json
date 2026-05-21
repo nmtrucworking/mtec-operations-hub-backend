@@ -1,0 +1,2639 @@
+[
+  {
+    "code": "I.1",
+    "name": "Tỷ lệ tham gia sinh hoạt, họp và hoạt động bắt buộc",
+    "component": "I",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 15.0,
+    "score_method": "RATIO",
+    "requires_evidence": true,
+    "sort_order": 101,
+    "description": "Tính theo tỷ lệ tham gia thực tế trên tổng số buổi được triệu tập. Công thức đề xuất: Điểm = (Số buổi tham gia hợp lệ / Tổng số buổi bắt buộc) × 15, tối đa 15 điểm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Tính theo tỷ lệ tham gia thực tế trên tổng số buổi được triệu tập. Công thức đề xuất: Điểm = (Số buổi tham gia hợp lệ / Tổng số buổi bắt buộc) × 15, tối đa 15 điểm.",
+      "evidence": "Danh sách điểm danh, biên bản họp, nhật ký sinh hoạt, lịch triệu tập",
+      "recordingUnit": "Ban Vận hành / Tổ Kỷ luật",
+      "rules": [
+        {
+          "detail": "Tham gia đầy đủ các buổi sinh hoạt CLB, họp ban, họp dự án, hoạt động bắt buộc theo thông báo triệu tập.",
+          "scoreDelta": "+15 điểm tối đa",
+          "note": "Thành viên đạt từ 80% số buổi trở lên được xem là đạt chuẩn chuyên cần cơ bản.",
+          "evidence": "Danh sách điểm danh, biên bản họp, nhật ký sinh hoạt, lịch triệu tập",
+          "recordingUnit": "Ban Vận hành / Tổ Kỷ luật"
+        },
+        {
+          "detail": "Vắng có phép, báo trước đúng hạn",
+          "scoreDelta": 0
+        },
+        {
+          "detail": "Vắng có lý do nhưng báo muộn: trừ 1–2 điểm/lần.",
+          "scoreDelta": -1,
+          "note": "/lần"
+        },
+        {
+          "detail": "Vắng không phép",
+          "scoreDelta": -3,
+          "note": "/lần\nNếu vắng 3 lần liên tiếp không lý do, chuyển sang diện xem xét kỷ luật theo Điều lệ."
+        },
+        {
+          "detail": "Tái phạm nhiều lần chuyển sang xem xét kỷ luật.",
+          "scoreDelta": "Xem xét kỷ luật"
+        }
+      ]
+    }
+  },
+  {
+    "code": "I.2",
+    "name": "Tuân thủ quy trình xin phép và báo cáo vắng mặt",
+    "component": "I",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 7.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 102,
+    "description": "Đánh giá mức độ tuân thủ quy trình xin phép khi không thể tham gia hoạt động bắt buộc. Tổng điểm ban đầu là 7, sau đó trừ theo lỗi phát sinh.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Đánh giá mức độ tuân thủ quy trình xin phép khi không thể tham gia hoạt động bắt buộc. Tổng điểm ban đầu là 7, sau đó trừ theo lỗi phát sinh.",
+      "evidence": "Đơn xin phép, tin nhắn/email xin phép, biểu mẫu xin phép",
+      "recordingUnit": "Ban Vận hành / Trưởng ban",
+      "rules": [
+        {
+          "detail": "Gửi xin phép đúng hạn, có lý do rõ ràng",
+          "scoreDelta": 0,
+          "evidence": "Đơn xin phép, tin nhắn/email xin phép, biểu mẫu xin phép",
+          "recordingUnit": "Ban Vận hành / Trưởng ban"
+        },
+        {
+          "detail": "Có lý do nhưng báo muộn",
+          "scoreDelta": "-1/lần",
+          "evidence": "Thời gian gửi thông báo, xác nhận của Trưởng ban"
+        },
+        {
+          "detail": "Không gửi xin phép trước/sau khi vắng",
+          "scoreDelta": "-3 / lần",
+          "evidence": "Biên bản họp, danh sách vắng mặt, ghi nhận của Tổ Kỷ luật"
+        }
+      ]
+    }
+  },
+  {
+    "code": "I.3",
+    "name": "Đúng giờ và tuân thủ thời hạn phản hồi",
+    "component": "I",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 4.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 103,
+    "description": "Tổng điểm ban đầu là 4, trừ điểm theo số lần đi muộn, phản hồi chậm hoặc không xác nhận tham gia hoạt động bắt buộc.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Tổng điểm ban đầu là 4, trừ điểm theo số lần đi muộn, phản hồi chậm hoặc không xác nhận tham gia hoạt động bắt buộc.",
+      "evidence": "Nhật ký điểm danh, thời gian check-in, ghi nhận trên nhóm làm việc",
+      "recordingUnit": "Ban Vận hành / Thư ký cuộc họp",
+      "rules": [
+        {
+          "detail": "Đi muộn dưới 15 phút",
+          "scoreDelta": "-0.5 điểm/lần.",
+          "evidence": "Nhật ký điểm danh, thời gian check-in, ghi nhận trên nhóm làm việc",
+          "recordingUnit": "Ban Vận hành / Thư ký cuộc họp"
+        },
+        {
+          "detail": "Đi muộn từ 15–30 phút",
+          "scoreDelta": "-1 điểm/lần."
+        },
+        {
+          "detail": "Không phản hồi thông báo quan trọng đúng hạn: trừ 0.5–1 điểm/lần.",
+          "scoreDelta": "-0.5 đến -1 / lần",
+          "evidence": "Tin nhắn nhóm, Google Form, Notion, email"
+        }
+      ]
+    }
+  },
+  {
+    "code": "I.4",
+    "name": "Hoàn thành nghĩa vụ hành chính bắt buộc",
+    "component": "I",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 4.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 104,
+    "description": "Tổng điểm ban đầu là 4, trừ điểm khi thành viên không hoàn thành các nghĩa vụ hành chính bắt buộc trong kỳ đánh giá.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Tổng điểm ban đầu là 4, trừ điểm khi thành viên không hoàn thành các nghĩa vụ hành chính bắt buộc trong kỳ đánh giá.",
+      "evidence": "Biểu mẫu báo cáo, Notion/Google Sheet, biên bản nhắc nhở",
+      "recordingUnit": "Trưởng ban / Ban Vận hành",
+      "rules": [
+        {
+          "detail": "Nộp báo cáo/cập nhật đúng hạn",
+          "scoreDelta": 0,
+          "evidence": "Biểu mẫu báo cáo, Notion/Google Sheet, biên bản nhắc nhở",
+          "recordingUnit": "Trưởng ban / Ban Vận hành"
+        },
+        {
+          "detail": "Không nộp báo cáo, không cập nhật tiến độ, không điền biểu mẫu bắt buộc đúng hạn",
+          "scoreDelta": "-1 / lần",
+          "evidence": "Lịch sử cập nhật, biểu mẫu, xác nhận của Trưởng ban"
+        },
+        {
+          "detail": "Không hoàn thành nghĩa vụ sau khi đã được nhắc: trừ tối đa toàn bộ điểm mục này.",
+          "scoreDelta": "-2 đến -4 / lần",
+          "evidence": "Biên bản/tin nhắn nhắc nhở, ghi nhận của Trưởng ban"
+        }
+      ]
+    }
+  },
+  {
+    "code": "II.1",
+    "name": "Tinh thần trách nhiệm trong công việc",
+    "component": "II",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 5.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 201,
+    "description": "Bắt đầu từ 5 điểm. Trừ theo lỗi thiếu trách nhiệm trong công việc được giao. Điểm mục này không âm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 5 điểm. Trừ theo lỗi thiếu trách nhiệm trong công việc được giao. Điểm mục này không âm.",
+      "evidence": "Task trên Notion/Trello/Google Sheet, báo cáo tiến độ, xác nhận của Trưởng ban",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Hoàn thành phần việc đúng cam kết, có phản hồi rõ ràng khi gặp khó khăn",
+          "scoreDelta": 0,
+          "note": "Không cộng thêm vì đây là chuẩn tối thiểu của thành viên.",
+          "evidence": "Task trên Notion/Trello/Google Sheet, báo cáo tiến độ, xác nhận của Trưởng ban",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Không theo dõi nhiệm vụ được giao",
+          "scoreDelta": "-1 / lần",
+          "note": "Áp dụng khi thành viên không nắm được deadline, không kiểm tra kênh làm việc hoặc bỏ sót nhiệm vụ.",
+          "evidence": "Nhật ký phân công, tin nhắn nhắc việc, ghi nhận của Trưởng ban"
+        },
+        {
+          "detail": "Để công việc trễ hạn nhưng không báo trước",
+          "scoreDelta": "-1 đến -2 / lần",
+          "note": "Nếu gây ảnh hưởng đến tiến độ chung, có thể ghi nhận thêm ở nhóm hiệu suất chuyên môn.",
+          "evidence": "Lịch sử deadline, log task, biên bản họp ban"
+        },
+        {
+          "detail": "Bỏ ngang nhiệm vụ hoặc không bàn giao khi không thể tiếp tục",
+          "scoreDelta": "-3 đến -5 / lần",
+          "note": "Trường hợp nghiêm trọng có thể chuyển sang diện cảnh cáo nội bộ.",
+          "evidence": "Biên bản làm việc, ghi nhận bàn giao, xác nhận của nhóm phụ trách"
+        }
+      ]
+    }
+  },
+  {
+    "code": "II.2",
+    "name": "Mức độ chủ động và phối hợp tổ chức",
+    "component": "II",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 5.0,
+    "score_method": "MANUAL",
+    "requires_evidence": true,
+    "sort_order": 202,
+    "description": "Bắt đầu từ 5 điểm. Có thể cộng điểm trong phạm vi tối đa 5 hoặc trừ điểm khi thiếu phối hợp. Điểm mục này không vượt 5.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 5 điểm. Có thể cộng điểm trong phạm vi tối đa 5 hoặc trừ điểm khi thiếu phối hợp. Điểm mục này không vượt 5.",
+      "evidence": "Biên bản họp, ghi nhận của Trưởng ban, kết quả xử lý vấn đề",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Chủ động đề xuất giải pháp, hỗ trợ nhóm khi phát sinh vấn đề",
+          "scoreDelta": "+0.5 đến +1 / lần",
+          "note": "Chỉ cộng khi đề xuất/hỗ trợ tạo ra kết quả rõ ràng, không cộng cho phát biểu chung chung.",
+          "evidence": "Biên bản họp, ghi nhận của Trưởng ban, kết quả xử lý vấn đề",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Chủ động nhận thêm nhiệm vụ phù hợp năng lực khi nhóm thiếu nhân sự",
+          "scoreDelta": "+0.5 đến +1 / lần",
+          "note": "Tổng điểm mục II.2 vẫn không vượt 5.",
+          "evidence": "Nhật ký phân công, xác nhận của nhóm dự án"
+        },
+        {
+          "detail": "Không phối hợp với thành viên khác khi được yêu cầu",
+          "scoreDelta": "-1 / lần",
+          "note": "Áp dụng khi sự thiếu phối hợp làm chậm tiến độ hoặc gây gián đoạn công việc.",
+          "evidence": "Tin nhắn làm việc, biên bản họp, ghi nhận của Trưởng ban"
+        },
+        {
+          "detail": "Có thái độ né tránh, đùn đẩy trách nhiệm",
+          "scoreDelta": "-2 đến -3 / lần",
+          "note": "Nếu lặp lại, đưa vào diện theo dõi thái độ tổ chức.",
+          "evidence": "Biên bản nhắc nhở, ghi nhận từ nhóm phụ trách"
+        }
+      ]
+    }
+  },
+  {
+    "code": "II.3",
+    "name": "Bảo vệ uy tín, hình ảnh và chuẩn mực phát ngôn của CLB",
+    "component": "II",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 5.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 203,
+    "description": "Bắt đầu từ 5 điểm. Trừ theo mức độ vi phạm liên quan đến phát ngôn, hình ảnh, ứng xử và danh nghĩa CLB. Điểm mục này không âm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 5 điểm. Trừ theo mức độ vi phạm liên quan đến phát ngôn, hình ảnh, ứng xử và danh nghĩa CLB. Điểm mục này không âm.",
+      "evidence": "Kế hoạch truyền thông, phân công nhiệm vụ, xác nhận của Ban Chủ nhiệm",
+      "recordingUnit": "Ban Chủ nhiệm / Ban Truyền thông",
+      "rules": [
+        {
+          "detail": "Sử dụng danh nghĩa CLB đúng phạm vi được phân công",
+          "scoreDelta": 0,
+          "note": "Đây là nghĩa vụ bắt buộc, không cộng điểm.",
+          "evidence": "Kế hoạch truyền thông, phân công nhiệm vụ, xác nhận của Ban Chủ nhiệm",
+          "recordingUnit": "Ban Chủ nhiệm / Ban Truyền thông"
+        },
+        {
+          "detail": "Tự ý phát ngôn, đăng tải hoặc đại diện CLB khi chưa được phân quyền",
+          "scoreDelta": "-2 đến -3 / lần",
+          "note": "Mức trừ phụ thuộc phạm vi lan truyền và mức độ ảnh hưởng.",
+          "evidence": "Bài đăng, ảnh chụp màn hình, ghi nhận của Ban Truyền thông",
+          "recordingUnit": "Ban Truyền thông / Ban Chủ nhiệm"
+        },
+        {
+          "detail": "Phát ngôn gây hiểu sai, ảnh hưởng tiêu cực đến hình ảnh CLB/Khoa/Trường",
+          "scoreDelta": "-3 đến -5 / lần",
+          "note": "Trường hợp nghiêm trọng có thể chuyển sang xử lý kỷ luật theo Điều lệ.",
+          "evidence": "Ảnh chụp màn hình, phản ánh từ thành viên/đơn vị liên quan, biên bản xác minh",
+          "recordingUnit": "Ban Chủ nhiệm / Ban Vận hành"
+        },
+        {
+          "detail": "Sử dụng danh nghĩa CLB để phục vụ mục đích cá nhân",
+          "scoreDelta": "-5 / lần",
+          "note": "Có thể xem xét khai trừ nếu gây thiệt hại uy tín hoặc lợi ích tổ chức.",
+          "evidence": "Biên bản xác minh, phản ánh, tài liệu liên quan",
+          "recordingUnit": "Ban Chủ nhiệm"
+        }
+      ]
+    }
+  },
+  {
+    "code": "II.4",
+    "name": "Bảo mật tài nguyên số và thông tin nội bộ",
+    "component": "II",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 5.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 204,
+    "description": "Bắt đầu từ 5 điểm. Trừ theo mức độ vi phạm về tài khoản, dữ liệu, tài liệu, mã nguồn, hồ sơ thành viên và thông tin nội bộ. Điểm mục này không âm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 5 điểm. Trừ theo mức độ vi phạm về tài khoản, dữ liệu, tài liệu, mã nguồn, hồ sơ thành viên và thông tin nội bộ. Điểm mục này không âm.",
+      "evidence": "Log truy cập, phân quyền Drive/Notion/GitHub/Fanpage, danh sách tài khoản",
+      "recordingUnit": "Ban Vận hành / Ban Công nghệ",
+      "rules": [
+        {
+          "detail": "Sử dụng tài nguyên số đúng phân quyền, không chia sẻ trái phép",
+          "scoreDelta": 0,
+          "note": "Đây là nghĩa vụ bắt buộc, không cộng điểm.",
+          "evidence": "Log truy cập, phân quyền Drive/Notion/GitHub/Fanpage, danh sách tài khoản",
+          "recordingUnit": "Ban Vận hành / Ban Công nghệ"
+        },
+        {
+          "detail": "Chia sẻ tài liệu nội bộ cho người không có thẩm quyền",
+          "scoreDelta": "-2 đến -4 / lần",
+          "note": "Mức trừ phụ thuộc mức độ nhạy cảm của tài liệu.",
+          "evidence": "Lịch sử chia sẻ file, log hệ thống, ảnh chụp màn hình"
+        },
+        {
+          "detail": "Tự ý thay đổi, xóa, di chuyển tài nguyên số khi chưa được phân quyền",
+          "scoreDelta": "-2 đến -5 / lần",
+          "note": "Nếu gây mất dữ liệu hoặc gián đoạn vận hành, chuyển sang xử lý kỷ luật.",
+          "evidence": "Log hệ thống, lịch sử chỉnh sửa, biên bản xác minh"
+        },
+        {
+          "detail": "Làm lộ tài khoản, mã nguồn, dữ liệu nhân sự hoặc thông tin nội bộ quan trọng",
+          "scoreDelta": "-5 / lần",
+          "note": "Trường hợp nghiêm trọng có thể đề xuất đình chỉ hoặc khai trừ.",
+          "evidence": "Log truy cập, bằng chứng rò rỉ, biên bản xác minh"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-A.1",
+    "name": "Hoàn thành nhiệm vụ được phân công",
+    "component": "III_A",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 10.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 301,
+    "description": "Bắt đầu từ 10 điểm. Trừ theo mức độ không hoàn thành, trễ hạn hoặc thiếu sản phẩm đầu ra. Điểm mục này không âm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 10 điểm. Trừ theo mức độ không hoàn thành, trễ hạn hoặc thiếu sản phẩm đầu ra. Điểm mục này không âm.",
+      "evidence": "Task trên Notion/Trello/Google Sheet, biên bản phân công, file sản phẩm",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Hoàn thành đầy đủ nhiệm vụ đúng hạn",
+          "scoreDelta": 0,
+          "note": "Không cộng thêm vì đây là yêu cầu cơ bản.",
+          "evidence": "Task trên Notion/Trello/Google Sheet, biên bản phân công, file sản phẩm",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Hoàn thành nhiệm vụ nhưng trễ hạn",
+          "scoreDelta": "-1 đến -2 / nhiệm vụ",
+          "note": "Tùy mức độ ảnh hưởng đến tiến độ chung.",
+          "evidence": "Deadline, lịch sử cập nhật task, xác nhận của Trưởng ban"
+        },
+        {
+          "detail": "Hoàn thành thiếu nội dung hoặc phải sửa nhiều lần do lỗi chủ quan",
+          "scoreDelta": "-1 đến -3 / nhiệm vụ",
+          "note": "Không áp dụng cho sửa đổi do thay đổi yêu cầu từ Ban Chủ nhiệm.",
+          "evidence": "File sản phẩm, lịch sử góp ý, biên bản nghiệm thu"
+        },
+        {
+          "detail": "Không hoàn thành nhiệm vụ được giao",
+          "scoreDelta": "-4 đến -10 / nhiệm vụ",
+          "note": "Nếu gây ảnh hưởng nghiêm trọng đến hoạt động chung, chuyển xem xét kỷ luật.",
+          "evidence": "Biên bản phân công, log task, ghi nhận của nhóm phụ trách"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-A.2",
+    "name": "Chất lượng sản phẩm đầu ra",
+    "component": "III_A",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 8.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 302,
+    "description": "Bắt đầu từ 8 điểm. Trừ theo mức độ lỗi, thiếu chuẩn hoặc không đáp ứng yêu cầu nghiệm thu. Điểm mục này không âm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 8 điểm. Trừ theo mức độ lỗi, thiếu chuẩn hoặc không đáp ứng yêu cầu nghiệm thu. Điểm mục này không âm.",
+      "evidence": "Checklist nghiệm thu, file sản phẩm, phản hồi của người phụ trách",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Sản phẩm đáp ứng đúng yêu cầu, đúng chuẩn của Ban",
+          "scoreDelta": 0,
+          "note": "Chuẩn đánh giá cần được Trưởng ban công bố trước.",
+          "evidence": "Checklist nghiệm thu, file sản phẩm, phản hồi của người phụ trách",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Sản phẩm có lỗi nhỏ, cần chỉnh sửa nhưng không ảnh hưởng kết quả chung",
+          "scoreDelta": "-0.5 đến -1 / sản phẩm",
+          "note": "Ví dụ: lỗi định dạng, lỗi trình bày, thiếu chi tiết nhỏ.",
+          "evidence": "Checklist góp ý, lịch sử chỉnh sửa",
+          "recordingUnit": "Trưởng nhóm / Trưởng ban"
+        },
+        {
+          "detail": "Sản phẩm không đạt yêu cầu nghiệm thu lần đầu",
+          "scoreDelta": "-2 đến -4 / sản phẩm",
+          "note": "Áp dụng khi cần làm lại đáng kể.",
+          "evidence": "Biên bản nghiệm thu, phản hồi của Trưởng ban",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Sản phẩm gây lỗi vận hành, sai thông tin hoặc ảnh hưởng đến hoạt động CLB",
+          "scoreDelta": "-5 đến -8 / sản phẩm",
+          "note": "Có thể chuyển sang xử lý ở nhóm kỷ luật nếu gây hậu quả nghiêm trọng.",
+          "evidence": "Biên bản sự cố, ảnh chụp, log hệ thống, phản ánh liên quan",
+          "recordingUnit": "Trưởng ban / Ban Chủ nhiệm"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-A.3",
+    "name": "Tiến độ và khả năng cập nhật công việc",
+    "component": "III_A",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 5.0,
+    "score_method": "DEDUCTIVE",
+    "requires_evidence": true,
+    "sort_order": 303,
+    "description": "Bắt đầu từ 5 điểm. Trừ theo lỗi không cập nhật tiến độ, cập nhật sai hoặc không phản hồi khi có yêu cầu điều phối.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 5 điểm. Trừ theo lỗi không cập nhật tiến độ, cập nhật sai hoặc không phản hồi khi có yêu cầu điều phối.",
+      "evidence": "Notion/Trello/Google Sheet, báo cáo tiến độ, tin nhắn nhóm",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Cập nhật tiến độ đúng hạn, rõ trạng thái công việc",
+          "scoreDelta": 0,
+          "note": "Đây là yêu cầu vận hành cơ bản.",
+          "evidence": "Notion/Trello/Google Sheet, báo cáo tiến độ, tin nhắn nhóm",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Cập nhật tiến độ muộn",
+          "scoreDelta": "-0.5 đến -1 / lần",
+          "note": "Chỉ áp dụng khi có mốc cập nhật rõ ràng.",
+          "evidence": "Lịch sử cập nhật, timestamp trên hệ thống",
+          "recordingUnit": "Trưởng nhóm / Trưởng ban"
+        },
+        {
+          "detail": "Không cập nhật tiến độ dù đã được nhắc",
+          "scoreDelta": "-1 đến -2 / lần",
+          "note": "Nếu lặp lại, ghi nhận thêm ở nhóm Thái độ.",
+          "evidence": "Tin nhắn nhắc việc, log task",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Báo cáo sai trạng thái công việc",
+          "scoreDelta": "-2 đến -5 / lần",
+          "note": "Áp dụng khi báo cáo sai làm ảnh hưởng đến điều phối chung.",
+          "evidence": "Biên bản đối soát, log sản phẩm, ghi nhận của nhóm",
+          "recordingUnit": "Trưởng ban / Ban Vận hành"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-A.4",
+    "name": "Khả năng phối hợp trong nhiệm vụ chuyên môn",
+    "component": "III_A",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 4.0,
+    "score_method": "MANUAL",
+    "requires_evidence": true,
+    "sort_order": 304,
+    "description": "Bắt đầu từ 4 điểm. Có thể cộng/trừ trong phạm vi điểm tối đa 4. Điểm mục này không âm, không vượt 4.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Bắt đầu từ 4 điểm. Có thể cộng/trừ trong phạm vi điểm tối đa 4. Điểm mục này không âm, không vượt 4.",
+      "evidence": "Biên bản họp nhóm, ghi nhận của Trưởng nhóm, kết quả nhiệm vụ",
+      "recordingUnit": "Trưởng nhóm / Trưởng ban",
+      "rules": [
+        {
+          "detail": "Phối hợp tốt với thành viên khác để hoàn thành nhiệm vụ chung",
+          "scoreDelta": 0,
+          "note": "Không cộng nếu chỉ thực hiện đúng phần việc cá nhân.",
+          "evidence": "Biên bản họp nhóm, ghi nhận của Trưởng nhóm, kết quả nhiệm vụ",
+          "recordingUnit": "Trưởng nhóm / Trưởng ban"
+        },
+        {
+          "detail": "Hỗ trợ xử lý phần việc phát sinh ngoài phạm vi cá nhân",
+          "scoreDelta": "+0.5 đến +1 / lần",
+          "note": "Chỉ cộng khi có kết quả cụ thể.",
+          "evidence": "Nhật ký phân công, xác nhận của nhóm phụ trách",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Chậm phản hồi hoặc thiếu phối hợp khi nhiệm vụ phụ thuộc liên ban",
+          "scoreDelta": "-1 / lần",
+          "note": "Áp dụng khi gây chậm tiến độ hoặc phải điều phối lại.",
+          "evidence": "Tin nhắn làm việc, biên bản họp, ghi nhận của nhóm",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Không bàn giao phần việc khi nhóm cần tiếp nối",
+          "scoreDelta": "-2 đến -4 / lần",
+          "note": "Trường hợp nghiêm trọng có thể ghi nhận vào nhóm Thái độ.",
+          "evidence": "File bàn giao, biên bản nhắc nhở, log task",
+          "recordingUnit": "Trưởng ban / Ban Vận hành"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-A.5",
+    "name": "Cải tiến, học hỏi và đóng góp chuyên môn",
+    "component": "III_A",
+    "unit_scope": "ALL",
+    "unit_code": null,
+    "max_score": 3.0,
+    "score_method": "ADDITIVE",
+    "requires_evidence": true,
+    "sort_order": 305,
+    "description": "Có thể cộng điểm trong phạm vi tối đa 3. Chỉ cộng khi có minh chứng rõ ràng về cải tiến, tài liệu hóa hoặc hỗ trợ nâng cao năng lực nhóm.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "Overview"
+      },
+      "formula": "Có thể cộng điểm trong phạm vi tối đa 3. Chỉ cộng khi có minh chứng rõ ràng về cải tiến, tài liệu hóa hoặc hỗ trợ nâng cao năng lực nhóm.",
+      "evidence": "Biên bản họp, tài liệu đề xuất, kết quả áp dụng",
+      "recordingUnit": "Trưởng ban chuyên môn",
+      "rules": [
+        {
+          "detail": "Đề xuất cải tiến quy trình/công cụ có áp dụng thực tế",
+          "scoreDelta": "+0.5 đến +1 / lần",
+          "note": "Không cộng cho đề xuất chưa triển khai hoặc không tạo giá trị.",
+          "evidence": "Biên bản họp, tài liệu đề xuất, kết quả áp dụng",
+          "recordingUnit": "Trưởng ban chuyên môn"
+        },
+        {
+          "detail": "Biên soạn tài liệu hướng dẫn, checklist, template phục vụ công việc chung",
+          "scoreDelta": "+0.5 đến +1 / tài liệu",
+          "note": "Tài liệu phải được dùng trong hoạt động thực tế.",
+          "evidence": "Tài liệu nội bộ, Drive/Notion, xác nhận của Trưởng ban"
+        },
+        {
+          "detail": "Hỗ trợ đào tạo, hướng dẫn thành viên khác trong phạm vi chuyên môn",
+          "scoreDelta": "+0.5 đến +1 / lần",
+          "note": "Chỉ cộng khi có ghi nhận từ Trưởng ban hoặc nhóm được hỗ trợ.",
+          "evidence": "Slide/tài liệu training, danh sách tham gia, phản hồi thành viên"
+        }
+      ]
+    }
+  },
+  {
+    "code": "III-B.BCN.01",
+    "name": "Hoạch định chiến lược và kế hoạch",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCN",
+    "max_score": 6.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4101,
+    "description": "Chấm theo mức độ hoàn thành kế hoạch, chất lượng điều phối và mức độ đúng hạn. Điểm tiêu chí không vượt quá 30.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.01.\nĐiểm cộng chỉ áp dụng khi kết quả đã được xác nhận bởi cấp quản lý hoặc đối tác liên quan.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCN"
+      },
+      "formula": "Chấm theo mức độ hoàn thành kế hoạch, chất lượng điều phối và mức độ đúng hạn. Điểm tiêu chí không vượt quá 30.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.01.\nĐiểm cộng chỉ áp dụng khi kết quả đã được xác nhận bởi cấp quản lý hoặc đối tác liên quan.",
+      "evidence": "Kế hoạch năm/nửa nhiệm kỳ; kế hoạch hoạt động tháng; biên bản họp BCN.",
+      "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành",
+      "rules": [
+        {
+          "detail": "Ban hành kế hoạch năm/nửa nhiệm kỳ và kế hoạch hoạt động tháng đúng hạn.",
+          "scoreDelta": "Đạt chuẩn: +30",
+          "note": "Áp dụng cho Chủ nhiệm, Phó Chủ nhiệm phụ trách kế hoạch và toàn BCN nếu kế hoạch được thông qua tập thể.",
+          "evidence": "Kế hoạch năm/nửa nhiệm kỳ; kế hoạch hoạt động tháng; biên bản họp BCN.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Chậm trễ ban hành kế hoạch tháng làm các ban chuyên môn bị động.",
+          "scoreDelta": "-10/lần",
+          "note": "Chỉ tính khi có bằng chứng việc chậm kế hoạch gây ảnh hưởng đến tiến độ chung.",
+          "evidence": "Biên bản họp; phản hồi từ Trưởng ban; lịch sử chỉnh sửa kế hoạch.",
+          "recordingUnit": "Ban Vận hành"
+        },
+        {
+          "detail": "Đề xuất chuỗi chương trình mới, có tính đột phá, được Khoa/Trường duyệt hoặc cấp ngân sách lớn.",
+          "scoreDelta": "+10/lần",
+          "note": "Tổng điểm sau cộng không vượt quá 30 đối với tiêu chí này.",
+          "evidence": "Văn bản phê duyệt; kế hoạch chương trình; quyết định cấp ngân sách/tài trợ.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Hủy họp BCN định kỳ quá 2 lần/tháng mà không có lý do chính đáng.",
+          "scoreDelta": "-10/tháng",
+          "note": "Không tính các trường hợp có điều chỉnh lịch được thông báo trước và có biên bản thay thế.",
+          "evidence": "Lịch họp; biên bản họp; thông báo hủy họp.",
+          "recordingUnit": "Ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban Ch? nhi?m",
+      "rawMaxScore": 30.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 6.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCN.02",
+    "name": "Quản trị, giám sát và phê duyệt",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCN",
+    "max_score": 6.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4102,
+    "description": "Chấm theo mức độ phản hồi, phê duyệt và giám sát hoạt động của các ban. Điểm tiêu chí không vượt quá 30.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.02.\nĐiểm cộng chỉ áp dụng khi có bằng chứng xử lý vấn đề phát sinh.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCN"
+      },
+      "formula": "Chấm theo mức độ phản hồi, phê duyệt và giám sát hoạt động của các ban. Điểm tiêu chí không vượt quá 30.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.02.\nĐiểm cộng chỉ áp dụng khi có bằng chứng xử lý vấn đề phát sinh.",
+      "evidence": "Nhật ký phê duyệt trên Drive; email/tin nhắn phản hồi; phiếu đề xuất.",
+      "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành",
+      "rules": [
+        {
+          "detail": "Phê duyệt kịp thời đề xuất, kịch bản, dự trù tài chính của các ban trong vòng 48 giờ.",
+          "scoreDelta": "Đạt chuẩn: +30",
+          "note": "Với hồ sơ phức tạp, thời hạn 48 giờ được hiểu là thời hạn phản hồi bước đầu, không bắt buộc phê duyệt cuối cùng.",
+          "evidence": "Nhật ký phê duyệt trên Drive; email/tin nhắn phản hồi; phiếu đề xuất.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Giam đề xuất, duyệt chậm hoặc không phản hồi làm ảnh hưởng tiến độ sự kiện/dự án.",
+          "scoreDelta": "-10/lần",
+          "note": "Chỉ tính khi có mốc thời gian gửi và phản hồi rõ ràng.",
+          "evidence": "Nhật ký Drive; lịch sử tin nhắn; biên bản họp; phản hồi từ Trưởng ban.",
+          "recordingUnit": "Ban Vận hành"
+        },
+        {
+          "detail": "Hỗ trợ giải quyết triệt để nút thắt vận hành hoặc chuyên môn cho ban phụ trách.",
+          "scoreDelta": "+5/lần",
+          "note": "Không cộng cho hoạt động hỗ trợ thông thường thuộc trách nhiệm mặc định.",
+          "evidence": "Biên bản xử lý vấn đề; báo cáo kết quả; xác nhận từ Trưởng ban.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Không kiểm tra, giám sát, để xảy ra sai phạm hệ thống ở ban mình phụ trách.",
+          "scoreDelta": "-15/lần",
+          "note": "Áp dụng cho thành viên BCN được phân công phụ trách ban tương ứng.",
+          "evidence": "Báo cáo sai phạm; biên bản xử lý; phản hồi từ thành viên/Trưởng ban.",
+          "recordingUnit": "Ban Vận hành; Ban Chủ nhiệm"
+        }
+      ],
+      "unitLabel": "Ban Ch? nhi?m",
+      "rawMaxScore": 30.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 6.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCN.03",
+    "name": "Quản lý nhân sự cốt cán và đối ngoại",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCN",
+    "max_score": 4.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4103,
+    "description": "Chấm theo năng lực duy trì nhân sự cốt cán, xử lý mâu thuẫn và đại diện CLB làm việc với các bên liên quan. Điểm tiêu chí không vượt quá 20.\nChấm theo kết quả đại diện, kết nối và duy trì quan hệ làm việc.\nĐiểm cộng chỉ áp dụng khi kết nối tạo ra kết quả cụ thể.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.03.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCN"
+      },
+      "formula": "Chấm theo năng lực duy trì nhân sự cốt cán, xử lý mâu thuẫn và đại diện CLB làm việc với các bên liên quan. Điểm tiêu chí không vượt quá 20.\nChấm theo kết quả đại diện, kết nối và duy trì quan hệ làm việc.\nĐiểm cộng chỉ áp dụng khi kết nối tạo ra kết quả cụ thể.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.03.",
+      "evidence": "Biên bản họp; biên bản xử lý mâu thuẫn; phản hồi từ Trưởng/Phó ban.",
+      "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành",
+      "rules": [
+        {
+          "detail": "Duy trì đoàn kết nội bộ, xử lý mâu thuẫn giữa các ban nếu phát sinh.",
+          "scoreDelta": "Đạt chuẩn: +10",
+          "note": "Nên tách điểm nội bộ và đối ngoại để dễ chấm: 10 điểm nhân sự, 10 điểm đối ngoại.",
+          "evidence": "Biên bản họp; biên bản xử lý mâu thuẫn; phản hồi từ Trưởng/Phó ban.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Đại diện CLB làm việc với Giảng viên cố vấn, Liên chi Hội Khoa, Khoa, Trường hoặc đối tác bên ngoài.",
+          "scoreDelta": "Đạt chuẩn: +10",
+          "note": "Phù hợp với vai trò đại diện và cầu nối của BCN được quy định trong Điều lệ.",
+          "evidence": "Biên bản làm việc; email xác nhận; thư mời; hình ảnh/báo cáo làm việc.",
+          "recordingUnit": "Ban Chủ nhiệm"
+        },
+        {
+          "detail": "Kết nối thành công với chuyên gia/doanh nghiệp bảo trợ chuyên môn, tài trợ hoặc đồng hành cùng MTEC.",
+          "scoreDelta": "+10/lần",
+          "note": "Tổng điểm sau cộng không vượt quá 20 đối với tiêu chí này.",
+          "evidence": "Biên bản hợp tác; email xác nhận; thư tài trợ; kế hoạch phối hợp.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "Quản lý lỏng lẻo dẫn đến nhân sự cốt cán đồng loạt xin rút khỏi CLB hoặc mất ổn định vận hành.",
+          "scoreDelta": "-15/lần",
+          "note": "Cần xác định nguyên nhân khách quan/chủ quan trước khi trừ điểm.",
+          "evidence": "Đơn xin rút; biên bản họp nhân sự; báo cáo biến động nhân sự.",
+          "recordingUnit": "Ban Vận hành; Ban Chủ nhiệm"
+        }
+      ],
+      "unitLabel": "Ban Ch? nhi?m",
+      "rawMaxScore": 20.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 4.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCN.04",
+    "name": "Hiệu suất chung của toàn Câu lạc bộ",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCN",
+    "max_score": 4.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4104,
+    "description": "Chấm theo mức độ hoàn thành mục tiêu tháng/quý của CLB. Điểm tiêu chí không vượt quá 20.\nĐiểm cộng chỉ áp dụng khi kết quả vượt chuẩn và có xác nhận chính thức.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.04.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCN"
+      },
+      "formula": "Chấm theo mức độ hoàn thành mục tiêu tháng/quý của CLB. Điểm tiêu chí không vượt quá 20.\nĐiểm cộng chỉ áp dụng khi kết quả vượt chuẩn và có xác nhận chính thức.\nĐiểm bị trừ trực tiếp vào tiêu chí III-B.BCN.04.",
+      "evidence": "Báo cáo tổng kết tháng/quý; dashboard KPI; biên bản họp tổng kết.",
+      "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành",
+      "rules": [
+        {
+          "detail": "CLB hoàn thành các chỉ tiêu tháng/quý về số lượng thành viên, chất lượng hoạt động, truyền thông và sự kiện.",
+          "scoreDelta": "Đạt chuẩn: +20",
+          "note": "Đây là tiêu chí tập thể của BCN, không nên dùng độc lập để quy trách nhiệm cá nhân nếu chưa có phân quyền cụ thể.",
+          "evidence": "Báo cáo tổng kết tháng/quý; dashboard KPI; biên bản họp tổng kết.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        },
+        {
+          "detail": "CLB hoàn thành vượt mức chỉ tiêu tháng/quý hoặc nhận bằng khen/ghi nhận từ Khoa, Trường, Đoàn - Hội.",
+          "scoreDelta": "+10/lần",
+          "note": "Tổng điểm sau cộng không vượt quá 20 đối với tiêu chí này.",
+          "evidence": "Bằng khen; giấy chứng nhận; báo cáo kết quả; thông báo ghi nhận.",
+          "recordingUnit": "Ban Chủ nhiệm"
+        },
+        {
+          "detail": "CLB hoạt động trì trệ, không có hoạt động nổi bật hoặc bị đánh giá kém trong kỳ đánh giá.",
+          "scoreDelta": "-15/kỳ",
+          "note": "Chỉ áp dụng khi có căn cứ đánh giá từ báo cáo hoặc phản hồi chính thức.",
+          "evidence": "Báo cáo tổng kết; biên bản họp; phản hồi từ đơn vị chủ quản/cố vấn.",
+          "recordingUnit": "Ban Chủ nhiệm; Ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban Ch? nhi?m",
+      "rawMaxScore": 20.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 4.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCNg.01",
+    "name": "Nghiên cứu, phát triển dự án và cuộc thi công nghệ",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCNg",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4201,
+    "description": "- Chấm theo hệ thống điểm tích lũy lũy tiến. Điểm tiêu chí không vượt quá 25.\n- Cộng vào điểm tích lũy của III-B.BCNg.01.\n- Trừ trực tiếp vào điểm tích lũy của III-B.BCNg.01.\n- Cộng vào III-B.BCNg.01, áp dụng cho vai trò quản lý dự án công nghệ.\n- Trừ trực tiếp vào III-B.BCNg.01.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCNg"
+      },
+      "formula": "- Chấm theo hệ thống điểm tích lũy lũy tiến. Điểm tiêu chí không vượt quá 25.\n- Cộng vào điểm tích lũy của III-B.BCNg.01.\n- Trừ trực tiếp vào điểm tích lũy của III-B.BCNg.01.\n- Cộng vào III-B.BCNg.01, áp dụng cho vai trò quản lý dự án công nghệ.\n- Trừ trực tiếp vào III-B.BCNg.01.",
+      "evidence": "Giấy chứng nhận; link cuộc thi; sản phẩm demo; repository; hình ảnh tham gia.",
+      "recordingUnit": "Leader Tech / Trưởng ban Công nghệ",
+      "rules": [
+        {
+          "itemCode": "III-B.BCNg.01.01",
+          "calculationNote": "- Chấm theo hệ thống điểm tích lũy lũy tiến. Điểm tiêu chí không vượt quá 25.\n- Cộng vào điểm tích lũy của III-B.BCNg.01.\n- Trừ trực tiếp vào điểm tích lũy của III-B.BCNg.01.\n- Cộng vào III-B.BCNg.01, áp dụng cho vai trò quản lý dự án công nghệ.\n- Trừ trực tiếp vào III-B.BCNg.01.",
+          "detail": "Tham gia cuộc thi cấp Trường trở lên hoặc làm sản phẩm demo công nghệ.",
+          "scoreDelta": 10,
+          "note": "Áp dụng cho cuộc thi lập trình, AI, hackathon hoặc sản phẩm demo có nghiệm thu.",
+          "evidence": "Giấy chứng nhận; link cuộc thi; sản phẩm demo; repository; hình ảnh tham gia.",
+          "recordingUnit": "Leader Tech / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.02",
+          "detail": "Tham gia cuộc thi ngoài trường.",
+          "scoreDelta": 15,
+          "note": "Chỉ tính khi có đăng ký hoặc tham gia thực tế, có minh chứng xác thực.",
+          "evidence": "Email xác nhận; giấy chứng nhận; link đội thi; hình ảnh tham gia.",
+          "recordingUnit": "Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.03",
+          "detail": "Đạt giải cao cấp Trường.",
+          "scoreDelta": 20,
+          "note": "Tính cho giải chính thức có công bố kết quả.",
+          "evidence": "Quyết định/Thông báo giải thưởng; giấy chứng nhận; link công bố.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.04",
+          "detail": "Tham gia cuộc thi cấp Khoa và đạt giải 1–2–3.",
+          "scoreDelta": 12,
+          "note": "Không cộng trùng nếu cùng thành tích đã tính ở cấp cao hơn.",
+          "evidence": "Giấy chứng nhận; thông báo kết quả; hình ảnh nhận giải.",
+          "recordingUnit": "Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.05",
+          "detail": "Tham gia cuộc thi cấp Khoa và đạt giải thấp hơn 1–2–3.",
+          "scoreDelta": 8,
+          "note": "Áp dụng cho giải khuyến khích, giải phụ hoặc ghi nhận chính thức.",
+          "evidence": "Giấy chứng nhận; thông báo kết quả; link công bố.",
+          "recordingUnit": "Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.06",
+          "detail": "Đăng ký cuộc thi nhưng bỏ cuộc không có lý do chính đáng.",
+          "scoreDelta": -10,
+          "note": "Chỉ tính khi việc bỏ cuộc ảnh hưởng đến đội/CLB.",
+          "evidence": "Danh sách đăng ký; tin nhắn xác nhận; biên bản đội thi.",
+          "recordingUnit": "Leader Tech / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.07",
+          "detail": "Hoàn thành vai trò Leader, điều phối đội ngũ và nộp sản phẩm đúng hạn.",
+          "scoreDelta": 10,
+          "note": "Leader phải có phân công, theo dõi tiến độ và nghiệm thu sản phẩm.",
+          "evidence": "Kế hoạch dự án; bảng phân công; repository; sản phẩm nộp; biên bản nghiệm thu.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.08",
+          "detail": "Đạt điểm tối đa ở mục 1.1.",
+          "scoreDelta": -15,
+          "note": "Chỉ dùng nếu thành viên vừa tham gia cuộc thi/dự án vừa đảm nhiệm vai trò Leader.",
+          "evidence": "Bảng điểm mục 1.1; minh chứng vai trò Leader.",
+          "recordingUnit": "Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.09",
+          "detail": "Bỏ thi hoặc bỏ dự án giữa chừng do lỗi quản lý của Leader.",
+          "scoreDelta": -15,
+          "note": "Áp dụng khi có căn cứ cho thấy lỗi thuộc trách nhiệm điều phối.",
+          "evidence": "Biên bản dự án; phản hồi thành viên; lịch sử phân công; báo cáo tiến độ.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        },
+        {
+          "itemCode": "III-B.BCNg.01.10",
+          "detail": "Team hoàn thành dự án xuất sắc, vượt mong đợi.",
+          "scoreDelta": 15,
+          "note": "Cần có nghiệm thu hoặc đánh giá từ BCN/đơn vị sử dụng.",
+          "evidence": "Báo cáo nghiệm thu; demo; phản hồi người dùng; biên bản đánh giá.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        }
+      ],
+      "unitLabel": "Ban C?ng ngh?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCNg.02",
+    "name": "Đào tạo nội bộ và giảng dạy chuyên môn",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCNg",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4202,
+    "description": "- Chấm theo số buổi giảng dạy, hỗ trợ kỹ thuật và chất lượng phản hồi. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.02.\n- Trừ trực tiếp vào III-B.BCNg.02.\n- Chấm theo mức độ hỗ trợ lớp học/training.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCNg"
+      },
+      "formula": "- Chấm theo số buổi giảng dạy, hỗ trợ kỹ thuật và chất lượng phản hồi. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.02.\n- Trừ trực tiếp vào III-B.BCNg.02.\n- Chấm theo mức độ hỗ trợ lớp học/training.",
+      "evidence": "Slide bài giảng; danh sách tham dự; hình ảnh buổi học; form feedback.",
+      "recordingUnit": "Leader Nội dung Tech / Trưởng ban Công nghệ",
+      "rules": [
+        {
+          "itemCode": "III-B.BCNg.02.01",
+          "calculationNote": "- Chấm theo số buổi giảng dạy, hỗ trợ kỹ thuật và chất lượng phản hồi. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.02.\n- Trừ trực tiếp vào III-B.BCNg.02.\n- Chấm theo mức độ hỗ trợ lớp học/training.",
+          "detail": "Đứng lớp chính ít nhất 1 buổi/tháng.",
+          "scoreDelta": 20,
+          "note": "Đạt chuẩn tháng cho vai trò giảng viên chính.",
+          "evidence": "Slide bài giảng; danh sách tham dự; hình ảnh buổi học; form feedback.",
+          "recordingUnit": "Leader Nội dung Tech / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.02",
+          "detail": "Từ buổi đứng lớp thứ 2 trở đi.",
+          "scoreDelta": "+20/buổi",
+          "note": "Tổng điểm tiêu chí vẫn không vượt quá 25 sau quy đổi/trần điểm.",
+          "evidence": "Lịch training; slide; danh sách tham dự; phản hồi học viên.",
+          "recordingUnit": "Leader Nội dung Tech"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.03",
+          "detail": "Nghỉ dạy tự do, không báo trước 24 giờ.",
+          "scoreDelta": -20,
+          "note": "Có thể hủy tư cách đứng lớp nếu tái phạm hoặc gây ảnh hưởng nghiêm trọng.",
+          "evidence": "Lịch phân công; tin nhắn báo vắng; biên bản buổi học.",
+          "recordingUnit": "Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.04",
+          "detail": "Nhận feedback xuất sắc từ học viên.",
+          "scoreDelta": 10,
+          "note": "Chỉ tính khi feedback có dữ liệu rõ, không dựa trên nhận xét cảm tính đơn lẻ.",
+          "evidence": "Google Form feedback; bảng tổng hợp đánh giá; nhận xét học viên.",
+          "recordingUnit": "Leader Nội dung Tech / Ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.05",
+          "detail": "Hỗ trợ kỹ thuật đủ 1 buổi/tháng với vai trò trợ giảng.",
+          "scoreDelta": 10,
+          "note": "Đạt chuẩn tháng cho vai trò trợ giảng.",
+          "evidence": "Lịch phân công; danh sách tham gia; xác nhận giảng viên chính.",
+          "recordingUnit": "Leader Nội dung Tech"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.06",
+          "detail": "Từ buổi trợ giảng thứ 3 trở đi.",
+          "scoreDelta": "+5/buổi",
+          "note": "Chỉ tính khi có tham gia thực tế và được giảng viên chính xác nhận.",
+          "evidence": "Danh sách tham dự; biên bản lớp học; xác nhận từ giảng viên chính.",
+          "recordingUnit": "Leader Nội dung Tech"
+        },
+        {
+          "itemCode": "III-B.BCNg.02.07",
+          "detail": "Đi muộn trên 15 phút làm ảnh hưởng lớp học.",
+          "scoreDelta": "-10/lần",
+          "note": "Áp dụng cho giảng viên chính hoặc trợ giảng.",
+          "evidence": "Lịch điểm danh; biên bản lớp học; xác nhận từ người phụ trách.",
+          "recordingUnit": "Leader Nội dung Tech"
+        }
+      ],
+      "unitLabel": "Ban C?ng ngh?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCNg.03",
+    "name": "Content kỹ thuật và nghiệm thu task chuyên môn",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCNg",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4203,
+    "description": "- Chấm theo sản phẩm nội dung kỹ thuật, task phát sinh và mức độ hoàn thành đúng hạn. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.03.\n- Trừ trực tiếp vào III-B.BCNg.03.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCNg"
+      },
+      "formula": "- Chấm theo sản phẩm nội dung kỹ thuật, task phát sinh và mức độ hoàn thành đúng hạn. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.03.\n- Trừ trực tiếp vào III-B.BCNg.03.",
+      "evidence": "File bài viết; link bài đăng; bản duyệt nội dung; lịch bàn giao.",
+      "recordingUnit": "Leader Nội dung Tech / Trưởng ban Công nghệ",
+      "rules": [
+        {
+          "itemCode": "III-B.BCNg.03.01",
+          "calculationNote": "- Chấm theo sản phẩm nội dung kỹ thuật, task phát sinh và mức độ hoàn thành đúng hạn. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BCNg.03.\n- Trừ trực tiếp vào III-B.BCNg.03.",
+          "detail": "Hoàn thành 1 bài viết content chuyên môn đạt yêu cầu và đúng hạn.",
+          "scoreDelta": 10,
+          "note": "Bài có thể đăng trên Fanpage, website hoặc dùng làm tài liệu nội bộ.",
+          "evidence": "File bài viết; link bài đăng; bản duyệt nội dung; lịch bàn giao.",
+          "recordingUnit": "Leader Nội dung Tech / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.02",
+          "detail": "Từ bài viết thứ 2 trở đi.",
+          "scoreDelta": "+15/bài",
+          "note": "Chỉ tính bài đạt yêu cầu chuyên môn và được nghiệm thu.",
+          "evidence": "Google Docs; link bài đăng; phản hồi duyệt bài.",
+          "recordingUnit": "Leader Nội dung Tech"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.03",
+          "detail": "Bài viết viral đạt trên 200 lượt tương tác.",
+          "scoreDelta": 10,
+          "note": "Tính theo số liệu thống kê của nền tảng đăng tải.",
+          "evidence": "Meta Business Suite; thống kê website; ảnh chụp reach/engagement.",
+          "recordingUnit": "Leader Nội dung Tech / Ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.04",
+          "detail": "Trễ deadline bàn giao bài viết hoặc bàn giao tài liệu.",
+          "scoreDelta": -10,
+          "note": "Chỉ tính khi deadline được giao rõ ràng.",
+          "evidence": "Lịch giao việc; tin nhắn giao task; lịch sử chỉnh sửa tài liệu.",
+          "recordingUnit": "Leader Nội dung Tech"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.05",
+          "detail": "Thành viên không đăng ký viết content nhưng hoàn thành xuất sắc task kỹ thuật đột xuất được giao.",
+          "scoreDelta": 10,
+          "note": "Áp dụng cho task phát sinh như fix bug, setup hệ thống, thiết kế web, hỗ trợ kỹ thuật.",
+          "evidence": "Git commit; ảnh kết quả; biên bản nghiệm thu; xác nhận từ Leader.",
+          "recordingUnit": "Leader Web & Dev / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.06",
+          "detail": "Xử lý được lỗi hệ thống phức tạp hoặc nghiêm trọng.",
+          "scoreDelta": 15,
+          "note": "Cần có mô tả lỗi, cách xử lý và kết quả sau xử lý.",
+          "evidence": "Bug report; commit fix lỗi; log hệ thống; biên bản xử lý sự cố.",
+          "recordingUnit": "Leader Web & Dev / Leader Network"
+        },
+        {
+          "itemCode": "III-B.BCNg.03.07",
+          "detail": "Nhận task nhưng không làm, gây ảnh hưởng đến tiến độ chung.",
+          "scoreDelta": -10,
+          "note": "Có thể đối chiếu thêm với nhóm II nếu hành vi thể hiện thiếu trách nhiệm tổ chức.",
+          "evidence": "Bảng task; Trello/Notion/GitHub issue; tin nhắn nhắc việc; báo cáo tiến độ.",
+          "recordingUnit": "Leader phụ trách / Trưởng ban Công nghệ"
+        }
+      ],
+      "unitLabel": "Ban C?ng ngh?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BCNg.04",
+    "name": "Hạ tầng hệ thống, AI/Data và vận hành kỹ thuật",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BCNg",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4204,
+    "description": "Chấm theo khả năng phát triển, duy trì, bảo mật và vận hành nền tảng kỹ thuật. Điểm tiêu chí không vượt quá 25.\nCộng vào III-B.BCNg.04.\nTrừ trực tiếp vào III-B.BCNg.04.\nTrừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BCNg"
+      },
+      "formula": "Chấm theo khả năng phát triển, duy trì, bảo mật và vận hành nền tảng kỹ thuật. Điểm tiêu chí không vượt quá 25.\nCộng vào III-B.BCNg.04.\nTrừ trực tiếp vào III-B.BCNg.04.\nTrừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Repository; Pull Request; link demo; tài liệu kỹ thuật; biên bản nghiệm thu.",
+      "recordingUnit": "Leader Web & Dev / Trưởng ban Công nghệ",
+      "rules": [
+        {
+          "itemCode": "III-B.BCNg.04.01",
+          "calculationNote": "Chấm theo khả năng phát triển, duy trì, bảo mật và vận hành nền tảng kỹ thuật. Điểm tiêu chí không vượt quá 25.\nCộng vào III-B.BCNg.04.\nTrừ trực tiếp vào III-B.BCNg.04.\nTrừ nặng, có thể chuyển xử lý kỷ luật.",
+          "detail": "Phát triển module/chức năng cho website, dashboard, landing page hoặc hệ thống nội bộ CLB.",
+          "scoreDelta": 20,
+          "note": "Áp dụng cho sản phẩm Web/App có tính năng rõ và chạy được.",
+          "evidence": "Repository; Pull Request; link demo; tài liệu kỹ thuật; biên bản nghiệm thu.",
+          "recordingUnit": "Leader Web & Dev / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.02",
+          "detail": "Cấu hình hoặc duy trì domain, hosting, form, drive, tài khoản kỹ thuật hoặc hệ thống hỗ trợ sự kiện.",
+          "scoreDelta": 15,
+          "note": "Phù hợp với nhiệm vụ quản trị hạ tầng kỹ thuật và nền tảng số của Ban Công nghệ.",
+          "evidence": "Log cấu hình; ảnh chụp cài đặt; tài liệu bàn giao; xác nhận nghiệm thu.",
+          "recordingUnit": "Leader Network / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.03",
+          "detail": "Xây dựng mô hình AI, dashboard dữ liệu, chatbot, automation hoặc pipeline xử lý dữ liệu phục vụ CLB.",
+          "scoreDelta": 20,
+          "note": "Phù hợp với nhiệm vụ ứng dụng AI/Data vào bài toán thực tiễn của CLB.",
+          "evidence": "Notebook; dashboard; repository; demo; báo cáo đánh giá; tài liệu hướng dẫn.",
+          "recordingUnit": "Leader AI/Data / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.04",
+          "detail": "Xây dựng tài liệu kỹ thuật, quy trình backup, phân quyền, checklist vận hành hệ thống.",
+          "scoreDelta": 10,
+          "note": "Tài liệu phải dùng được cho vận hành hoặc bàn giao nhân sự.",
+          "evidence": "File tài liệu; checklist; Drive kỹ thuật; biên bản bàn giao.",
+          "recordingUnit": "Leader Network / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.05",
+          "detail": "Đẩy code lỗi, làm hỏng chức năng đang hoạt động hoặc gây lỗi production/staging.",
+          "scoreDelta": "-10 đến -20",
+          "note": "Mức trừ tùy mức độ ảnh hưởng và thời gian khắc phục.",
+          "evidence": "Bug report; commit gây lỗi; log hệ thống; biên bản rollback/hotfix.",
+          "recordingUnit": "Leader Web & Dev / Trưởng ban Công nghệ"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.06",
+          "detail": "Không backup dữ liệu, phân quyền sai, để thất lạc tài khoản hoặc gây rủi ro mất dữ liệu.",
+          "scoreDelta": "-15 đến -25",
+          "note": "Mức -25 áp dụng khi gây mất dữ liệu hoặc mất quyền truy cập tài nguyên số.",
+          "evidence": "Log phân quyền; lịch sử Drive; email cảnh báo; biên bản xử lý sự cố.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.07",
+          "detail": "Public token/API key, chia sẻ mật khẩu hoặc quyền quản trị cho người không có thẩm quyền.",
+          "scoreDelta": -25,
+          "note": "Liên quan trực tiếp đến bảo mật tài nguyên số của CLB.",
+          "evidence": "Repository history; log đăng nhập; lịch sử phân quyền; biên bản xác minh.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        },
+        {
+          "itemCode": "III-B.BCNg.04.08",
+          "detail": "Sử dụng dữ liệu thành viên, dữ liệu nội bộ hoặc dữ liệu đối tác sai phạm vi được phép.",
+          "scoreDelta": -25,
+          "note": "Có thể đối chiếu thêm với nhóm II về ý thức tổ chức và bảo vệ uy tín CLB.",
+          "evidence": "Log truy cập; file chia sẻ; lịch sử phân quyền; biên bản xác minh.",
+          "recordingUnit": "Trưởng ban Công nghệ / BCN"
+        }
+      ],
+      "unitLabel": "Ban C?ng ngh?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BTT.01",
+    "name": "Content — Nội dung truyền thông",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BTT",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4301,
+    "description": "Chấm theo số lượng, chất lượng, mức độ đúng hạn và hiệu quả của sản phẩm nội dung. Điểm tiêu chí không vượt quá 25.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BTT"
+      },
+      "formula": "Chấm theo số lượng, chất lượng, mức độ đúng hạn và hiệu quả của sản phẩm nội dung. Điểm tiêu chí không vượt quá 25.",
+      "evidence": "Link bài viết Fanpage; file Google Docs; lịch đăng bài; xác nhận của Leader Content.",
+      "recordingUnit": "Leader Content / Trưởng ban Truyền thông",
+      "rules": [
+        {
+          "itemCode": "III-B.BTT.01.01",
+          "calculationNote": "Chấm theo số lượng, chất lượng, mức độ đúng hạn và hiệu quả của sản phẩm nội dung. Điểm tiêu chí không vượt quá 25.",
+          "detail": "Viết bài Facebook cơ bản: thông báo, minigame, bài tương tác, recap ngắn.",
+          "scoreDelta": "+10/bài đạt yêu cầu",
+          "note": "Chỉ tính khi bài đã được duyệt và đăng hoặc được nghiệm thu để đăng.",
+          "evidence": "Link bài viết Fanpage; file Google Docs; lịch đăng bài; xác nhận của Leader Content.",
+          "recordingUnit": "Leader Content / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.01.02",
+          "calculationNote": "Điểm cộng được tính khi sản phẩm có độ phức tạp cao hơn bài cơ bản.",
+          "detail": "Viết bài chuyên sâu, bài học thuật, tech-blog, kịch bản video hoặc kịch bản truyền thông sự kiện.",
+          "scoreDelta": "+20/bài hoặc kịch bản đạt yêu cầu",
+          "note": "Nội dung chuyên sâu cần có cấu trúc rõ, thông tin chính xác và phù hợp định hướng CLB.",
+          "evidence": "File Google Docs; bản duyệt nội dung; link bài đăng; phản hồi duyệt từ BCN/Leader."
+        },
+        {
+          "itemCode": "III-B.BTT.01.03",
+          "calculationNote": "Điểm cộng hiệu quả chỉ áp dụng khi có số liệu đo lường cụ thể.",
+          "detail": "Bài viết có tương tác tăng từ 20% trở lên so với bài cùng loại gần nhất.",
+          "scoreDelta": "+5/lần",
+          "note": "Không so sánh với bài có tính chất quá khác biệt, ví dụ thông báo nội bộ so với minigame.",
+          "evidence": "Meta Business Suite; thống kê reach, engagement, share, comment.",
+          "recordingUnit": "Leader Content / Page Ops"
+        },
+        {
+          "itemCode": "III-B.BTT.01.04",
+          "calculationNote": "Điểm cộng hiệu quả chỉ áp dụng với sản phẩm vượt ngưỡng truyền thông đã định.",
+          "detail": "Nội dung có hiệu quả nổi bật: đạt từ 50 lượt chia sẻ hoặc video/kịch bản đạt từ 2.000 lượt xem sau khi đăng.",
+          "scoreDelta": "+10/lần",
+          "note": "Ngưỡng có thể điều chỉnh theo quy mô Fanpage từng giai đoạn.",
+          "evidence": "Thống kê Fanpage/TikTok/Reels; ảnh chụp số liệu; link bài đăng.",
+          "recordingUnit": "Page Ops / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.01.05",
+          "calculationNote": "Trừ điểm trực tiếp vào tiêu chí III-B.BTH.01.\nTrừ điểm nặng; có thể kèm xử lý kỷ luật tùy mức độ.",
+          "detail": "Trễ deadline duyệt nội dung làm ảnh hưởng lịch đăng.",
+          "scoreDelta": "-5/lần",
+          "note": "Chỉ tính khi có deadline được giao rõ ràng.",
+          "evidence": "Lịch nội dung; log giao việc; tin nhắn nhắc deadline.",
+          "recordingUnit": "Leader Content"
+        },
+        {
+          "itemCode": "III-B.BTT.01.06",
+          "detail": "Bài đã đăng có lỗi chính tả, sai thông tin, sai thời gian, sai tên đơn vị hoặc sai nội dung truyền thông.",
+          "scoreDelta": "-5/lần",
+          "note": "Nếu lỗi gây ảnh hưởng nghiêm trọng đến hình ảnh CLB, chuyển thêm sang nhóm thái độ/hình ảnh tổ chức ở Overview.",
+          "evidence": "Link bài đăng; ảnh chụp lỗi; biên bản chỉnh sửa; phản hồi từ BCN.",
+          "recordingUnit": "Leader Content / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.01.07",
+          "detail": "Đạo văn, sao chép 100% nội dung, sử dụng nguồn không kiểm chứng hoặc không được phép.",
+          "scoreDelta": "-20/lần",
+          "note": "Trường hợp nghiêm trọng có thể hủy bài và chuyển BCN xem xét kỷ luật.",
+          "evidence": "Bản đối chiếu nguồn; link nguồn gốc; biên bản xử lý nội dung.",
+          "recordingUnit": "Trưởng ban Truyền thông / BCN"
+        }
+      ],
+      "unitLabel": "Ban Truy?n th?ng",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BTT.02",
+    "name": "Design — Thiết kế ấn phẩm",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BTT",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4302,
+    "description": "Chấm theo số lượng, độ phức tạp, mức độ đúng nhận diện và tiến độ bàn giao. Điểm tiêu chí không vượt quá 25.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BTT"
+      },
+      "formula": "Chấm theo số lượng, độ phức tạp, mức độ đúng nhận diện và tiến độ bàn giao. Điểm tiêu chí không vượt quá 25.",
+      "evidence": "File thiết kế; link bài đăng; thư mục Drive; bản xuất PNG/JPG/PDF.",
+      "recordingUnit": "Leader Design / Trưởng ban Truyền thông",
+      "rules": [
+        {
+          "itemCode": "III-B.BTT.02.01",
+          "calculationNote": "Chấm theo số lượng, độ phức tạp, mức độ đúng nhận diện và tiến độ bàn giao. Điểm tiêu chí không vượt quá 25.",
+          "detail": "Thiết kế ấn phẩm tĩnh đơn lẻ: avatar, cover, ảnh bài viết, story, banner đơn giản.",
+          "scoreDelta": "+15/ấn phẩm đạt yêu cầu",
+          "note": "Chỉ tính bản thiết kế cuối cùng đã được duyệt.",
+          "evidence": "File thiết kế; link bài đăng; thư mục Drive; bản xuất PNG/JPG/PDF.",
+          "recordingUnit": "Leader Design / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.02.02",
+          "calculationNote": "Điểm cộng được tính cho sản phẩm có độ phức tạp cao hơn ấn phẩm đơn lẻ.",
+          "detail": "Thiết kế chuỗi ấn phẩm phức tạp: album, carousel, infographic, bộ visual sự kiện.",
+          "scoreDelta": "+25/bộ đạt yêu cầu",
+          "note": "Một bộ cần có tối thiểu 3 ấn phẩm hoặc có yêu cầu layout/phong cách thống nhất.",
+          "evidence": "Thư mục Drive; file thiết kế gốc; bản xuất cuối cùng; link bài đăng.",
+          "recordingUnit": "Leader Design"
+        },
+        {
+          "itemCode": "III-B.BTT.02.03",
+          "calculationNote": "Điểm cộng chất lượng chỉ áp dụng khi sản phẩm được duyệt ngay hoặc có ghi nhận rõ.",
+          "detail": "Thiết kế được duyệt ngay từ vòng đầu, ít hoặc không cần chỉnh sửa.",
+          "scoreDelta": "+5/lần",
+          "note": "Không cộng nếu sản phẩm được duyệt nhanh do deadline gấp nhưng chất lượng chưa đủ chuẩn.",
+          "evidence": "Lịch sử góp ý; phản hồi duyệt; file thiết kế các phiên bản.",
+          "recordingUnit": "Leader Design / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.02.04",
+          "calculationNote": "Điểm cộng chất lượng áp dụng cho sản phẩm có đóng góp nổi bật về hình ảnh thương hiệu.",
+          "detail": "Ý tưởng hình ảnh độc đáo, đồng bộ nhận diện, được Leader/BCN ghi nhận.",
+          "scoreDelta": "+10/lần",
+          "note": "Tổng điểm tiêu chí vẫn không vượt quá 25.",
+          "evidence": "Biên bản họp; phản hồi BCN; link chiến dịch; thư mục thiết kế.",
+          "recordingUnit": "Trưởng ban Truyền thông / BCN"
+        },
+        {
+          "itemCode": "III-B.BTT.02.05",
+          "calculationNote": "Trừ điểm trực tiếp vào tiêu chí III-B.BTH.02.",
+          "detail": "Trễ deadline giao file thiết kế.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức trừ tùy mức độ ảnh hưởng đến lịch đăng hoặc lịch in ấn.",
+          "evidence": "Lịch phân công; log giao việc; tin nhắn nhắc deadline.",
+          "recordingUnit": "Leader Design"
+        },
+        {
+          "itemCode": "III-B.BTT.02.06",
+          "detail": "Sai logo, sai màu nhận diện, sai tên CLB, sai đơn vị chủ quản hoặc dùng hình ảnh không phù hợp.",
+          "scoreDelta": "-10/lần",
+          "note": "Nếu đã đăng công khai và phải gỡ/chỉnh sửa, có thể ghi nhận thêm ở tiêu chí hình ảnh tổ chức.",
+          "evidence": "File thiết kế; link bài đăng; ảnh chụp lỗi; phản hồi chỉnh sửa.",
+          "recordingUnit": "Leader Design / Trưởng ban Truyền thông"
+        }
+      ],
+      "unitLabel": "Ban Truy?n th?ng",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BTT.03",
+    "name": "Media — Hình ảnh và video",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BTT",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4303,
+    "description": "Chấm theo chất lượng ghi hình, hậu kỳ, tiến độ bàn giao và khả năng khai thác truyền thông. Điểm tiêu chí không vượt quá 25.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BTT"
+      },
+      "formula": "Chấm theo chất lượng ghi hình, hậu kỳ, tiến độ bàn giao và khả năng khai thác truyền thông. Điểm tiêu chí không vượt quá 25.",
+      "evidence": "Thư mục Drive ảnh sự kiện; ảnh đã hậu kỳ; xác nhận nghiệm thu.",
+      "recordingUnit": "Leader Media / Trưởng ban Truyền thông",
+      "rules": [
+        {
+          "itemCode": "III-B.BTT.03.01",
+          "calculationNote": "Chấm theo chất lượng ghi hình, hậu kỳ, tiến độ bàn giao và khả năng khai thác truyền thông. Điểm tiêu chí không vượt quá 25.",
+          "detail": "Chụp ảnh sự kiện thực tế và hậu kỳ ảnh đạt yêu cầu.",
+          "scoreDelta": "+20/buổi",
+          "note": "Ảnh cần đủ số lượng, rõ nét, có chọn lọc và phù hợp mục đích truyền thông.",
+          "evidence": "Thư mục Drive ảnh sự kiện; ảnh đã hậu kỳ; xác nhận nghiệm thu.",
+          "recordingUnit": "Leader Media / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.03.02",
+          "calculationNote": "Điểm cộng tiến độ áp dụng khi bàn giao sớm và không ảnh hưởng chất lượng.",
+          "detail": "Trả file ảnh chất lượng trong vòng 12 giờ sau sự kiện.",
+          "scoreDelta": "+10/lần",
+          "note": "Chỉ tính khi bộ ảnh được nghiệm thu và sử dụng được ngay.",
+          "evidence": "Thời gian upload Drive; thư mục ảnh; xác nhận từ Content/Page Ops.",
+          "recordingUnit": "Leader Media"
+        },
+        {
+          "itemCode": "III-B.BTT.03.03",
+          "calculationNote": "Điểm cộng cho sản phẩm video đã hoàn thiện và được nghiệm thu.",
+          "detail": "Quay và dựng video: Reels, TikTok, recap sự kiện, video truyền thông chiến dịch.",
+          "scoreDelta": "+25/video đạt yêu cầu",
+          "note": "Nếu video có độ phức tạp cao, có thể ghi nhận thêm ở phần cộng hiệu quả nhưng tổng mục không vượt 25.",
+          "evidence": "File MP4; project file; link video đã đăng; bản duyệt.",
+          "recordingUnit": "Leader Media / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.03.04",
+          "calculationNote": "Điểm cộng hiệu quả áp dụng khi có số liệu sau đăng.",
+          "detail": "Video đạt mốc lượt xem cao theo tuần hoặc vượt KPI chiến dịch.",
+          "scoreDelta": "+15/lần",
+          "note": "Cần quy định KPI theo từng giai đoạn Fanpage/TikTok/Reels.",
+          "evidence": "Thống kê lượt xem; reach; retention; engagement; link video.",
+          "recordingUnit": "Page Ops / Leader Media"
+        },
+        {
+          "itemCode": "III-B.BTT.03.05",
+          "calculationNote": "Trừ điểm trực tiếp vào tiêu chí III-B.BTH.03.",
+          "detail": "Trễ file ảnh/video làm chậm tiến độ đăng bài của Content hoặc Page Ops.",
+          "scoreDelta": "-10/lần",
+          "note": "Chỉ tính khi có timeline bàn giao rõ ràng.",
+          "evidence": "Lịch đăng bài; log giao việc; tin nhắn nhắc deadline.",
+          "recordingUnit": "Leader Media / Leader Content"
+        },
+        {
+          "itemCode": "III-B.BTT.03.06",
+          "detail": "Video dính bản quyền âm thanh, hình ảnh mờ, âm thanh kém, sai format hoặc không đạt yêu cầu đăng tải.",
+          "scoreDelta": "-10/lần",
+          "note": "Nếu phải dựng lại hoàn toàn, có thể trừ thêm theo mức ảnh hưởng thực tế.",
+          "evidence": "File video; phản hồi duyệt; thông báo bản quyền; bản chỉnh sửa.",
+          "recordingUnit": "Leader Media / Trưởng ban Truyền thông"
+        }
+      ],
+      "unitLabel": "Ban Truy?n th?ng",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BTT.04",
+    "name": "Quản trị chiến dịch và vận hành kênh",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BTT",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4304,
+    "description": "Chấm theo năng lực lập kế hoạch, điều phối chiến dịch, quản trị lịch đăng và phản hồi kênh. Điểm tiêu chí không vượt quá 25.\nĐiểm cộng hiệu quả chỉ áp dụng khi chiến dịch vượt chỉ tiêu đã định.\nĐiểm cộng duy trì kênh tính theo tuần trực page hoặc quản trị lịch đăng.\nĐiểm cộng chất lượng áp dụng khi phản hồi đúng chuẩn truyền thông.\nTrừ điểm trực tiếp vào tiêu chí III-B.BTH.04.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BTT"
+      },
+      "formula": "Chấm theo năng lực lập kế hoạch, điều phối chiến dịch, quản trị lịch đăng và phản hồi kênh. Điểm tiêu chí không vượt quá 25.\nĐiểm cộng hiệu quả chỉ áp dụng khi chiến dịch vượt chỉ tiêu đã định.\nĐiểm cộng duy trì kênh tính theo tuần trực page hoặc quản trị lịch đăng.\nĐiểm cộng chất lượng áp dụng khi phản hồi đúng chuẩn truyền thông.\nTrừ điểm trực tiếp vào tiêu chí III-B.BTH.04.",
+      "evidence": "Kế hoạch truyền thông; timeline; bảng phân công; báo cáo sau chiến dịch.",
+      "recordingUnit": "Trưởng ban Truyền thông / BCN",
+      "rules": [
+        {
+          "itemCode": "III-B.BTT.04.01",
+          "calculationNote": "Chấm theo năng lực lập kế hoạch, điều phối chiến dịch, quản trị lịch đăng và phản hồi kênh. Điểm tiêu chí không vượt quá 25.\nĐiểm cộng hiệu quả chỉ áp dụng khi chiến dịch vượt chỉ tiêu đã định.\nĐiểm cộng duy trì kênh tính theo tuần trực page hoặc quản trị lịch đăng.\nĐiểm cộng chất lượng áp dụng khi phản hồi đúng chuẩn truyền thông.\nTrừ điểm trực tiếp vào tiêu chí III-B.BTH.04.",
+          "detail": "Đảm nhiệm vai trò Leader truyền thông cho sự kiện/dự án.",
+          "scoreDelta": "+25/sự kiện đạt yêu cầu",
+          "note": "Vai trò Leader phải bao gồm lập kế hoạch, phân công nhân sự, kiểm soát timeline và nghiệm thu sản phẩm.",
+          "evidence": "Kế hoạch truyền thông; timeline; bảng phân công; báo cáo sau chiến dịch.",
+          "recordingUnit": "Trưởng ban Truyền thông / BCN"
+        },
+        {
+          "itemCode": "III-B.BTT.04.02",
+          "detail": "Chiến dịch đạt hoặc vượt KPI: tăng follow, tăng reach, tăng engagement hoặc hỗ trợ tốt cho sự kiện.",
+          "scoreDelta": "+10 đến +20/lần",
+          "note": "KPI cần được xác định trước chiến dịch, không đánh giá hồi tố cảm tính.",
+          "evidence": "Báo cáo campaign; Meta Business Suite; bảng KPI; báo cáo tổng kết sự kiện.",
+          "recordingUnit": "Page Ops / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.04.03",
+          "detail": "Trực page, lên lịch bài, phản hồi tin nhắn/comment đúng quy định.",
+          "scoreDelta": "+10/tuần đạt yêu cầu",
+          "note": "Áp dụng cho thành viên được phân công Page Ops.",
+          "evidence": "Nhật ký trực Page; lịch đăng bài; ảnh chụp phản hồi tin nhắn/comment.",
+          "recordingUnit": "Page Ops / Trưởng ban Truyền thông"
+        },
+        {
+          "itemCode": "III-B.BTT.04.04",
+          "detail": "Phản hồi thắc mắc của sinh viên/đối tác nhanh, lịch sự, đúng thông tin.",
+          "scoreDelta": "+5/lần hoặc +5/tuần",
+          "note": "Nên tính theo tuần để tránh cộng điểm quá nhỏ lẻ.",
+          "evidence": "Inbox Fanpage; comment; ảnh chụp phản hồi; nhật ký trực Page.",
+          "recordingUnit": "Page Ops"
+        },
+        {
+          "itemCode": "III-B.BTT.04.05",
+          "detail": "Bể kế hoạch truyền thông do phân công lỏng lẻo, thiếu bao quát hoặc không kiểm soát timeline.",
+          "scoreDelta": "-25/lần",
+          "note": "Áp dụng cho Leader chiến dịch hoặc người phụ trách chính.",
+          "evidence": "Kế hoạch truyền thông; biên bản họp; báo cáo lỗi; phản hồi từ BCN/ban liên quan.",
+          "recordingUnit": "Trưởng ban Truyền thông / BCN"
+        },
+        {
+          "itemCode": "III-B.BTT.04.06",
+          "detail": "Đăng bài sai khung giờ đã quy định hoặc sai lịch truyền thông.",
+          "scoreDelta": "-5/lần",
+          "note": "Không tính nếu lịch đăng thay đổi theo chỉ đạo của BCN/Leader và có thông báo trước.",
+          "evidence": "Lịch đăng bài; Meta Business Suite; log đăng bài.",
+          "recordingUnit": "Page Ops"
+        },
+        {
+          "itemCode": "III-B.BTT.04.07",
+          "detail": "Bỏ sót tin nhắn/comment của sinh viên, đối tác hoặc đơn vị liên hệ quá 12 giờ.",
+          "scoreDelta": "-5/lần",
+          "note": "Tin nhắn ngoài giờ trực có thể xử lý theo ca trực đã phân công.",
+          "evidence": "Inbox Fanpage; ảnh chụp thời gian phản hồi; nhật ký trực Page.",
+          "recordingUnit": "Page Ops / Trưởng ban Truyền thông"
+        }
+      ],
+      "unitLabel": "Ban Truy?n th?ng",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-HC.01",
+    "name": "Quản lý tài sản, vật tư và cơ sở vật chất",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-HC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4401,
+    "description": "- Chấm theo mức độ đầy đủ, chính xác, cập nhật và truy xuất được của dữ liệu tài sản/vật tư. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.01.\n- Trừ trực tiếp vào III-B.BVH-HC.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-HC"
+      },
+      "formula": "- Chấm theo mức độ đầy đủ, chính xác, cập nhật và truy xuất được của dữ liệu tài sản/vật tư. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.01.\n- Trừ trực tiếp vào III-B.BVH-HC.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Sổ tài sản; Google Sheet kiểm kê; ảnh vật tư; lịch sử chỉnh sửa.",
+      "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "itemCode": "III-B.BVH-HC.01.01",
+          "calculationNote": "- Chấm theo mức độ đầy đủ, chính xác, cập nhật và truy xuất được của dữ liệu tài sản/vật tư. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.01.\n- Trừ trực tiếp vào III-B.BVH-HC.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+          "detail": "Lập và cập nhật danh mục tài sản, vật tư, thiết bị, công cụ phục vụ hoạt động CLB.",
+          "scoreDelta": "+15/tháng đạt chuẩn",
+          "note": "Danh mục cần có tên vật tư, số lượng, tình trạng, vị trí lưu trữ, người phụ trách và ngày cập nhật.",
+          "evidence": "Sổ tài sản; Google Sheet kiểm kê; ảnh vật tư; lịch sử chỉnh sửa.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.02",
+          "detail": "Kiểm kê định kỳ tài sản/vật tư và đối chiếu với thực tế lưu kho.",
+          "scoreDelta": "+10/lần",
+          "note": "Nên thực hiện trước/sau sự kiện lớn hoặc theo chu kỳ tháng/học kỳ.",
+          "evidence": "Biên bản kiểm kê; ảnh kho/vật tư; bảng đối chiếu; xác nhận Trưởng ban.",
+          "recordingUnit": "Tổ Hậu cần / BCN"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.03",
+          "detail": "Chuẩn hóa quy trình mượn — trả, bàn giao, lưu kho và theo dõi tình trạng vật tư.",
+          "scoreDelta": "+15/lần",
+          "note": "Chỉ tính khi quy trình có biểu mẫu, người chịu trách nhiệm và cơ chế xác nhận rõ.",
+          "evidence": "Biểu mẫu mượn — trả; checklist bàn giao; tài liệu quy trình; log sử dụng.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.04",
+          "detail": "Ghi sai số lượng, thiếu cập nhật tình trạng, không đối chiếu vật tư sau sử dụng hoặc thiếu hồ sơ bàn giao.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức -10 áp dụng nếu sai lệch làm ảnh hưởng kế hoạch chuẩn bị sự kiện.",
+          "evidence": "Bảng đối chiếu; biên bản bàn giao; ảnh vật tư; lịch sử chỉnh sửa.",
+          "recordingUnit": "Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.05",
+          "detail": "Làm thất lạc, hư hỏng tài sản chung do lỗi chủ quan hoặc không báo cáo kịp thời.",
+          "scoreDelta": "-15 đến -25/lần",
+          "note": "Mức -25 áp dụng khi tài sản có giá trị cao hoặc làm gián đoạn hoạt động CLB.",
+          "evidence": "Biên bản sự cố; ảnh hư hỏng; báo giá thay thế/sửa chữa; báo cáo giải trình.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? H?u c?n",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-HC.02",
+    "name": "Chuẩn bị hậu cần cho họp, sinh hoạt và training nội bộ",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-HC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4402,
+    "description": "- Chấm theo mức độ đúng hạn, đầy đủ và phù hợp của công tác chuẩn bị không gian, thiết bị, vật tư cho hoạt động nội bộ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.02.\n- Trừ trực tiếp vào III-B.BVH-HC.02.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-HC"
+      },
+      "formula": "- Chấm theo mức độ đúng hạn, đầy đủ và phù hợp của công tác chuẩn bị không gian, thiết bị, vật tư cho hoạt động nội bộ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.02.\n- Trừ trực tiếp vào III-B.BVH-HC.02.",
+      "evidence": "Checklist chuẩn bị; ảnh setup; lịch phòng; xác nhận người phụ trách buổi họp.",
+      "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "itemCode": "III-B.BVH-HC.01.01",
+          "calculationNote": "- Chấm theo mức độ đúng hạn, đầy đủ và phù hợp của công tác chuẩn bị không gian, thiết bị, vật tư cho hoạt động nội bộ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.02.\n- Trừ trực tiếp vào III-B.BVH-HC.02.",
+          "detail": "Chuẩn bị phòng, bàn ghế, thiết bị trình chiếu, âm thanh, điện, nước, bảng tên hoặc vật tư cho buổi họp/sinh hoạt/training.",
+          "scoreDelta": "+15/buổi đạt yêu cầu",
+          "note": "Phù hợp với nhiệm vụ chuẩn bị cơ sở vật chất và không gian phục vụ buổi sinh hoạt nội bộ.",
+          "evidence": "Checklist chuẩn bị; ảnh setup; lịch phòng; xác nhận người phụ trách buổi họp.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.02",
+          "detail": "Có mặt đúng thời gian setup, kiểm tra thiết bị trước hoạt động và bàn giao không gian sau hoạt động.",
+          "scoreDelta": "+10/buổi",
+          "note": "Nên quy định thời gian có mặt tối thiểu 30–60 phút trước hoạt động tùy quy mô.",
+          "evidence": "Lịch setup; ảnh trước/sau; checklist kiểm tra; xác nhận từ ban tổ chức.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.03",
+          "detail": "Chủ động chuẩn bị phương án dự phòng cho thiết bị, phòng, vật tư hoặc kết nối kỹ thuật cơ bản.",
+          "scoreDelta": "+10/lần",
+          "note": "Áp dụng khi có phương án dự phòng thực tế, không chỉ ghi trên kế hoạch.",
+          "evidence": "Checklist phương án B; ảnh thiết bị dự phòng; biên bản chuẩn bị; xác nhận Leader.",
+          "recordingUnit": "Tổ Hậu cần / BCN"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.04",
+          "detail": "Chuẩn bị thiếu thiết bị/vật tư cơ bản, đến muộn giờ setup hoặc bàn giao không gian không đúng quy định.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức -10 áp dụng nếu làm chậm giờ bắt đầu hoạt động.",
+          "evidence": "Checklist thiếu sót; ảnh hiện trường; biên bản hoạt động; phản hồi từ người phụ trách.",
+          "recordingUnit": "Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.01.05",
+          "detail": "Không kiểm tra thiết bị trước buổi họp/training, dẫn đến lỗi trình chiếu, âm thanh, điện hoặc không gian sử dụng.",
+          "scoreDelta": "-10 đến -15/lần",
+          "note": "Mức -15 áp dụng nếu hoạt động bị gián đoạn đáng kể.",
+          "evidence": "Biên bản sự cố; ảnh/video lỗi; phản hồi người tham gia; checklist chưa hoàn thành.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? H?u c?n",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-HC.03",
+    "name": "Hậu cần sự kiện, hội thảo và hoạt động quy mô lớn",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-HC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4403,
+    "description": "- Chấm theo năng lực lập kế hoạch hậu cần, điều phối nhân sự, kiểm soát vật tư và xử lý phát sinh trong sự kiện. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.03.\n- Trừ trực tiếp vào III-B.BVH-HC.03.\n- Trừ nặng nếu gây ảnh hưởng nghiêm trọng.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-HC"
+      },
+      "formula": "- Chấm theo năng lực lập kế hoạch hậu cần, điều phối nhân sự, kiểm soát vật tư và xử lý phát sinh trong sự kiện. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.03.\n- Trừ trực tiếp vào III-B.BVH-HC.03.\n- Trừ nặng nếu gây ảnh hưởng nghiêm trọng.",
+      "evidence": "Kế hoạch hậu cần; sơ đồ setup; bảng phân công; checklist vật tư.",
+      "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "itemCode": "III-B.BVH-HC.03.01",
+          "calculationNote": "- Chấm theo năng lực lập kế hoạch hậu cần, điều phối nhân sự, kiểm soát vật tư và xử lý phát sinh trong sự kiện. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.03.\n- Trừ trực tiếp vào III-B.BVH-HC.03.\n- Trừ nặng nếu gây ảnh hưởng nghiêm trọng.",
+          "detail": "Lập kế hoạch hậu cần cho sự kiện: sơ đồ setup, danh mục vật tư, timeline chuẩn bị, phân công nhân sự.",
+          "scoreDelta": "+15/kế hoạch đạt yêu cầu",
+          "note": "Kế hoạch cần bám timeline sự kiện và có người chịu trách nhiệm theo từng hạng mục.",
+          "evidence": "Kế hoạch hậu cần; sơ đồ setup; bảng phân công; checklist vật tư.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.03.02",
+          "detail": "Triển khai setup, điều phối hậu cần và hỗ trợ vận hành sự kiện đúng tiến độ.",
+          "scoreDelta": "+20/sự kiện đạt yêu cầu",
+          "note": "Điều lệ ghi nhận Hậu cần triển khai logistics cho sự kiện, hội thảo và hoạt động của CLB.",
+          "evidence": "Ảnh setup; checklist hoàn thành; biên bản sự kiện; xác nhận từ ban tổ chức.",
+          "recordingUnit": "Tổ Hậu cần / BCN"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.03.03",
+          "detail": "Xử lý kịp thời phát sinh về thiết bị, vật tư, phòng, check-in, điều phối dòng người hoặc bố trí không gian trong sự kiện.",
+          "scoreDelta": "+10/lần",
+          "note": "Chỉ tính khi xử lý có tác động rõ giúp sự kiện tiếp tục vận hành ổn định.",
+          "evidence": "Biên bản phát sinh; ảnh/video hiện trường; phản hồi ban tổ chức; báo cáo sự kiện.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.03.04",
+          "detail": "Hoàn tất thu dọn, kiểm kê sau sự kiện và bàn giao lại không gian/tài sản đúng quy định.",
+          "scoreDelta": "+10/sự kiện",
+          "note": "Cần có checklist sau sự kiện, đặc biệt với vật tư mượn hoặc tài sản chung.",
+          "evidence": "Biên bản bàn giao; ảnh sau sự kiện; checklist kiểm kê; xác nhận đơn vị quản lý phòng.",
+          "recordingUnit": "Tổ Hậu cần / BCN"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.03.05",
+          "detail": "Thiếu checklist hậu cần, phân công không rõ, setup chậm hoặc thiếu vật tư quan trọng làm ảnh hưởng sự kiện.",
+          "scoreDelta": "-10 đến -20/lần",
+          "note": "Mức -20 áp dụng nếu sự kiện phải thay đổi kịch bản hoặc chậm tiến độ đáng kể.",
+          "evidence": "Kế hoạch sự kiện; checklist lỗi; biên bản phát sinh; phản hồi từ BCN/ban tổ chức.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.03.06",
+          "detail": "Không có mặt theo phân công trong ca hậu cần sự kiện mà không báo trước.",
+          "scoreDelta": "-15 đến -25/lần",
+          "note": "Mức -25 áp dụng nếu vắng mặt làm thiếu nhân sự vận hành trọng yếu.",
+          "evidence": "Bảng phân công ca; điểm danh sự kiện; tin nhắn báo vắng; biên bản sự kiện.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? H?u c?n",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-HC.04",
+    "name": "Mua sắm, dự trù vật tư và phối hợp vận hành",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-HC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4404,
+    "description": "- Chấm theo năng lực dự trù, mua sắm, phối hợp tài chính và báo cáo sau hoạt động. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.04.\n- Trừ trực tiếp vào III-B.BVH-HC.04.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-HC"
+      },
+      "formula": "- Chấm theo năng lực dự trù, mua sắm, phối hợp tài chính và báo cáo sau hoạt động. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.04.\n- Trừ trực tiếp vào III-B.BVH-HC.04.",
+      "evidence": "Danh sách vật tư; kế hoạch hoạt động; báo giá; bảng phân công chuẩn bị.",
+      "recordingUnit": "Tổ Hậu cần / Tổ Tài chính",
+      "rules": [
+        {
+          "itemCode": "III-B.BVH-HC.04.01",
+          "calculationNote": "- Chấm theo năng lực dự trù, mua sắm, phối hợp tài chính và báo cáo sau hoạt động. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-HC.04.\n- Trừ trực tiếp vào III-B.BVH-HC.04.",
+          "detail": "Lập danh sách vật tư cần mua/mượn/chuẩn bị cho hoạt động, kèm số lượng và thời hạn cần có.",
+          "scoreDelta": "+10/lần",
+          "note": "Danh sách cần phân biệt vật tư có sẵn, cần mua, cần mượn, cần in ấn hoặc cần tài trợ.",
+          "evidence": "Danh sách vật tư; kế hoạch hoạt động; báo giá; bảng phân công chuẩn bị.",
+          "recordingUnit": "Tổ Hậu cần / Tổ Tài chính"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.04.02",
+          "detail": "Phối hợp Tổ Tài chính để lấy báo giá, đề xuất chi, mua sắm hoặc hoàn ứng đúng quy trình.",
+          "scoreDelta": "+15/lần đạt yêu cầu",
+          "note": "Không tự ý mua sắm ngoài phê duyệt nếu có phát sinh ngân sách.",
+          "evidence": "Báo giá; phiếu đề xuất chi; hóa đơn/biên nhận; hồ sơ hoàn ứng.",
+          "recordingUnit": "Tổ Hậu cần / Tổ Tài chính"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.04.03",
+          "detail": "Tối ưu vật tư, tái sử dụng tài sản, đề xuất phương án tiết kiệm chi phí nhưng vẫn đảm bảo chất lượng hoạt động.",
+          "scoreDelta": "+10/lần",
+          "note": "Cần có so sánh chi phí hoặc chứng minh giảm lãng phí vật tư.",
+          "evidence": "Bảng so sánh phương án; báo cáo tiết kiệm; ảnh vật tư tái sử dụng; biên bản duyệt.",
+          "recordingUnit": "Tổ Hậu cần / Tổ Tài chính"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.04.04",
+          "detail": "Lập báo cáo hậu cần sau hoạt động: vật tư đã dùng, tồn kho, hư hỏng, phát sinh, đề xuất cải tiến.",
+          "scoreDelta": "+15/báo cáo đạt yêu cầu",
+          "note": "Báo cáo sau hoạt động giúp cập nhật kho và cải tiến quy trình cho lần sau.",
+          "evidence": "Báo cáo hậu cần; bảng tồn kho; biên bản phát sinh; ảnh minh chứng.",
+          "recordingUnit": "Tổ Hậu cần / Trưởng ban Vận hành"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.04.05",
+          "detail": "Dự trù sai số lượng vật tư, mua thừa/mua thiếu hoặc không kiểm soát tồn kho sau hoạt động.",
+          "scoreDelta": "-5 đến -15/lần",
+          "note": "Mức trừ tùy mức độ lãng phí hoặc ảnh hưởng đến hoạt động.",
+          "evidence": "Bảng vật tư; hóa đơn; bảng tồn kho; báo cáo sau hoạt động.",
+          "recordingUnit": "Trưởng ban Vận hành / Tổ Tài chính"
+        },
+        {
+          "itemCode": "III-B.BVH-HC.04.06",
+          "detail": "Tự ý mua sắm, mượn tài sản hoặc cam kết thuê/mượn thiết bị khi chưa có phê duyệt.",
+          "scoreDelta": "-15 đến -25/lần",
+          "note": "Mức -25 áp dụng nếu phát sinh nghĩa vụ tài chính hoặc rủi ro tài sản cho CLB.",
+          "evidence": "Tin nhắn/email cam kết; hóa đơn; biên bản giải trình; phản hồi từ Tổ Tài chính/BCN.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? H?u c?n",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-NS.01",
+    "name": "Quản lý hồ sơ và dữ liệu thành viên",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-NS",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4501,
+    "description": "- Chấm theo mức độ đầy đủ, chính xác, cập nhật và bảo mật dữ liệu nhân sự. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.01.\n- Trừ trực tiếp vào III-B.BVH-NS.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-NS"
+      },
+      "formula": "- Chấm theo mức độ đầy đủ, chính xác, cập nhật và bảo mật dữ liệu nhân sự. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.01.\n- Trừ trực tiếp vào III-B.BVH-NS.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "File hồ sơ thành viên; Google Form; Google Sheet; lịch sử chỉnh sửa.",
+      "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Cập nhật hồ sơ thành viên đầy đủ, đúng biểu mẫu và đúng thời hạn.",
+          "scoreDelta": "+10/lần hoặc +20/tháng đạt chuẩn",
+          "note": "Dữ liệu tối thiểu gồm họ tên, MSSV, khoa/ngành, email, số điện thoại, ban chuyên môn, trạng thái hoạt động.",
+          "evidence": "File hồ sơ thành viên; Google Form; Google Sheet; lịch sử chỉnh sửa.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Chuẩn hóa database nhân sự: phân quyền, lọc trùng, cập nhật trạng thái thành viên, tạo mã thành viên.",
+          "scoreDelta": "+15/lần",
+          "note": "Chỉ tính khi có thay đổi thực chất giúp dữ liệu dễ quản lý hơn.",
+          "evidence": "Database nhân sự; log chỉnh sửa; bảng mã thành viên; tài liệu mô tả cấu trúc dữ liệu.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Xây dựng biểu mẫu, dashboard hoặc hệ thống theo dõi nhân sự phục vụ đánh giá định kỳ.",
+          "scoreDelta": "+20/lần",
+          "note": "Có thể là Google Form, Google Sheet dashboard, Notion database hoặc công cụ tương đương.",
+          "evidence": "Link biểu mẫu; dashboard; file hướng dẫn sử dụng; biên bản nghiệm thu.",
+          "recordingUnit": "Tổ Nhân sự / Ban Chủ nhiệm"
+        },
+        {
+          "detail": "Nhập sai thông tin thành viên, thiếu dữ liệu bắt buộc hoặc cập nhật chậm làm ảnh hưởng đánh giá/tuyển dụng.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức trừ tùy mức độ ảnh hưởng; lỗi nhỏ trừ -5, lỗi ảnh hưởng báo cáo trừ -10.",
+          "evidence": "Bảng đối chiếu; phản hồi từ thành viên; lịch sử chỉnh sửa; biên bản rà soát.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Làm lộ dữ liệu cá nhân, chia sẻ hồ sơ nhân sự cho người không có thẩm quyền hoặc phân quyền sai phạm vi.",
+          "scoreDelta": "-25/lần",
+          "note": "Liên quan trực tiếp đến bảo mật dữ liệu nội bộ và uy tín CLB.",
+          "evidence": "Log phân quyền; lịch sử chia sẻ Drive; ảnh chụp bằng chứng; biên bản xác minh.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? Nh?n s?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-NS.02",
+    "name": "Tuyển dụng, tiếp nhận và kết nạp thành viên",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-NS",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4502,
+    "description": "- Chấm theo năng lực tổ chức quy trình tuyển dụng, xử lý hồ sơ, phỏng vấn và báo cáo kết quả. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.02.\n- Trừ trực tiếp vào III-B.BVH-NS.02.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-NS"
+      },
+      "formula": "- Chấm theo năng lực tổ chức quy trình tuyển dụng, xử lý hồ sơ, phỏng vấn và báo cáo kết quả. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.02.\n- Trừ trực tiếp vào III-B.BVH-NS.02.",
+      "evidence": "Form đăng ký; kế hoạch tuyển dụng; bài truyền thông; tài liệu mô tả vị trí.",
+      "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Chuẩn bị biểu mẫu đăng ký, mô tả vị trí, timeline tuyển dụng và tài liệu hướng dẫn ứng viên.",
+          "scoreDelta": "+15/đợt đạt yêu cầu",
+          "note": "Phù hợp với yêu cầu ứng viên phải cung cấp thông tin qua biểu mẫu chính thức của CLB.",
+          "evidence": "Form đăng ký; kế hoạch tuyển dụng; bài truyền thông; tài liệu mô tả vị trí.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Sàng lọc hồ sơ, phân loại ứng viên và lập danh sách phỏng vấn đúng hạn.",
+          "scoreDelta": "+10/lần hoặc +20/đợt",
+          "note": "Cần có tiêu chí lọc rõ, không chọn theo cảm tính.",
+          "evidence": "Danh sách ứng viên; bảng đánh giá hồ sơ; lịch phỏng vấn; email/tin nhắn mời phỏng vấn.",
+          "recordingUnit": "Tổ Nhân sự"
+        },
+        {
+          "detail": "Tham gia phỏng vấn, ghi nhận đánh giá ứng viên và tổng hợp báo cáo gửi BCN.",
+          "scoreDelta": "+15/đợt",
+          "note": "Ban Vận hành có trách nhiệm đánh giá năng lực, sự phù hợp của ứng viên và báo cáo BCN trước khi thông qua thành viên.",
+          "evidence": "Phiếu phỏng vấn; bảng điểm ứng viên; báo cáo tuyển dụng; biên bản họp xét duyệt.",
+          "recordingUnit": "Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Tổ chức onboarding thành viên mới: phổ biến điều lệ, cơ cấu ban, quy trình làm việc và kênh liên lạc.",
+          "scoreDelta": "+20/đợt",
+          "note": "Chỉ tính khi có tài liệu hoặc buổi onboarding thực tế.",
+          "evidence": "Slide onboarding; danh sách tham dự; ảnh buổi onboarding; form xác nhận đã đọc quy định.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Gửi sai thông tin tuyển dụng, thiếu lịch phỏng vấn, bỏ sót ứng viên hoặc phản hồi ứng viên chậm quá 48 giờ.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức -10 áp dụng nếu gây khiếu nại hoặc ảnh hưởng hình ảnh CLB.",
+          "evidence": "Email/tin nhắn phản hồi; danh sách ứng viên; log trao đổi; phản hồi từ ứng viên.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Tự ý xác nhận thành viên chính thức khi chưa có thông qua của BCN.",
+          "scoreDelta": "-20/lần",
+          "note": "Điều lệ quy định việc xác nhận thành viên tham gia CLB do BCN thông qua sau báo cáo của Ban Vận hành.",
+          "evidence": "Danh sách thành viên; biên bản xét duyệt; tin nhắn/email xác nhận; báo cáo tuyển dụng.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? Nh?n s?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-NS.03",
+    "name": "Theo dõi KPI, đánh giá năng lực và báo cáo nhân sự",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-NS",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4503,
+    "description": "- Chấm theo mức độ đầy đủ, đúng hạn và tính chính xác của dữ liệu đánh giá. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.03.\n- Trừ trực tiếp vào III-B.BVH-NS.03.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-NS"
+      },
+      "formula": "- Chấm theo mức độ đầy đủ, đúng hạn và tính chính xác của dữ liệu đánh giá. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.03.\n- Trừ trực tiếp vào III-B.BVH-NS.03.",
+      "evidence": "Biểu mẫu đánh giá; bảng tổng hợp minh chứng; file điểm danh; báo cáo từ các trưởng ban.",
+      "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Thu thập dữ liệu đánh giá định kỳ từ các ban: chuyên cần, task, thái độ, hiệu suất, minh chứng.",
+          "scoreDelta": "+15/kỳ đạt yêu cầu",
+          "note": "Áp dụng theo chu kỳ tháng hoặc kỳ đánh giá nội bộ.",
+          "evidence": "Biểu mẫu đánh giá; bảng tổng hợp minh chứng; file điểm danh; báo cáo từ các trưởng ban.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Tổng hợp điểm đánh giá thành viên đúng công thức, đúng cấu phần và đúng hạn.",
+          "scoreDelta": "+20/kỳ đạt yêu cầu",
+          "note": "Phù hợp với nhiệm vụ thiết lập và vận hành bộ tiêu chí đánh giá hiệu suất/KPI định kỳ.",
+          "evidence": "Bảng điểm tổng hợp; workbook đánh giá; log công thức; biên bản rà soát.",
+          "recordingUnit": "Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Lập báo cáo nhân sự tháng/quý: biến động thành viên, tỷ lệ hoạt động, thành viên nổi bật, thành viên rủi ro.",
+          "scoreDelta": "+20/báo cáo đạt yêu cầu",
+          "note": "Báo cáo cần có dữ liệu, nhận định và đề xuất xử lý.",
+          "evidence": "Báo cáo PDF/Docs; dashboard; biên bản họp BCN; bảng dữ liệu gốc.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Phát hiện bất thường trong dữ liệu đánh giá hoặc đề xuất cải tiến quy trình đánh giá.",
+          "scoreDelta": "+10/lần",
+          "note": "Ví dụ: phát hiện thiếu minh chứng, trùng điểm, sai công thức, tiêu chí gây chấm lệch.",
+          "evidence": "Báo cáo rà soát; bản sửa công thức; ghi chú audit; biên bản họp.",
+          "recordingUnit": "Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Tổng hợp sai điểm, sai công thức, thiếu minh chứng hoặc làm thất lạc dữ liệu đánh giá.",
+          "scoreDelta": "-10 đến -20/lần",
+          "note": "Mức -20 áp dụng nếu sai sót ảnh hưởng kết quả xếp loại/khen thưởng/kỷ luật.",
+          "evidence": "Bảng đối chiếu; lịch sử chỉnh sửa; biên bản rà soát; phản hồi từ thành viên.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Công bố điểm/xếp loại khi chưa được kiểm tra hoặc chưa có xác nhận của cấp phụ trách.",
+          "scoreDelta": "-15/lần",
+          "note": "Có thể gây tranh chấp dữ liệu đánh giá; cần kiểm duyệt trước khi công bố.",
+          "evidence": "Bản công bố; tin nhắn/email gửi điểm; biên bản đính chính.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? Nh?n s?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-NS.04",
+    "name": "Gắn kết nội bộ, đào tạo kỹ năng mềm và chăm sóc thành viên",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-NS",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4504,
+    "description": "- Chấm theo mức độ tổ chức hoạt động nội bộ, theo dõi tình trạng thành viên và hỗ trợ duy trì sự ổn định nhân sự. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.04.\n- Trừ trực tiếp vào III-B.BVH-NS.04.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-NS"
+      },
+      "formula": "- Chấm theo mức độ tổ chức hoạt động nội bộ, theo dõi tình trạng thành viên và hỗ trợ duy trì sự ổn định nhân sự. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-NS.04.\n- Trừ trực tiếp vào III-B.BVH-NS.04.",
+      "evidence": "Kế hoạch hoạt động; danh sách tham dự; hình ảnh; form feedback; báo cáo tổng kết.",
+      "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Tổ chức hoặc phối hợp tổ chức hoạt động gắn kết nội bộ, teambuilding, sinh hoạt chung hoặc khảo sát mức độ hài lòng.",
+          "scoreDelta": "+20/hoạt động đạt yêu cầu",
+          "note": "Điều lệ ghi nhận vai trò Ban Vận hành trong đào tạo kỹ năng mềm và gắn kết nội bộ.",
+          "evidence": "Kế hoạch hoạt động; danh sách tham dự; hình ảnh; form feedback; báo cáo tổng kết.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Theo dõi thành viên ít hoạt động, liên hệ nhắc nhở, ghi nhận lý do và đề xuất phương án hỗ trợ.",
+          "scoreDelta": "+10/lần hoặc +20/tháng đạt chuẩn",
+          "note": "Không thay thế vai trò kỷ luật; mục tiêu là phát hiện sớm rủi ro nhân sự.",
+          "evidence": "Log liên hệ; bảng theo dõi rủi ro; biên bản trao đổi; đề xuất hỗ trợ.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Tổ chức đào tạo kỹ năng mềm, hướng dẫn quy trình làm việc hoặc training công cụ nội bộ cho thành viên.",
+          "scoreDelta": "+15/buổi",
+          "note": "Có thể phối hợp với BCN hoặc các ban chuyên môn.",
+          "evidence": "Slide training; danh sách tham dự; ảnh buổi học; form feedback.",
+          "recordingUnit": "Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Đề xuất khen thưởng, ghi nhận thành viên nổi bật hoặc đề xuất hỗ trợ thành viên gặp khó khăn.",
+          "scoreDelta": "+10/lần",
+          "note": "Cần có căn cứ dữ liệu, không đề xuất theo cảm tính.",
+          "evidence": "Phiếu đề xuất; bảng KPI; minh chứng đóng góp; biên bản họp xét duyệt.",
+          "recordingUnit": "Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Bỏ sót tình trạng thành viên không hoạt động kéo dài, không liên hệ xác minh hoặc không báo cáo rủi ro nhân sự.",
+          "scoreDelta": "-10/lần",
+          "note": "Có thể liên quan đến quy trình khai trừ nếu thành viên không sinh hoạt 3 lần liên tiếp không lý do.",
+          "evidence": "Bảng chuyên cần; log liên hệ; báo cáo nhân sự; biên bản họp.",
+          "recordingUnit": "Tổ Nhân sự / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Xử lý phản ánh của thành viên chậm, thiếu khách quan hoặc làm phát sinh mâu thuẫn nội bộ.",
+          "scoreDelta": "-10 đến -20/lần",
+          "note": "Mức trừ tùy hậu quả và phạm vi ảnh hưởng.",
+          "evidence": "Tin nhắn/email phản ánh; biên bản xử lý; báo cáo xác minh; phản hồi thành viên.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? Nh?n s?",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-KL.01",
+    "name": "Theo dõi chuyên cần và điểm danh hoạt động",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-KL",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4601,
+    "description": "- Chấm theo mức độ đầy đủ, chính xác và đúng hạn của dữ liệu điểm danh. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.01.\n- Trừ trực tiếp vào III-B.BVH-KL.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-KL"
+      },
+      "formula": "- Chấm theo mức độ đầy đủ, chính xác và đúng hạn của dữ liệu điểm danh. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.01.\n- Trừ trực tiếp vào III-B.BVH-KL.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Google Form; QR điểm danh; Google Sheet điểm danh; kế hoạch hoạt động.",
+      "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Chuẩn bị biểu mẫu điểm danh cho sinh hoạt, họp ban, training, workshop hoặc sự kiện CLB.",
+          "scoreDelta": "+10/lần",
+          "note": "Biểu mẫu cần ghi rõ thời gian, hoạt động, thành phần tham gia và trạng thái có mặt/vắng phép/vắng không phép.",
+          "evidence": "Google Form; QR điểm danh; Google Sheet điểm danh; kế hoạch hoạt động.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Ghi nhận và cập nhật dữ liệu chuyên cần đầy đủ, đúng hạn sau mỗi buổi sinh hoạt/họp/sự kiện.",
+          "scoreDelta": "+15/lần hoặc +20/tháng đạt chuẩn",
+          "note": "Phù hợp với yêu cầu thành viên tham gia tối thiểu 80% số buổi sinh hoạt/hội họp định kỳ.",
+          "evidence": "Bảng điểm danh; timestamp Google Form; ảnh chụp buổi họp; biên bản họp.",
+          "recordingUnit": "Tổ Kỷ luật / Ban Vận hành"
+        },
+        {
+          "detail": "Đối chiếu dữ liệu điểm danh với danh sách phân công, biên bản họp hoặc danh sách tham dự thực tế.",
+          "scoreDelta": "+10/lần",
+          "note": "Dùng để giảm sai lệch do quên điểm danh, điểm danh hộ hoặc thiếu cập nhật vắng phép.",
+          "evidence": "Bảng đối chiếu; biên bản họp; ảnh minh chứng; xác nhận từ Trưởng ban.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Cập nhật điểm danh chậm, thiếu thành viên, sai trạng thái vắng phép/vắng không phép hoặc thiếu minh chứng.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức -10 áp dụng nếu sai sót ảnh hưởng điểm chuyên cần hoặc xếp loại thành viên.",
+          "evidence": "Bảng đối chiếu; phản hồi thành viên; lịch sử chỉnh sửa; biên bản rà soát.",
+          "recordingUnit": "Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Làm giả dữ liệu điểm danh, sửa điểm danh không có căn cứ hoặc che giấu tình trạng vắng không phép.",
+          "scoreDelta": "-25/lần",
+          "note": "Đây là lỗi nghiêm trọng vì làm sai lệch cơ chế đánh giá định lượng.",
+          "evidence": "Lịch sử chỉnh sửa; bản sao lưu; phản hồi nhân chứng; biên bản xác minh.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? K? lu?t",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-KL.02",
+    "name": "Giám sát tuân thủ điều lệ, nội quy và nghĩa vụ thành viên",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-KL",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4602,
+    "description": "- Chấm theo năng lực phát hiện, ghi nhận và báo cáo vi phạm quy định nội bộ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.02.\n- Trừ trực tiếp vào III-B.BVH-KL.02.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-KL"
+      },
+      "formula": "- Chấm theo năng lực phát hiện, ghi nhận và báo cáo vi phạm quy định nội bộ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.02.\n- Trừ trực tiếp vào III-B.BVH-KL.02.",
+      "evidence": "Đơn xin phép; tin nhắn/email xin phép; bảng theo dõi vắng phép; nội quy CLB.",
+      "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Theo dõi việc tuân thủ nội quy, quy định chuyên cần, thời hạn xin phép vắng và nghĩa vụ hành chính của thành viên.",
+          "scoreDelta": "+15/tháng đạt chuẩn",
+          "note": "Thành viên có lý do vắng chính đáng phải thông báo trước ít nhất 24 giờ theo Điều lệ.",
+          "evidence": "Đơn xin phép; tin nhắn/email xin phép; bảng theo dõi vắng phép; nội quy CLB.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Phát hiện và ghi nhận kịp thời các vi phạm: vắng không phép, đi muộn, phản hồi chậm, không hoàn thành nghĩa vụ được giao.",
+          "scoreDelta": "+10/lần hoặc +20/tháng đạt chuẩn",
+          "note": "Chỉ tính khi ghi nhận có căn cứ, không dựa trên nhận xét cảm tính.",
+          "evidence": "Biên bản ghi nhận; bảng vi phạm; log tin nhắn; phản hồi từ Trưởng ban.",
+          "recordingUnit": "Tổ Kỷ luật / Ban Vận hành"
+        },
+        {
+          "detail": "Thiết lập hoặc cải tiến bảng theo dõi vi phạm, nhắc nhở và trạng thái xử lý của thành viên.",
+          "scoreDelta": "+15/lần",
+          "note": "Công cụ cần hỗ trợ truy xuất theo thành viên, ngày vi phạm, lỗi vi phạm, mức xử lý và minh chứng.",
+          "evidence": "Google Sheet/Notion theo dõi; quy trình cập nhật; lịch sử chỉnh sửa.",
+          "recordingUnit": "Tổ Kỷ luật / BCN"
+        },
+        {
+          "detail": "Bỏ sót vi phạm rõ ràng, không cập nhật vắng không phép hoặc không báo cáo thành viên có nguy cơ vi phạm liên tiếp.",
+          "scoreDelta": "-10/lần",
+          "note": "Cần đối chiếu với quy định thành viên không sinh hoạt 3 lần liên tiếp không lý do có thể bị xem xét khai trừ.",
+          "evidence": "Bảng chuyên cần; báo cáo nhân sự; phản hồi từ Trưởng ban; biên bản họp.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Ghi nhận vi phạm sai căn cứ, áp dụng sai quy định hoặc đánh giá thiếu khách quan.",
+          "scoreDelta": "-10 đến -20/lần",
+          "note": "Mức -20 áp dụng nếu gây tranh chấp, khiếu nại hoặc ảnh hưởng xếp loại thành viên.",
+          "evidence": "Biên bản khiếu nại; bảng đối chiếu; lịch sử chỉnh sửa; quyết định điều chỉnh.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? K? lu?t",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-KL.03",
+    "name": "Quy trình nhắc nhở, cảnh cáo và đề xuất xử lý kỷ luật",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-KL",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4603,
+    "description": "- Chấm theo mức độ đúng quy trình, đầy đủ hồ sơ và tính khách quan khi xử lý vi phạm. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.03.\n- Trừ trực tiếp vào III-B.BVH-KL.03.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-KL"
+      },
+      "formula": "- Chấm theo mức độ đúng quy trình, đầy đủ hồ sơ và tính khách quan khi xử lý vi phạm. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.03.\n- Trừ trực tiếp vào III-B.BVH-KL.03.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Tin nhắn/email nhắc nhở; biên bản ghi nhận; bảng theo dõi vi phạm.",
+      "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Thực hiện nhắc nhở thành viên vi phạm lần đầu đúng quy trình, có ghi nhận nội bộ.",
+          "scoreDelta": "+10/lần",
+          "note": "Phù hợp với quy trình kỷ luật lũy tiến: cảnh cáo nội bộ, đình chỉ công tác, khai trừ.",
+          "evidence": "Tin nhắn/email nhắc nhở; biên bản ghi nhận; bảng theo dõi vi phạm.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Lập hồ sơ cảnh cáo, đình chỉ hoặc đề xuất khai trừ đầy đủ minh chứng, đúng thẩm quyền.",
+          "scoreDelta": "+20/hồ sơ đạt yêu cầu",
+          "note": "Hồ sơ phải thể hiện lỗi vi phạm, mốc thời gian, minh chứng, lần vi phạm và đề xuất xử lý.",
+          "evidence": "Biên bản vi phạm; bảng chuyên cần; hồ sơ kỷ luật; quyết định/đề xuất xử lý.",
+          "recordingUnit": "Tổ Kỷ luật / BCN"
+        },
+        {
+          "detail": "Theo dõi sau xử lý: kiểm tra việc khắc phục, tái phạm hoặc cải thiện của thành viên.",
+          "scoreDelta": "+10/lần",
+          "note": "Không chỉ ghi nhận lỗi; cần theo dõi hiệu quả sau nhắc nhở/kỷ luật.",
+          "evidence": "Bảng theo dõi sau xử lý; báo cáo cải thiện; phản hồi từ Trưởng ban.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Tự ý ra quyết định kỷ luật vượt thẩm quyền, không thông qua Trưởng ban Vận hành/BCN.",
+          "scoreDelta": "-20/lần",
+          "note": "Tổ Kỷ luật có vai trò ghi nhận và đề xuất; quyết định chính thức thuộc thẩm quyền cấp quản lý được quy định.",
+          "evidence": "Tin nhắn/quyết định tự ban hành; biên bản đính chính; phản hồi từ BCN.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Xử lý thiên vị, bao che, công khai lỗi cá nhân sai phạm vi hoặc làm tổn hại danh dự thành viên.",
+          "scoreDelta": "-25/lần",
+          "note": "Lỗi này ảnh hưởng trực tiếp đến tính công bằng và văn hóa tổ chức.",
+          "evidence": "Biên bản xác minh; phản hồi thành viên; ảnh chụp công khai sai phạm; kết luận BCN.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? K? lu?t",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-KL.04",
+    "name": "Báo cáo kỷ luật, phân tích rủi ro và cải tiến quy trình",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-KL",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4604,
+    "description": "- Chấm theo chất lượng báo cáo, dữ liệu phân tích và đề xuất cải tiến hệ thống kỷ luật. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.04.\n- Trừ trực tiếp vào III-B.BVH-KL.04.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-KL"
+      },
+      "formula": "- Chấm theo chất lượng báo cáo, dữ liệu phân tích và đề xuất cải tiến hệ thống kỷ luật. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-KL.04.\n- Trừ trực tiếp vào III-B.BVH-KL.04.",
+      "evidence": "Báo cáo tháng; dashboard chuyên cần; bảng vi phạm; biên bản họp.",
+      "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Lập báo cáo chuyên cần và kỷ luật định kỳ theo tháng/kỳ đánh giá.",
+          "scoreDelta": "+20/báo cáo đạt yêu cầu",
+          "note": "Báo cáo cần có số liệu tham dự, tỷ lệ vắng phép/vắng không phép, danh sách rủi ro và đề xuất xử lý.",
+          "evidence": "Báo cáo tháng; dashboard chuyên cần; bảng vi phạm; biên bản họp.",
+          "recordingUnit": "Tổ Kỷ luật / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Phân tích rủi ro nhân sự dựa trên chuyên cần, tái phạm, phản hồi chậm hoặc thiếu tham gia hoạt động.",
+          "scoreDelta": "+15/lần",
+          "note": "Có thể phối hợp với Tổ Nhân sự để theo dõi thành viên có nguy cơ rời CLB hoặc bị xử lý.",
+          "evidence": "Dashboard rủi ro; bảng phân loại thành viên; báo cáo phân tích; đề xuất can thiệp.",
+          "recordingUnit": "Tổ Kỷ luật / Tổ Nhân sự"
+        },
+        {
+          "detail": "Đề xuất cải tiến quy trình điểm danh, xin phép vắng, ghi nhận vi phạm hoặc xử lý khiếu nại.",
+          "scoreDelta": "+15/lần",
+          "note": "Chỉ tính khi đề xuất có khả năng áp dụng thực tế hoặc được BCN/Trưởng ban duyệt.",
+          "evidence": "Tài liệu quy trình; biểu mẫu mới; biên bản duyệt; báo cáo áp dụng thử.",
+          "recordingUnit": "Tổ Kỷ luật / BCN"
+        },
+        {
+          "detail": "Hỗ trợ đề xuất khen thưởng thành viên tuân thủ tốt, chuyên cần tốt hoặc có cải thiện rõ sau nhắc nhở.",
+          "scoreDelta": "+10/lần",
+          "note": "Tổ Kỷ luật không chỉ xử lý vi phạm mà còn cung cấp dữ liệu để ghi nhận hành vi tích cực.",
+          "evidence": "Bảng chuyên cần; phiếu đề xuất khen thưởng; báo cáo cải thiện; biên bản họp xét duyệt.",
+          "recordingUnit": "Tổ Kỷ luật / Tổ Nhân sự / BCN"
+        },
+        {
+          "detail": "Báo cáo trễ hạn, thiếu số liệu, thiếu danh sách rủi ro hoặc không có minh chứng đi kèm.",
+          "scoreDelta": "-10 đến -15/lần",
+          "note": "Mức -15 áp dụng nếu báo cáo không đủ dùng cho kỳ đánh giá.",
+          "evidence": "Báo cáo lỗi; bảng đối chiếu; phản hồi từ Trưởng ban/BCN; lịch sử chỉnh sửa.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Công bố dữ liệu kỷ luật hoặc danh sách vi phạm sai phạm vi, gây ảnh hưởng danh dự thành viên.",
+          "scoreDelta": "-20 đến -25/lần",
+          "note": "Dữ liệu kỷ luật phải được quản lý theo phạm vi nội bộ và đúng thẩm quyền công bố.",
+          "evidence": "Ảnh chụp công bố; log chia sẻ file; biên bản xác minh; phản hồi thành viên.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? K? lu?t",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-TC.01",
+    "name": "Quản lý thu — chi và sổ quỹ nội bộ",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-TC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4701,
+    "description": "- Chấm theo mức độ đầy đủ, chính xác, đúng hạn và có chứng từ của các khoản thu — chi. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.01.\n- Trừ trực tiếp vào III-B.BVH-TC.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-TC"
+      },
+      "formula": "- Chấm theo mức độ đầy đủ, chính xác, đúng hạn và có chứng từ của các khoản thu — chi. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.01.\n- Trừ trực tiếp vào III-B.BVH-TC.01.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Sổ quỹ Google Sheet/Excel; lịch sử chỉnh sửa; ảnh chứng từ; biên nhận.",
+      "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Ghi nhận đầy đủ các khoản thu — chi phát sinh trong tháng đúng biểu mẫu sổ quỹ.",
+          "scoreDelta": "+15/tháng đạt chuẩn",
+          "note": "Sổ quỹ cần có ngày phát sinh, nội dung, người thực hiện, số tiền, loại giao dịch và số dư sau giao dịch.",
+          "evidence": "Sổ quỹ Google Sheet/Excel; lịch sử chỉnh sửa; ảnh chứng từ; biên nhận.",
+          "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Đối soát số dư quỹ với chứng từ và báo cáo thực tế định kỳ.",
+          "scoreDelta": "+10/lần",
+          "note": "Nên thực hiện tối thiểu mỗi tháng 1 lần hoặc sau mỗi sự kiện có phát sinh ngân sách.",
+          "evidence": "Bảng đối soát; biên bản kiểm quỹ; ảnh sao kê/tiền mặt; xác nhận của người giữ quỹ.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Chuẩn hóa hệ thống mã hóa giao dịch, danh mục khoản thu — chi, biểu mẫu hoàn ứng/thanh toán.",
+          "scoreDelta": "+15/lần",
+          "note": "Chỉ tính khi có cải tiến thực chất giúp dễ kiểm tra, đối chiếu và lưu trữ.",
+          "evidence": "Biểu mẫu tài chính; bảng danh mục giao dịch; tài liệu hướng dẫn; log cập nhật.",
+          "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Ghi sai số tiền, sai nội dung, thiếu khoản phát sinh hoặc cập nhật sổ quỹ chậm quá thời hạn quy định.",
+          "scoreDelta": "-5 đến -10/lần",
+          "note": "Mức -10 áp dụng nếu sai sót ảnh hưởng báo cáo tháng hoặc quyết định chi tiêu.",
+          "evidence": "Bảng đối chiếu; lịch sử chỉnh sửa; chứng từ gốc; biên bản rà soát.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Làm thất lạc quỹ, chứng từ quan trọng hoặc không giải trình được chênh lệch số dư.",
+          "scoreDelta": "-20 đến -25/lần",
+          "note": "Mức -25 áp dụng khi phát sinh rủi ro thất thoát tài chính.",
+          "evidence": "Biên bản kiểm quỹ; bảng chênh lệch; chứng từ còn thiếu; báo cáo giải trình.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? T?i ch?nh",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-TC.02",
+    "name": "Dự toán, phê duyệt và kiểm soát ngân sách hoạt động",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-TC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4702,
+    "description": "- Chấm theo năng lực lập dự toán, kiểm soát chi tiêu và đảm bảo chi đúng mục đích. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.02.\n- Trừ trực tiếp vào III-B.BVH-TC.02.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-TC"
+      },
+      "formula": "- Chấm theo năng lực lập dự toán, kiểm soát chi tiêu và đảm bảo chi đúng mục đích. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.02.\n- Trừ trực tiếp vào III-B.BVH-TC.02.",
+      "evidence": "File dự toán; báo giá; kế hoạch sự kiện; biên bản phê duyệt.",
+      "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành",
+      "rules": [
+        {
+          "detail": "Lập dự toán ngân sách cho sự kiện, workshop, training hoặc hoạt động nội bộ đúng hạn.",
+          "scoreDelta": "+15/kế hoạch đạt yêu cầu",
+          "note": "Dự toán cần có danh mục chi, đơn giá, số lượng, tổng tiền, nguồn chi và người phụ trách.",
+          "evidence": "File dự toán; báo giá; kế hoạch sự kiện; biên bản phê duyệt.",
+          "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Kiểm tra tính hợp lệ của đề xuất chi, hóa đơn/chứng từ và hồ sơ hoàn ứng.",
+          "scoreDelta": "+10/lần hoặc +20/tháng đạt chuẩn",
+          "note": "Tổ Tài chính không chỉ ghi nhận chi mà còn phải kiểm tra tính hợp lệ trước khi xuất quỹ.",
+          "evidence": "Phiếu đề xuất chi; hóa đơn; biên nhận; hồ sơ hoàn ứng; log duyệt chi.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Tối ưu chi phí hoặc đề xuất phương án tiết kiệm ngân sách nhưng vẫn đảm bảo chất lượng hoạt động.",
+          "scoreDelta": "+10/lần",
+          "note": "Chỉ tính khi có số liệu so sánh trước — sau hoặc lựa chọn phương án thay thế rõ ràng.",
+          "evidence": "Bảng so sánh báo giá; báo cáo tiết kiệm; biên bản chọn phương án.",
+          "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Lập dự toán thiếu hạng mục quan trọng, sai tổng tiền hoặc nộp trễ làm ảnh hưởng tiến độ phê duyệt.",
+          "scoreDelta": "-10/lần",
+          "note": "Chỉ tính khi timeline lập dự toán đã được giao rõ.",
+          "evidence": "File dự toán; lịch sử chỉnh sửa; tin nhắn giao việc; phản hồi từ BCN/ban liên quan.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Xuất quỹ khi chưa có phê duyệt hợp lệ hoặc chi sai mục đích so với kế hoạch đã duyệt.",
+          "scoreDelta": "-20 đến -25/lần",
+          "note": "Mức -25 áp dụng nếu gây thất thoát, tranh chấp hoặc vi phạm quy trình tài chính.",
+          "evidence": "Phiếu chi; chứng từ; biên bản phê duyệt; báo cáo giải trình.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? T?i ch?nh",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-TC.03",
+    "name": "Báo cáo tài chính, minh bạch hóa và lưu trữ chứng từ",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-TC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4703,
+    "description": "- Chấm theo chất lượng báo cáo, đúng hạn, minh bạch và khả năng truy xuất chứng từ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.03.\n- Trừ trực tiếp vào III-B.BVH-TC.03.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-TC"
+      },
+      "formula": "- Chấm theo chất lượng báo cáo, đúng hạn, minh bạch và khả năng truy xuất chứng từ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.03.\n- Trừ trực tiếp vào III-B.BVH-TC.03.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Báo cáo tài chính tháng; bảng thu — chi; biên bản công khai; xác nhận BCN.",
+      "recordingUnit": "Tổ Tài chính / BCN",
+      "rules": [
+        {
+          "detail": "Lập báo cáo thu — chi hàng tháng đầy đủ, rõ ràng và đúng hạn.",
+          "scoreDelta": "+20/báo cáo đạt yêu cầu",
+          "note": "Điều lệ yêu cầu minh bạch hóa dòng tiền bằng báo cáo tài chính hàng tháng.",
+          "evidence": "Báo cáo tài chính tháng; bảng thu — chi; biên bản công khai; xác nhận BCN.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Lưu trữ chứng từ khoa học: hóa đơn, biên nhận, sao kê, báo giá, phiếu đề xuất chi, phiếu hoàn ứng.",
+          "scoreDelta": "+10/tháng đạt chuẩn",
+          "note": "Có thể lưu theo thư mục tháng/sự kiện, đặt tên file thống nhất để truy xuất nhanh.",
+          "evidence": "Thư mục Drive tài chính; file chứng từ; quy tắc đặt tên; log upload.",
+          "recordingUnit": "Tổ Tài chính / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Công khai báo cáo tài chính định kỳ trước BCN hoặc toàn CLB theo phạm vi được phép.",
+          "scoreDelta": "+10/lần",
+          "note": "Nội dung công khai cần phù hợp phạm vi nội bộ, không công bố dữ liệu nhạy cảm nếu chưa được duyệt.",
+          "evidence": "Biên bản họp; slide báo cáo; thông báo công khai; bảng tổng hợp đã duyệt.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Báo cáo trễ hạn, thiếu chứng từ, thiếu số dư đầu kỳ/cuối kỳ hoặc không giải thích biến động quỹ.",
+          "scoreDelta": "-10 đến -15/lần",
+          "note": "Mức -15 áp dụng nếu báo cáo phải làm lại hoặc gây trì hoãn đánh giá tài chính.",
+          "evidence": "Báo cáo lỗi; bảng đối chiếu; phản hồi từ BCN; lịch sử chỉnh sửa.",
+          "recordingUnit": "Trưởng ban Vận hành / BCN"
+        },
+        {
+          "detail": "Cố ý che giấu khoản thu — chi, sửa chứng từ, xóa dữ liệu tài chính hoặc báo cáo sai lệch có chủ đích.",
+          "scoreDelta": "-25/lần",
+          "note": "Đây là lỗi nghiêm trọng vì liên quan đến tính minh bạch và uy tín tổ chức.",
+          "evidence": "Log chỉnh sửa; bản sao lưu; chứng từ đối chiếu; biên bản xác minh.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? T?i ch?nh",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  },
+  {
+    "code": "III-B.BVH-TC.04",
+    "name": "Tài trợ, gây quỹ và phát triển nguồn lực tài chính",
+    "component": "III_B",
+    "unit_scope": "UNIT_SPECIFIC",
+    "unit_code": "BVH-TC",
+    "max_score": 5.0,
+    "score_method": "WEIGHTED",
+    "requires_evidence": true,
+    "sort_order": 4704,
+    "description": "- Chấm theo năng lực xây dựng hồ sơ tài trợ, tìm kiếm nguồn lực và theo dõi cam kết tài trợ/gây quỹ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.04.\n- Trừ trực tiếp vào III-B.BVH-TC.04.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+    "metadata": {
+      "source": {
+        "workbook": "BẢNG TIÊU CHÍ ĐÁNH GIÁ THÀNH VIÊN CHI TIẾT.xlsx",
+        "sheet": "BVH-TC"
+      },
+      "formula": "- Chấm theo năng lực xây dựng hồ sơ tài trợ, tìm kiếm nguồn lực và theo dõi cam kết tài trợ/gây quỹ. Điểm tiêu chí không vượt quá 25.\n- Cộng vào III-B.BVH-TC.04.\n- Trừ trực tiếp vào III-B.BVH-TC.04.\n- Trừ nặng, có thể chuyển xử lý kỷ luật.",
+      "evidence": "Pitch deck; proposal; bảng quyền lợi tài trợ; email gửi đối tác.",
+      "recordingUnit": "Tổ Tài chính / BCN",
+      "rules": [
+        {
+          "detail": "Xây dựng hồ sơ tài trợ, proposal, sponsorship pitch deck hoặc bảng quyền lợi nhà tài trợ.",
+          "scoreDelta": "+15/bộ đạt yêu cầu",
+          "note": "Điều lệ giao Tài chính xây dựng hồ sơ tài trợ và tìm kiếm nguồn lực từ doanh nghiệp đối tác.",
+          "evidence": "Pitch deck; proposal; bảng quyền lợi tài trợ; email gửi đối tác.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Chủ động tìm kiếm, liên hệ hoặc theo dõi đối tác tài trợ/gây quỹ.",
+          "scoreDelta": "+10/lần",
+          "note": "Chỉ tính khi có danh sách đối tác, nội dung liên hệ và trạng thái xử lý rõ.",
+          "evidence": "CRM đối tác; email/tin nhắn liên hệ; bảng theo dõi tài trợ; biên bản làm việc.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Kết nối thành công tài trợ bằng tiền mặt, hiện vật, học bổng, voucher, chuyên gia hoặc tài nguyên hỗ trợ CLB.",
+          "scoreDelta": "+20/lần",
+          "note": "Chỉ tính khi có xác nhận tài trợ hoặc bàn giao nguồn lực thực tế.",
+          "evidence": "Thư tài trợ; biên bản nhận tài trợ; ảnh hiện vật; sao kê; email xác nhận.",
+          "recordingUnit": "BCN / Tổ Tài chính"
+        },
+        {
+          "detail": "Tổ chức hoặc phối hợp tổ chức hoạt động gây quỹ có báo cáo doanh thu — chi phí rõ ràng.",
+          "scoreDelta": "+20/hoạt động đạt yêu cầu",
+          "note": "Cần tách riêng doanh thu, chi phí, lợi nhuận và phần nộp quỹ CLB.",
+          "evidence": "Kế hoạch gây quỹ; báo cáo doanh thu; chứng từ chi phí; biên bản nộp quỹ.",
+          "recordingUnit": "Tổ Tài chính / BCN"
+        },
+        {
+          "detail": "Gửi proposal sai thông tin, sai quyền lợi cam kết, sai tên đơn vị hoặc không theo dõi phản hồi đối tác.",
+          "scoreDelta": "-10/lần",
+          "note": "Nếu gây ảnh hưởng uy tín CLB, có thể đối chiếu thêm nhóm II trong Overview.",
+          "evidence": "Email đã gửi; proposal lỗi; phản hồi đối tác; biên bản đính chính.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        },
+        {
+          "detail": "Tự ý cam kết tài trợ, quyền lợi truyền thông hoặc điều khoản hợp tác khi chưa được BCN phê duyệt.",
+          "scoreDelta": "-20 đến -25/lần",
+          "note": "Mức -25 áp dụng nếu gây nghĩa vụ tài chính/truyền thông ngoài thẩm quyền.",
+          "evidence": "Email/tin nhắn cam kết; proposal; biên bản làm việc; báo cáo giải trình.",
+          "recordingUnit": "BCN / Trưởng ban Vận hành"
+        }
+      ],
+      "unitLabel": "Ban V?n h?nh - T? T?i ch?nh",
+      "rawMaxScore": 25.0,
+      "rawScaleMaxScore": 100.0,
+      "convertedMaxScore": 5.0,
+      "conversionFormula": "raw_score / 100 * 20",
+      "conversionFactor": 0.2
+    }
+  }
+]
