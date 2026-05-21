@@ -684,9 +684,7 @@ tests/test_evaluation_workflow_phase4.py
 |---|---|
 | `test_accept_appeal_creates_adjustment_event` | Accepted tạo score event điều chỉnh. |
 | `test_reject_appeal_does_not_create_adjustment_event` | Rejected không tạo event. |
-| `test_partial_accept_appeal_creates_adjustment_event` | Partial accepted tạo event nếu có delta. |
-| `test_resolve_appeal_recomputes_member` | Resolve có điều chỉnh thì compute lại member. |
-| `test_resolved_appeal_updates_member_status` | Member evaluation chuyển trạng thái phù hợp. |
+| `test_resolve_appeal_recomputes_member` | Partial accepted có điều chỉnh thì tạo event, compute lại member và cập nhật status. |
 
 ## 19.4. Approval and lock tests
 
@@ -696,8 +694,8 @@ tests/test_evaluation_workflow_phase4.py
 | `test_approve_cycle_requires_bcn` | Chỉ BCN approve. |
 | `test_approve_cycle_sets_member_evaluations_approved` | Approve cập nhật member evaluations. |
 | `test_lock_cycle_requires_approved_status` | Chỉ lock sau approved. |
-| `test_locked_cycle_rejects_new_score_event` | Cycle locked chặn event mới. |
-| `test_locked_cycle_rejects_new_appeal` | Cycle locked chặn appeal mới. |
+| `test_create_score_event_rejects_locked_cycle` | Cycle locked chặn event mới. |
+| `test_create_appeal_rejects_locked_cycle` | Cycle locked chặn appeal mới. |
 | `test_reopen_correction_allowed_only_before_lock` | Approved có thể reopen, locked thì không. |
 
 ## 20. Manual QA checklist
@@ -738,6 +736,22 @@ Phase 4 hoàn thành khi:
 - Có audit log cho các quyết định chính.
 - Có integration tests cho state transition, RBAC, appeal resolution và lock guard.
 - API v1 legacy không bị thay đổi hành vi.
+
+### 21.1. Trạng thái triển khai
+
+- [x] Bổ sung constants trạng thái workflow cho cycle, member evaluation và appeal.
+- [x] Bổ sung error classes Phase 4 và HTTP mapping có `details` khi cần.
+- [x] Tạo `EvaluationReviewService` để mở/đóng review window và tổng hợp review.
+- [x] Tạo `EvaluationAppealService` cho lifecycle appeal, request evidence, cancel và resolve.
+- [x] Tạo `EvaluationApprovalService` cho ready/approve/lock/reopen correction.
+- [x] Tạo `EvaluationNotificationService` no-op để chuẩn bị hook notification.
+- [x] Hoàn thiện endpoint review/appeal/approval/reopen trong router `/api/v2/evaluations`.
+- [x] Accepted/partially accepted appeal tạo adjustment event `source_type=APPEAL` thay vì sửa event gốc.
+- [x] Resolve appeal có thể compute lại member và cập nhật status.
+- [x] Approval bị chặn khi còn appeal mở hoặc member evaluation chưa ổn định.
+- [x] Lock chỉ cho phép sau `APPROVED` và chặn các thao tác ghi thường.
+- [x] Bổ sung integration tests tại `tests/test_evaluation_workflow_phase4.py`.
+- [x] Đã chạy targeted ruff và pytest cho Phase 4 + các test evaluation Phase 1-3.
 
 ## 22. Thứ tự triển khai đề xuất
 

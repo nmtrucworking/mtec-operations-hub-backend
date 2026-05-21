@@ -7,7 +7,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
-from app.core.evaluation_constants import CYCLE_STATUS_LOCKED, EVENT_TYPE_PENALTY
+from app.core.evaluation_constants import (
+    CYCLE_MUTABLE_STATUSES,
+    EVENT_TYPE_PENALTY,
+)
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -24,7 +27,11 @@ from app.models import (
     User,
 )
 from app.schemas_evaluation import (
+    EvaluationAppealCancelRequest,
     EvaluationAppealCreate,
+    EvaluationAppealEvidenceRequest,
+    EvaluationAppealResolveRequest,
+    EvaluationApproveCycleRequest,
     EvaluationComputeRequest,
     EvaluationCriteriaCreate,
     EvaluationCriteriaSeedRequest,
@@ -34,24 +41,37 @@ from app.schemas_evaluation import (
     EvaluationCycleUpdate,
     EvaluationEvidenceCreate,
     EvaluationEvidenceReviewRequest,
+    EvaluationOpenReviewRequest,
+    EvaluationReopenCorrectionRequest,
     EvaluationScoreEventCreate,
     EvaluationScoreEventVoidRequest,
     MemberCycleRoleCreate,
     MemberCycleRoleUpdate,
 )
+from app.services.evaluation_appeal import EvaluationAppealService
+from app.services.evaluation_approval import EvaluationApprovalService
 from app.services.evaluation_calculator import EvaluationCalculatorService
 from app.services.evaluation_criteria_seed import (
     DEFAULT_CRITERIA_EFFECTIVE_FROM,
     EvaluationCriteriaSeedService,
 )
 from app.services.evaluation_errors import (
+    EvaluationAppealAlreadyResolvedError,
+    EvaluationAppealNotFoundError,
+    EvaluationCorrectionNotAllowedError,
+    EvaluationCycleAlreadyApprovedError,
     EvaluationCycleLockedError,
     EvaluationError,
     EvaluationEvidenceError,
+    EvaluationInvalidStatusTransitionError,
     EvaluationMissingCriteriaError,
     EvaluationNotFoundError,
+    EvaluationNotReadyForApprovalError,
+    EvaluationOpenAppealsExistError,
+    EvaluationReviewWindowClosedError,
     EvaluationWeightError,
 )
+from app.services.evaluation_review import EvaluationReviewService
 from app.services.evaluation_sync import EvaluationSyncService
 from app.utils import sanitize_pagination
 
@@ -76,6 +96,14 @@ SENSITIVE_METADATA_KEY_PARTS = (
 
 EVALUATION_ERROR_STATUS_MAP = {
     EvaluationCycleLockedError.code: status.HTTP_409_CONFLICT,
+    EvaluationInvalidStatusTransitionError.code: status.HTTP_409_CONFLICT,
+    EvaluationReviewWindowClosedError.code: status.HTTP_409_CONFLICT,
+    EvaluationAppealNotFoundError.code: status.HTTP_404_NOT_FOUND,
+    EvaluationAppealAlreadyResolvedError.code: status.HTTP_409_CONFLICT,
+    EvaluationNotReadyForApprovalError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    EvaluationOpenAppealsExistError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    EvaluationCycleAlreadyApprovedError.code: status.HTTP_409_CONFLICT,
+    EvaluationCorrectionNotAllowedError.code: status.HTTP_409_CONFLICT,
     EvaluationMissingCriteriaError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
     EvaluationEvidenceError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
     EvaluationWeightError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -84,11 +112,14 @@ EVALUATION_ERROR_STATUS_MAP = {
 
 
 def _raise_evaluation_http_error(exc: EvaluationError) -> None:
+    detail = {"code": exc.code, "message": str(exc)}
+    if exc.details:
+        detail["details"] = exc.details
     raise HTTPException(
         status_code=EVALUATION_ERROR_STATUS_MAP.get(
             exc.code, status.HTTP_400_BAD_REQUEST
         ),
-        detail={"code": exc.code, "message": str(exc)},
+        detail=detail,
     )
 
 
@@ -123,12 +154,12 @@ def _get_cycle_or_404(db: Session, cycle_id: str) -> EvaluationCycle:
 
 
 def _ensure_cycle_not_locked(cycle: EvaluationCycle) -> None:
-    if cycle.status == CYCLE_STATUS_LOCKED:
+    if cycle.status not in CYCLE_MUTABLE_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={
                 "code": "EVALUATION_CYCLE_LOCKED",
-                "message": "Evaluation cycle is locked",
+                "message": f"Evaluation cycle is not writable in status {cycle.status}",
             },
         )
 
@@ -613,45 +644,140 @@ def submit_cycle_review(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    _require_roles(current_user, {"bvh_discipline", "bvh_hr"})
-    cycle = _get_cycle_or_404(db, cycle_id)
-    _ensure_cycle_not_locked(cycle)
-    cycle.status = "MEMBER_REVIEW"
-    create_audit_log(
-        db=db,
-        action="SUBMIT_EVALUATION_CYCLE_REVIEW",
-        resource_type="evaluation_cycle",
-        resource_id=cycle.id,
-        actor=current_user,
-        after_snapshot={"status": cycle.status},
-    )
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    try:
+        result = EvaluationReviewService(db).open_member_review(
+            cycle_id,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
     db.commit()
-    db.refresh(cycle)
-    return api_response(data=_cycle_out(cycle))
+    db.refresh(result["cycle"])
+    return api_response(
+        data=_cycle_out(result["cycle"]),
+        meta={
+            "reviewDeadline": result["reviewDeadline"],
+            "updatedMembers": result["updatedMembers"],
+        },
+    )
+
+
+@router.post("/cycles/{cycle_id}/review/open")
+def open_member_review(
+    cycle_id: str,
+    body: EvaluationOpenReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    try:
+        result = EvaluationReviewService(db).open_member_review(
+            cycle_id,
+            actor_user_id=current_user.id,
+            review_deadline=body.reviewDeadline,
+            note=body.note,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(result["cycle"])
+    return api_response(
+        data=_cycle_out(result["cycle"]),
+        meta={
+            "reviewDeadline": result["reviewDeadline"],
+            "updatedMembers": result["updatedMembers"],
+        },
+    )
+
+
+@router.post("/cycles/{cycle_id}/review/close")
+def close_member_review(
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    try:
+        result = EvaluationReviewService(db).close_member_review(
+            cycle_id,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(result["cycle"])
+    return api_response(
+        data=_cycle_out(result["cycle"]),
+        meta={
+            "openAppeals": result["openAppeals"],
+            "nextStatus": result["nextStatus"],
+        },
+    )
+
+
+@router.get("/cycles/{cycle_id}/review/summary")
+def get_review_summary(
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_manager(current_user)
+    try:
+        result = EvaluationReviewService(db).get_review_summary(cycle_id)
+    except EvaluationError as exc:
+        _raise_evaluation_http_error(exc)
+    return api_response(data=result)
+
+
+@router.post("/cycles/{cycle_id}/ready-for-approval")
+def mark_cycle_ready_for_approval(
+    cycle_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    try:
+        result = EvaluationApprovalService(db).mark_ready_for_approval(
+            cycle_id,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(result["cycle"])
+    return api_response(data=_cycle_out(result["cycle"]), meta=result["details"])
 
 
 @router.post("/cycles/{cycle_id}/approve")
 def approve_cycle(
     cycle_id: str,
+    body: EvaluationApproveCycleRequest | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
     _require_roles(current_user, EVALUATION_ADMIN_ROLES)
-    cycle = _get_cycle_or_404(db, cycle_id)
-    _ensure_cycle_not_locked(cycle)
-    cycle.status = "APPROVED"
-    cycle.approved_by_user_id = current_user.id
-    cycle.approved_at = datetime.now(UTC)
-    create_audit_log(
-        db=db,
-        action="APPROVE_EVALUATION_CYCLE",
-        resource_type="evaluation_cycle",
-        resource_id=cycle.id,
-        actor=current_user,
-    )
+    body = body or EvaluationApproveCycleRequest()
+    try:
+        result = EvaluationApprovalService(db).approve_cycle(
+            cycle_id,
+            actor_user_id=current_user.id,
+            approval_note=body.approvalNote,
+            lock_after_approve=body.lockAfterApprove,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
     db.commit()
-    db.refresh(cycle)
-    return api_response(data=_cycle_out(cycle))
+    db.refresh(result["cycle"])
+    return api_response(
+        data=_cycle_out(result["cycle"]),
+        meta={"approvedMembers": result["approvedMembers"]},
+    )
 
 
 @router.post("/cycles/{cycle_id}/lock")
@@ -661,16 +787,39 @@ def lock_cycle(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     _require_roles(current_user, EVALUATION_ADMIN_ROLES)
-    cycle = _get_cycle_or_404(db, cycle_id)
-    cycle.status = CYCLE_STATUS_LOCKED
-    cycle.locked_at = datetime.now(UTC)
-    create_audit_log(
-        db=db,
-        action="LOCK_EVALUATION_CYCLE",
-        resource_type="evaluation_cycle",
-        resource_id=cycle.id,
-        actor=current_user,
+    try:
+        result = EvaluationApprovalService(db).lock_cycle(
+            cycle_id,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(result["cycle"])
+    return api_response(
+        data=_cycle_out(result["cycle"]),
+        meta={"lockedMembers": result["lockedMembers"]},
     )
+
+
+@router.post("/cycles/{cycle_id}/reopen-correction")
+def reopen_cycle_correction(
+    cycle_id: str,
+    body: EvaluationReopenCorrectionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_ADMIN_ROLES)
+    try:
+        cycle = EvaluationApprovalService(db).reopen_approved_cycle_for_correction(
+            cycle_id,
+            body.reason,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
     db.commit()
     db.refresh(cycle)
     return api_response(data=_cycle_out(cycle))
@@ -1545,34 +1694,22 @@ def create_appeal(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    cycle = _get_cycle_or_404(db, cycle_id)
-    _ensure_cycle_not_locked(cycle)
     member = _get_member_or_404(db, body.memberId)
     if not (_is_manager(current_user) or _is_current_user_linked_to_member(current_user, member)):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"code": "FORBIDDEN", "message": "Cannot create appeal for this member"},
         )
-    appeal = EvaluationAppeal(
-        cycle_id=cycle_id,
-        member_id=body.memberId,
-        member_evaluation_id=body.memberEvaluationId,
-        criterion_id=body.criterionId,
-        criterion_code=body.criterionCode,
-        appeal_type=body.appealType,
-        content=body.content,
-        requested_score=body.requestedScore,
-        metadata_json=_metadata_dump(body.metadata),
-    )
-    db.add(appeal)
-    db.flush()
-    create_audit_log(
-        db=db,
-        action="CREATE_EVALUATION_APPEAL",
-        resource_type="evaluation_appeal",
-        resource_id=appeal.id,
-        actor=current_user,
-    )
+    try:
+        appeal = EvaluationAppealService(db).create_appeal(
+            cycle_id,
+            body.model_dump(),
+            actor_user_id=current_user.id,
+            allow_late=_is_manager(current_user),
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
     db.commit()
     db.refresh(appeal)
     return api_response(data=_appeal_out(appeal))
@@ -1614,4 +1751,109 @@ def get_appeal(
             detail={"code": "RESOURCE_NOT_FOUND", "message": "Appeal not found"},
         )
     _ensure_can_access_member(current_user, _get_member_or_404(db, appeal.member_id))
+    return api_response(data=_appeal_out(appeal))
+
+
+@router.post("/appeals/{appeal_id}/start-review")
+def start_appeal_review(
+    appeal_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_RECORDER_ROLES)
+    try:
+        appeal = EvaluationAppealService(db).start_review(
+            appeal_id,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(appeal)
+    return api_response(data=_appeal_out(appeal))
+
+
+@router.post("/appeals/{appeal_id}/request-evidence")
+def request_appeal_evidence(
+    appeal_id: str,
+    body: EvaluationAppealEvidenceRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_RECORDER_ROLES)
+    try:
+        appeal = EvaluationAppealService(db).request_more_evidence(
+            appeal_id,
+            body.note,
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(appeal)
+    return api_response(data=_appeal_out(appeal))
+
+
+@router.post("/appeals/{appeal_id}/resolve")
+def resolve_appeal(
+    appeal_id: str,
+    body: EvaluationAppealResolveRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_RECORDER_ROLES)
+    try:
+        result = EvaluationAppealService(db).resolve_appeal(
+            appeal_id,
+            body.model_dump(),
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(result["appeal"])
+    if result["adjustmentEvent"]:
+        db.refresh(result["adjustmentEvent"])
+    return api_response(
+        data=_appeal_out(result["appeal"]),
+        meta={
+            "adjustmentEvent": (
+                _score_event_out(result["adjustmentEvent"])
+                if result["adjustmentEvent"]
+                else None
+            ),
+            "recomputed": result["recomputed"],
+        },
+    )
+
+
+@router.post("/appeals/{appeal_id}/cancel")
+def cancel_appeal(
+    appeal_id: str,
+    body: EvaluationAppealCancelRequest | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    appeal = db.get(EvaluationAppeal, appeal_id)
+    if not appeal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "RESOURCE_NOT_FOUND", "message": "Appeal not found"},
+        )
+    if not _is_manager(current_user):
+        _ensure_can_access_member(current_user, _get_member_or_404(db, appeal.member_id))
+    try:
+        appeal = EvaluationAppealService(db).cancel_appeal(
+            appeal_id,
+            (body.reason if body else None),
+            actor_user_id=current_user.id,
+        )
+    except EvaluationError as exc:
+        db.rollback()
+        _raise_evaluation_http_error(exc)
+    db.commit()
+    db.refresh(appeal)
     return api_response(data=_appeal_out(appeal))

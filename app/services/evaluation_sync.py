@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
 from app.core.evaluation_constants import (
-    CYCLE_STATUS_LOCKED,
+    CYCLE_MUTABLE_STATUSES,
     DEFAULT_ATTENDANCE_PENALTY_CRITERION_CODE,
     DEFAULT_COMPETITION_BONUS_CRITERION_CODE,
     EVENT_TYPE_BONUS,
@@ -176,8 +176,10 @@ class EvaluationSyncService:
         cycle = self.db.get(EvaluationCycle, cycle_id)
         if not cycle:
             raise EvaluationNotFoundError(f"Evaluation cycle not found: {cycle_id}")
-        if cycle.status == CYCLE_STATUS_LOCKED:
-            raise EvaluationCycleLockedError(f"Evaluation cycle is locked: {cycle_id}")
+        if cycle.status not in CYCLE_MUTABLE_STATUSES:
+            raise EvaluationCycleLockedError(
+                f"Evaluation cycle is not writable in status {cycle.status}: {cycle_id}"
+            )
 
     def _get_active_criterion(self, criterion_code: str) -> EvaluationCriterion:
         criterion = self.db.scalar(

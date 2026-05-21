@@ -148,12 +148,55 @@ class EvaluationComputeRequest(BaseModel):
     recomputeExisting: bool = True
 
 
+class EvaluationOpenReviewRequest(BaseModel):
+    reviewDeadline: dt_datetime | None = None
+    note: str | None = None
+
+
 class EvaluationAppealCreate(BaseModel):
     memberId: str
     memberEvaluationId: str | None = None
     criterionId: str | None = None
     criterionCode: str | None = None
     appealType: str
-    content: str
+    content: str = Field(min_length=1)
     requestedScore: float | None = None
+    evidenceIds: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] | None = None
+
+
+class EvaluationAppealEvidenceRequest(BaseModel):
+    note: str = Field(min_length=1)
+
+
+class EvaluationAppealResolveRequest(BaseModel):
+    decision: str
+    resolutionNote: str = Field(min_length=1)
+    adjustedScoreDelta: float | None = None
+    targetCriterionCode: str | None = None
+    createAdjustmentEvent: bool = False
+    evidenceIds: list[str] = Field(default_factory=list)
+    recomputeMember: bool = True
+
+    @model_validator(mode="after")
+    def validate_adjustment(self) -> "EvaluationAppealResolveRequest":
+        if self.createAdjustmentEvent and (
+            self.adjustedScoreDelta is None or not self.targetCriterionCode
+        ):
+            raise ValueError(
+                "targetCriterionCode and adjustedScoreDelta are required for adjustment"
+            )
+        return self
+
+
+class EvaluationAppealCancelRequest(BaseModel):
+    reason: str | None = None
+
+
+class EvaluationApproveCycleRequest(BaseModel):
+    approvalNote: str | None = None
+    lockAfterApprove: bool = False
+
+
+class EvaluationReopenCorrectionRequest(BaseModel):
+    reason: str = Field(min_length=1)

@@ -13,7 +13,7 @@ from app.core.evaluation_constants import (
     COMPONENT_III_A,
     COMPONENT_III_B,
     COMPONENT_MAX_SCORES,
-    CYCLE_STATUS_LOCKED,
+    CYCLE_MUTABLE_STATUSES,
     MEMBER_EVALUATION_STATUS_COMPUTED,
     TOTAL_MAX_SCORE,
     WEIGHT_TOLERANCE,
@@ -233,8 +233,10 @@ class EvaluationCalculatorService:
         return member
 
     def _ensure_cycle_is_writable(self, cycle: EvaluationCycle) -> None:
-        if cycle.status == CYCLE_STATUS_LOCKED:
-            raise EvaluationCycleLockedError(f"Evaluation cycle is locked: {cycle.id}")
+        if cycle.status not in CYCLE_MUTABLE_STATUSES:
+            raise EvaluationCycleLockedError(
+                f"Evaluation cycle is not writable in status {cycle.status}: {cycle.id}"
+            )
 
     def _load_active_criteria(self, cycle: EvaluationCycle) -> list[EvaluationCriterion]:
         criteria = self.db.scalars(

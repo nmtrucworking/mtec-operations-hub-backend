@@ -181,6 +181,8 @@ def test_lock_cycle_requires_bcn(client: TestClient, test_db: Session):
     operator = _user(test_db, "operator_lock", "bvh_discipline")
     admin = _user(test_db, "admin_lock", "bcn")
     cycle = _cycle(test_db, "2026-05-LOCK")
+    cycle.status = "APPROVED"
+    test_db.commit()
 
     denied = client.post(
         f"/api/v2/evaluations/cycles/{cycle.id}/lock",
