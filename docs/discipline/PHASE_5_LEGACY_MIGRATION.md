@@ -740,6 +740,22 @@ Phase 5 hoàn thành khi:
 - Legacy API có kế hoạch deprecation rõ ràng.
 - API v1 không bị xóa đột ngột và frontend có đường chuyển sang v2.
 
+### 21.1. Trạng thái triển khai
+
+- [x] Có service inventory/migration/rollback dùng chung cho dữ liệu legacy.
+- [x] Có script inventory và migration hỗ trợ `inventory`, `dry_run`, `sandbox`, `production`, `rollback`.
+- [x] Migration gắn `migrationBatchId`, `sourceModule`, `migrationVersion` vào metadata.
+- [x] Migration idempotent cho score events, discipline cases và evidence.
+- [x] `discipline_records.discipline_level` được map sang `discipline_cases` khi hợp lệ.
+- [x] `discipline_records.absents`, `attendances` và `competition_results` được map sang score events theo criteria v2.
+- [x] `discipline_records.kpi` chỉ được lưu snapshot/reconciliation, không cộng trực tiếp vào điểm mới.
+- [x] Có report JSON/Markdown gồm summary, warnings và manual review queue.
+- [x] Có soft rollback theo `migrationBatchId`.
+- [x] Legacy API v1 có feature flags cho deprecation header và read-only mode.
+- [x] Có test tự động cho inventory, mapping, idempotency, dry-run, rollback và legacy deprecation.
+- [ ] Manual QA trên DB dev/staging chưa được thực hiện trong bước code này.
+- [ ] Production backup/migration chưa được chạy trong bước code này.
+
 ## 22. Thứ tự triển khai đề xuất
 
 1. Tạo script inventory.

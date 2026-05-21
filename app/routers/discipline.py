@@ -1,16 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core import config
 from app.core.audit import create_audit_log
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
-from app.models import DisciplineRecord, User, Meeting, Attendance, Member, Competition, CompetitionResult
+from app.models import (
+    Attendance,
+    Competition,
+    CompetitionResult,
+    DisciplineRecord,
+    Meeting,
+    Member,
+    User,
+)
 from app.schemas import DisciplineRecordCreate, DisciplineRecordUpdate
 from app.utils import sanitize_pagination
 
 router = APIRouter(prefix="/discipline-records", tags=["discipline"])
+
+
+def _apply_legacy_deprecation_header(response: Response) -> None:
+    if config.DISCIPLINE_LEGACY_DEPRECATION_HEADER:
+        response.headers["X-MTEC-Deprecated"] = "true"
+        response.headers["X-MTEC-Replacement"] = "/api/v2/evaluations"
+
+
+def _ensure_legacy_mutation_allowed(response: Response) -> None:
+    _apply_legacy_deprecation_header(response)
+    if config.DISCIPLINE_LEGACY_READ_ONLY:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "DISCIPLINE_LEGACY_READ_ONLY",
+                "message": "Discipline legacy module is read-only. Use /api/v2/evaluations instead.",
+            },
+        )
 
 
 def _record_out(record: DisciplineRecord) -> dict:
@@ -31,6 +58,7 @@ def _record_out(record: DisciplineRecord) -> dict:
 
 @router.get("")
 def list_records(
+    response: Response,
     search: str | None = None,
     disciplineLevel: str | None = None,
     committee: str | None = None,
@@ -39,6 +67,7 @@ def list_records(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> dict:
+    _apply_legacy_deprecation_header(response)
     page, pageSize = sanitize_pagination(page, pageSize)
     stmt = select(DisciplineRecord)
     count_stmt = select(func.count()).select_from(DisciplineRecord)
@@ -74,9 +103,11 @@ def list_records(
 
 @router.get("/stats")
 def get_stats(
+    response: Response,
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ) -> dict:
+    _apply_legacy_deprecation_header(response)
     # Tổng số bản ghi (mỗi bản ghi tương ứng 1 thành viên có record kỷ luật/KPI)
     total_records = db.scalar(select(func.count()).select_from(DisciplineRecord)) or 0
 
@@ -105,9 +136,11 @@ def get_stats(
 @router.post("")
 def create_record(
     body: DisciplineRecordCreate,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
+    _ensure_legacy_mutation_allowed(response)
     if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -149,9 +182,11 @@ def create_record(
 def update_record(
     record_id: str,
     body: DisciplineRecordUpdate,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
+    _ensure_legacy_mutation_allowed(response)
     if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -198,6 +233,7 @@ def update_record(
 @router.post("/sync-attendance/{meeting_id}")
 def sync_attendance_to_discipline(
     meeting_id: str,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
@@ -208,7 +244,8 @@ def sync_attendance_to_discipline(
     2. Cộng dồn số buổi vắng vào DisciplineRecord.
     3. Tự động nội suy mức độ kỷ luật (discipline_level) dựa trên tổng số buổi vắng.
     """
-    
+    _ensure_legacy_mutation_allowed(response)
+
     # Kiểm tra phân quyền (RBAC) - Tránh việc thành viên tự ý kích hoạt đồng bộ
     if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
@@ -307,6 +344,7 @@ def sync_attendance_to_discipline(
 @router.post("/sync-competition-kpi/{competition_id}")
 def sync_competition_to_kpi(
     competition_id: str,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
@@ -314,7 +352,8 @@ def sync_competition_to_kpi(
     Đồng bộ điểm thưởng (bonus_kpi) từ kết quả cuộc thi vào hồ sơ Kỷ luật & Hiệu suất.
     Hệ thống chỉ xử lý những bản ghi chưa được đồng bộ (is_synced == False).
     """
-    
+    _ensure_legacy_mutation_allowed(response)
+
     if not current_user.has_any_roles({"bcn", "bvh_discipline"}):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -333,7 +372,7 @@ def sync_competition_to_kpi(
         select(CompetitionResult).where(
             CompetitionResult.competition_id == competition_id,
             CompetitionResult.bonus_kpi > 0,
-            CompetitionResult.is_synced == False
+            CompetitionResult.is_synced.is_(False)
         )
     ).all()
 

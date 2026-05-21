@@ -57,3 +57,13 @@ AI_GEMINI_BASE_URL = os.getenv(
 AI_GEMINI_MODEL = os.getenv("AI_GEMINI_MODEL", "gemini-1.5-flash")
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+DISCIPLINE_LEGACY_DEPRECATION_HEADER = _as_bool(
+    os.getenv("DISCIPLINE_LEGACY_DEPRECATION_HEADER"), default=False
+)
+DISCIPLINE_LEGACY_READ_ONLY = _as_bool(
+    os.getenv("DISCIPLINE_LEGACY_READ_ONLY"), default=False
+)
+EVALUATION_LEGACY_MIGRATION_ENABLED = _as_bool(
+    os.getenv("EVALUATION_LEGACY_MIGRATION_ENABLED"), default=False
+)
