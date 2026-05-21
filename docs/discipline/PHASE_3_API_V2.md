@@ -792,7 +792,9 @@ tests/test_evaluation_api_v2.py
 | `test_create_score_event_success` | Recorder ghi điểm thành công. |
 | `test_create_score_event_rejects_locked_cycle` | Kỳ khóa không nhận event mới. |
 | `test_create_evidence_for_own_member` | Member nộp minh chứng cho mình. |
+| `test_evidence_response_filters_sensitive_metadata` | Evidence response không trả metadata nhạy cảm. |
 | `test_verify_evidence_requires_manager_role` | Member không tự verify evidence. |
+| `test_verify_evidence_rejects_self_review` | Người nộp minh chứng không tự verify. |
 | `test_void_score_event_does_not_delete_event` | Void event không hard delete. |
 
 ## 17.4. Compute/results tests
@@ -806,24 +808,30 @@ tests/test_evaluation_api_v2.py
 | `test_get_member_result_denies_other_member` | Member không xem điểm người khác. |
 | `test_get_cycle_members_requires_manager` | Danh sách toàn kỳ không mở cho member thường. |
 
+## 17.5. Appeal tests
+
+| Test | Mục tiêu |
+|---|---|
+| `test_create_appeal_rejects_locked_cycle` | Kỳ khóa không nhận appeal mới. |
+
 ## 18. OpenAPI quality checklist
 
-- [ ] Endpoint có tag `evaluations`.
-- [ ] Request body dùng Pydantic schema, không dùng raw dict nếu không cần.
-- [ ] Field camelCase ở request/response để phù hợp frontend.
-- [ ] Các endpoint list có `page`, `pageSize`.
-- [ ] Error response được mô tả nhất quán.
-- [ ] Không expose internal SQLAlchemy field name nếu response đang dùng camelCase.
+- [x] Endpoint có tag `evaluations`.
+- [x] Request body dùng Pydantic schema, không dùng raw dict nếu không cần.
+- [x] Field camelCase ở request/response để phù hợp frontend.
+- [x] Các endpoint list có `page`, `pageSize`.
+- [x] Error response được mô tả nhất quán.
+- [x] Không expose internal SQLAlchemy field name nếu response đang dùng camelCase.
 
 ## 19. Security checklist
 
-- [ ] Mọi endpoint `/api/v2/evaluations` yêu cầu authenticated user.
-- [ ] Mutating endpoint có role guard.
-- [ ] Member không xem/sửa dữ liệu người khác.
-- [ ] Không cho thao tác trên cycle `LOCKED`, trừ endpoint read.
-- [ ] Không cho verify evidence bởi chính người nộp nếu policy yêu cầu độc lập.
-- [ ] Không trả metadata nhạy cảm nếu evidence chứa internal link.
-- [ ] Không cho client tự set `recordedByUserId`, `approvedByUserId`, `verifiedByUserId`; server lấy từ token.
+- [x] Mọi endpoint `/api/v2/evaluations` yêu cầu authenticated user.
+- [x] Mutating endpoint có role guard.
+- [x] Member không xem/sửa dữ liệu người khác.
+- [x] Không cho thao tác trên cycle `LOCKED`, trừ endpoint read.
+- [x] Không cho verify evidence bởi chính người nộp nếu policy yêu cầu độc lập.
+- [x] Không trả metadata nhạy cảm nếu evidence chứa internal link.
+- [x] Không cho client tự set `recordedByUserId`, `approvedByUserId`, `verifiedByUserId`; server lấy từ token.
 
 ## 20. Migration compatibility
 
@@ -850,6 +858,17 @@ Phase 3 hoàn thành khi:
 - Có integration tests cho endpoint chính.
 - API v1 legacy không bị thay đổi hành vi.
 - Swagger/OpenAPI hiển thị được nhóm endpoint mới.
+
+### 21.1. Trạng thái triển khai
+
+- [x] Tạo `app/schemas_evaluation.py` cho request schema Phase 3.
+- [x] Tạo `app/routers/v2/evaluations.py` và mount vào `api_v2_router`.
+- [x] Expose endpoint nền cho cycles, criteria, member roles, score events, evidence, compute/results, sync và appeal.
+- [x] Router chỉ xử lý auth/RBAC/validation/response mapping; tính điểm và sync vẫn gọi service Phase 2.
+- [x] Domain errors được map sang HTTP status và `detail={code, message}`.
+- [x] Guard cycle `LOCKED`, self-review evidence, owner access và metadata evidence nhạy cảm.
+- [x] Bổ sung integration tests trong `tests/test_evaluation_api_v2.py`.
+- [x] Đã chạy targeted ruff và pytest cho Phase 3 + bộ service Phase 2.
 
 ## 22. Thứ tự triển khai đề xuất
 
