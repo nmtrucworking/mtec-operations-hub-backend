@@ -44,6 +44,7 @@ from app.schemas_evaluation import (
     EvaluationOpenReviewRequest,
     EvaluationReopenCorrectionRequest,
     EvaluationScoreEventCreate,
+    EvaluationScoreEventBulkCreate,
     EvaluationScoreEventVoidRequest,
     MemberCycleRoleCreate,
     MemberCycleRoleUpdate,
@@ -1181,6 +1182,79 @@ def delete_member_role(
     db.delete(role)
     db.commit()
     return api_response(data={"deleted": True, "id": role_id})
+
+
+@router.post("/cycles/{cycle_id}/score-events/bulk")
+def create_score_events_bulk(
+    cycle_id: str,
+    body: EvaluationScoreEventBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_RECORDER_ROLES)
+    cycle = _get_cycle_or_404(db, cycle_id)
+    _ensure_cycle_not_locked(cycle)
+    
+    created_count = 0
+    for evt_body in body.events:
+        _get_member_or_404(db, evt_body.memberId)
+        
+        if evt_body.sourceType == "SPREADSHEET":
+            existing = db.scalar(
+                select(EvaluationScoreEvent).where(
+                    EvaluationScoreEvent.cycle_id == cycle_id,
+                    EvaluationScoreEvent.member_id == evt_body.memberId,
+                    EvaluationScoreEvent.criterion_code == evt_body.criterionCode,
+                    EvaluationScoreEvent.source_type == "SPREADSHEET",
+                    EvaluationScoreEvent.is_void.is_(False)
+                )
+            )
+            if existing:
+                if existing.score_delta == evt_body.scoreDelta and existing.note == evt_body.note:
+                    continue
+                existing.is_void = True
+                existing.void_reason = "Overwritten by spreadsheet update"
+                existing.voided_at = func.now()
+                existing.voided_by_user_id = current_user.id
+                db.add(existing)
+        else:
+            existing_source = _existing_source_event(db, cycle_id=cycle_id, body=evt_body)
+            if existing_source:
+                continue
+
+        criterion = _find_criterion(
+            db,
+            criterion_id=evt_body.criterionId,
+            criterion_code=evt_body.criterionCode,
+            unit_code=evt_body.unitCode,
+        )
+        score_delta = evt_body.scoreDelta
+        if evt_body.eventType == EVENT_TYPE_PENALTY and score_delta > 0:
+            score_delta = -score_delta
+
+        event = EvaluationScoreEvent(
+            cycle_id=cycle_id,
+            member_id=evt_body.memberId,
+            criterion_id=criterion.id,
+            criterion_code=criterion.code,
+            component=criterion.component,
+            unit_code=evt_body.unitCode if evt_body.unitCode is not None else criterion.unit_code,
+            event_type=evt_body.eventType,
+            source_type=evt_body.sourceType,
+            source_id=evt_body.sourceId,
+            raw_value=evt_body.rawValue,
+            score_delta=score_delta,
+            max_score_snapshot=criterion.max_score,
+            weight=evt_body.weight,
+            note=evt_body.note,
+            recorded_by_user_id=current_user.id,
+            metadata_json=_metadata_dump(evt_body.metadata),
+        )
+        db.add(event)
+        created_count += 1
+
+    db.commit()
+    return api_response(data={"createdCount": created_count}, message=f"Đã lưu thành công {created_count} sự kiện điểm.")
 
 
 @router.post("/cycles/{cycle_id}/score-events")

@@ -114,6 +114,10 @@ class EvaluationScoreEventCreate(BaseModel):
     metadata: dict[str, Any] | None = None
 
 
+class EvaluationScoreEventBulkCreate(BaseModel):
+    events: list[EvaluationScoreEventCreate]
+
+
 class EvaluationScoreEventVoidRequest(BaseModel):
     reason: str | None = None
 
