@@ -76,6 +76,7 @@ from app.services.evaluation_errors import (
 from app.services.evaluation_review import EvaluationReviewService
 from app.services.evaluation_sync import EvaluationSyncService
 from app.utils import sanitize_pagination
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/evaluations", tags=["evaluations"])
 
@@ -1501,7 +1502,19 @@ def create_evidence(
         metadata_json=_metadata_dump(body.metadata),
     )
     db.add(evidence)
-    db.flush()
+    try:
+        db.flush()
+    except IntegrityError as ie:
+        db.rollback()
+        # Unique constraint on score_event_id prevents duplicate evidence for same score event
+        # Return a clear, machine-readable error for clients
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "EVIDENCE_DUPLICATE",
+                "message": "Evidence for this score event already exists",
+            },
+        ) from ie
     create_audit_log(
         db=db,
         action="CREATE_EVALUATION_EVIDENCE",

@@ -438,6 +438,7 @@ class EvaluationEvidence(Base):
         Index("ix_evaluation_evidence_score_event_id", "score_event_id"),
         Index("ix_evaluation_evidence_evidence_type", "evidence_type"),
         Index("ix_evaluation_evidence_status", "status"),
+        UniqueConstraint("score_event_id", name="uq_evaluation_evidence_score_event"),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
