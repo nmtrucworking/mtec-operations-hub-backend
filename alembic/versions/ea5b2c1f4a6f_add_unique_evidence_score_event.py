@@ -57,7 +57,7 @@ def upgrade() -> None:
         # SQLite does not support ALTER CONSTRAINT directly; use batch_alter_table for compatibility
         bind = op.get_bind()
         if bind.dialect.name == 'sqlite':
-            with op.batch_alter_table('evaluation_evidence', copy_from=op.get_context().impl.get_table_names()) as batch_op:
+            with op.batch_alter_table('evaluation_evidence') as batch_op:
                 batch_op.create_unique_constraint(
                     "uq_evaluation_evidence_score_event", ["score_event_id"]
                 )
