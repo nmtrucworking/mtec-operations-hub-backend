@@ -235,12 +235,36 @@ class DisciplineRecord(Base):
     committee: Mapped[str | None] = mapped_column(String(120), nullable=True)
     absents: Mapped[int] = mapped_column(Integer, default=0)
     kpi: Mapped[float] = mapped_column(Float, default=0)
-    discipline_level: Mapped[str] = mapped_column(String(40), default="Khong")
+    discipline_level: Mapped[str] = mapped_column(String(40), default="NONE")
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
+
+
+class DisciplineAttendanceSyncLog(Base):
+    __tablename__ = "discipline_attendance_sync_logs"
+    __table_args__ = (
+        UniqueConstraint(
+            "meeting_id",
+            "member_id",
+            name="uq_discipline_attendance_sync_logs_meeting_member",
+        ),
+        Index("ix_discipline_attendance_sync_logs_meeting_id", "meeting_id"),
+        Index("ix_discipline_attendance_sync_logs_member_id", "member_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    meeting_id: Mapped[str] = mapped_column(String(36), ForeignKey("meetings.id"))
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("members.id"))
+    discipline_record_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("discipline_records.id"), nullable=True
+    )
+    synced_by_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
 
 class EvaluationCycle(Base):
@@ -394,6 +418,10 @@ class EvaluationScoreEvent(Base):
     recorded_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     is_void: Mapped[bool] = mapped_column(Boolean, default=False)
     void_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    voided_by_user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id"), nullable=True
+    )
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
@@ -676,8 +704,8 @@ class Attendance(Base):
     member_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("members.id"), index=True
     )
-    # Trạng thái: 'Present' (Có mặt), 'Absent' (Vắng không phép), 'Excused' (Vắng có phép)
-    status: Mapped[str] = mapped_column(String(20), default="Absent")
+    # Trạng thái: Present, Absent, Excused, Unrecorded.
+    status: Mapped[str] = mapped_column(String(20), default="Unrecorded")
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 

@@ -60,7 +60,8 @@ def list_meetings(
                 Meeting,
                 func.count(case((Attendance.status == "Present", 1))).label("present_count"),
                 func.count(case((Attendance.status == "Absent", 1))).label("absent_count"),
-                func.count(case((Attendance.status == "Excused", 1))).label("excused_count")
+                func.count(case((Attendance.status == "Excused", 1))).label("excused_count"),
+                func.count(case((Attendance.status == "Unrecorded", 1))).label("unrecorded_count"),
             )
             .outerjoin(Attendance, Meeting.id == Attendance.meeting_id)
             .group_by(Meeting.id)
@@ -75,7 +76,8 @@ def list_meetings(
             stats = {
                 "present": row.present_count,
                 "absent": row.absent_count,
-                "excused": row.excused_count
+                "excused": row.excused_count,
+                "unrecorded": row.unrecorded_count,
             }
             results.append(_meeting_out(meeting_obj, stats=stats))
             

@@ -4,7 +4,15 @@ from datetime import date as dt_date
 from datetime import datetime as dt_datetime
 
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.core.discipline_levels import (
+    DISCIPLINE_LEVEL_NONE,
+    normalize_discipline_level,
+)
+
+
+ATTENDANCE_STATUSES = {"Present", "Absent", "Excused", "Unrecorded"}
 
 
 class LoginRequest(BaseModel):
@@ -167,8 +175,13 @@ class DisciplineRecordCreate(BaseModel):
     committee: str | None = None
     absents: int = Field(default=0, ge=0)
     kpi: float = Field(default=0, ge=0)
-    disciplineLevel: str = "Khong"
+    disciplineLevel: str = DISCIPLINE_LEVEL_NONE
     note: str | None = None
+
+    @field_validator("disciplineLevel")
+    @classmethod
+    def validate_discipline_level(cls, value: str) -> str:
+        return normalize_discipline_level(value)
 
 
 class DisciplineRecordUpdate(BaseModel):
@@ -177,6 +190,13 @@ class DisciplineRecordUpdate(BaseModel):
     kpi: float | None = Field(default=None, ge=0)
     disciplineLevel: str | None = None
     note: str | None = None
+
+    @field_validator("disciplineLevel")
+    @classmethod
+    def validate_discipline_level(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return normalize_discipline_level(value)
 
 
 class SettingsProfileUpdate(BaseModel):
@@ -248,6 +268,15 @@ class AttendanceUpdateItem(BaseModel):
     memberId: str
     status: str
     note: Optional[str] = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        if value not in ATTENDANCE_STATUSES:
+            raise ValueError(
+                "Attendance status must be Present, Absent, Excused, or Unrecorded"
+            )
+        return value
 
 class AttendanceListUpdate(BaseModel):
     attendances: List[AttendanceUpdateItem]

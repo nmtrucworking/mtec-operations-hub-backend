@@ -346,7 +346,11 @@ class EvaluationCalculatorService:
         breakdowns: list[dict[str, Any]] = []
         for criterion in criteria:
             related_events = events_by_criterion_id.get(criterion.id, [])
-            raw_score = sum(event.score_delta for event in related_events)
+            event_total = sum(event.score_delta for event in related_events)
+            if (criterion.score_method or "").upper() == "DEDUCTIVE":
+                raw_score = criterion.max_score + event_total
+            else:
+                raw_score = event_total
             final_score = _clamp(raw_score, 0.0, criterion.max_score)
             evidence_count = sum(
                 self.evidence_service.count_evidence_for_event(event.id)

@@ -8,6 +8,15 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.discipline_levels import (
+    DISCIPLINE_LEVEL_EXPULSION,
+    DISCIPLINE_LEVEL_NONE,
+    DISCIPLINE_LEVEL_REMINDER,
+    DISCIPLINE_LEVEL_SUSPENSION,
+    DISCIPLINE_LEVEL_WARNING_1,
+    DISCIPLINE_LEVEL_WARNING_2,
+    normalize_discipline_level,
+)
 from app.core.evaluation_constants import (
     BLOCKER_INTERNAL_WARNING,
     BLOCKER_SEVERE_VIOLATION,
@@ -174,6 +183,45 @@ def normalize_legacy_level(value: str | None) -> str:
 
 
 def map_discipline_level(value: str | None) -> dict[str, Any] | None:
+    try:
+        canonical = normalize_discipline_level(value)
+    except ValueError:
+        canonical = None
+    if canonical == DISCIPLINE_LEVEL_NONE:
+        return None
+    if canonical == DISCIPLINE_LEVEL_REMINDER:
+        return {
+            "caseType": "REMINDER",
+            "severity": "LOW",
+            "blockerCode": None,
+            "requiresManualReview": False,
+            "confidence": "HIGH",
+        }
+    if canonical in {DISCIPLINE_LEVEL_WARNING_1, DISCIPLINE_LEVEL_WARNING_2}:
+        return {
+            "caseType": "WARNING",
+            "severity": "MEDIUM",
+            "blockerCode": BLOCKER_INTERNAL_WARNING,
+            "requiresManualReview": False,
+            "confidence": "HIGH",
+        }
+    if canonical == DISCIPLINE_LEVEL_SUSPENSION:
+        return {
+            "caseType": "SUSPENSION",
+            "severity": "HIGH",
+            "blockerCode": BLOCKER_SEVERE_VIOLATION,
+            "requiresManualReview": False,
+            "confidence": "HIGH",
+        }
+    if canonical == DISCIPLINE_LEVEL_EXPULSION:
+        return {
+            "caseType": "EXPULSION_REVIEW",
+            "severity": "CRITICAL",
+            "blockerCode": BLOCKER_SEVERE_VIOLATION,
+            "requiresManualReview": False,
+            "confidence": "HIGH",
+        }
+
     normalized = normalize_legacy_level(value)
     if normalized in {"", "khong", "none", "n/a"}:
         return None

@@ -1,13 +1,19 @@
+from datetime import datetime, time
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
 from app.core.evaluation_constants import (
+    BLOCKER_UNEXCUSED_ABSENCE,
     CYCLE_MUTABLE_STATUSES,
+    DEFAULT_ATTENDANCE_RATE_CRITERION_CODE,
     DEFAULT_ATTENDANCE_PENALTY_CRITERION_CODE,
     DEFAULT_COMPETITION_BONUS_CRITERION_CODE,
+    EVENT_TYPE_BASE,
     EVENT_TYPE_BONUS,
     EVENT_TYPE_PENALTY,
+    SOURCE_TYPE_ATTENDANCE_AGGREGATE,
     SOURCE_TYPE_ATTENDANCE,
     SOURCE_TYPE_COMPETITION,
 )
@@ -15,6 +21,7 @@ from app.models import (
     Attendance,
     Competition,
     CompetitionResult,
+    DisciplineCase,
     EvaluationCriterion,
     EvaluationCycle,
     EvaluationScoreEvent,
@@ -44,14 +51,20 @@ class EvaluationSyncService:
         if not meeting:
             raise EvaluationNotFoundError(f"Meeting not found: {meeting_id}")
 
+        cycle = self.db.get(EvaluationCycle, cycle_id)
         criterion = self._get_active_criterion(DEFAULT_ATTENDANCE_PENALTY_CRITERION_CODE)
+        attendance_rate_criterion = self._get_optional_active_criterion(
+            DEFAULT_ATTENDANCE_RATE_CRITERION_CODE
+        )
         attendances = self.db.scalars(
             select(Attendance).where(Attendance.meeting_id == meeting_id)
         ).all()
 
         created = 0
         skipped = 0
+        touched_member_ids: set[str] = set()
         for attendance in attendances:
+            touched_member_ids.add(attendance.member_id)
             if attendance.status != "Absent":
                 continue
             if self._score_event_exists(
@@ -84,6 +97,21 @@ class EvaluationSyncService:
                 )
             )
             created += 1
+            self._ensure_unexcused_absence_case(
+                cycle_id=cycle_id,
+                member_id=attendance.member_id,
+                meeting_id=meeting_id,
+                actor_user_id=actor_user_id,
+            )
+
+        if cycle and attendance_rate_criterion:
+            for member_id in touched_member_ids:
+                self._upsert_attendance_rate_event(
+                    cycle=cycle,
+                    member_id=member_id,
+                    criterion=attendance_rate_criterion,
+                    actor_user_id=actor_user_id,
+                )
 
         self._audit(
             actor_user_id=actor_user_id,
@@ -193,6 +221,123 @@ class EvaluationSyncService:
                 f"Active criterion not found: {criterion_code}"
             )
         return criterion
+
+    def _get_optional_active_criterion(
+        self, criterion_code: str
+    ) -> EvaluationCriterion | None:
+        return self.db.scalar(
+            select(EvaluationCriterion).where(
+                EvaluationCriterion.code == criterion_code,
+                EvaluationCriterion.is_active.is_(True),
+            )
+        )
+
+    def _upsert_attendance_rate_event(
+        self,
+        *,
+        cycle: EvaluationCycle,
+        member_id: str,
+        criterion: EvaluationCriterion,
+        actor_user_id: str | None,
+    ) -> None:
+        start_at = datetime.combine(cycle.start_date, time.min)
+        end_at = datetime.combine(cycle.end_date, time.max)
+        attendances = self.db.scalars(
+            select(Attendance)
+            .join(Meeting, Meeting.id == Attendance.meeting_id)
+            .where(
+                Attendance.member_id == member_id,
+                Meeting.date >= start_at,
+                Meeting.date <= end_at,
+                Attendance.status.in_(("Present", "Absent", "Excused")),
+            )
+        ).all()
+        required_count = len(attendances)
+        if required_count == 0:
+            return
+
+        present_count = sum(1 for item in attendances if item.status == "Present")
+        attendance_rate = present_count / required_count
+        score_delta = attendance_rate * criterion.max_score
+        source_id = f"{cycle.id[:12]}:{member_id[:12]}:attendance_rate"
+
+        existing = self.db.scalar(
+            select(EvaluationScoreEvent).where(
+                EvaluationScoreEvent.cycle_id == cycle.id,
+                EvaluationScoreEvent.member_id == member_id,
+                EvaluationScoreEvent.criterion_code == criterion.code,
+                EvaluationScoreEvent.source_type == SOURCE_TYPE_ATTENDANCE_AGGREGATE,
+                EvaluationScoreEvent.source_id == source_id,
+                EvaluationScoreEvent.event_type == EVENT_TYPE_BASE,
+                EvaluationScoreEvent.is_void.is_(False),
+            )
+        )
+        note = (
+            f"Attendance rate {attendance_rate:.2%} "
+            f"({present_count}/{required_count} recorded meetings)"
+        )
+        if existing:
+            existing.raw_value = attendance_rate
+            existing.score_delta = score_delta
+            existing.max_score_snapshot = criterion.max_score
+            existing.note = note
+            return
+
+        self.db.add(
+            EvaluationScoreEvent(
+                cycle_id=cycle.id,
+                member_id=member_id,
+                criterion_id=criterion.id,
+                criterion_code=criterion.code,
+                component=criterion.component,
+                unit_code=criterion.unit_code,
+                event_type=EVENT_TYPE_BASE,
+                source_type=SOURCE_TYPE_ATTENDANCE_AGGREGATE,
+                source_id=source_id,
+                raw_value=attendance_rate,
+                score_delta=score_delta,
+                max_score_snapshot=criterion.max_score,
+                recorded_by_user_id=actor_user_id,
+                note=note,
+            )
+        )
+
+    def _ensure_unexcused_absence_case(
+        self,
+        *,
+        cycle_id: str,
+        member_id: str,
+        meeting_id: str,
+        actor_user_id: str | None,
+    ) -> None:
+        existing = self.db.scalar(
+            select(DisciplineCase).where(
+                DisciplineCase.cycle_id == cycle_id,
+                DisciplineCase.member_id == member_id,
+                DisciplineCase.source_type == SOURCE_TYPE_ATTENDANCE,
+                DisciplineCase.source_id == meeting_id,
+                DisciplineCase.status != "CANCELLED",
+            )
+        )
+        if existing:
+            return
+
+        self.db.add(
+            DisciplineCase(
+                cycle_id=cycle_id,
+                member_id=member_id,
+                case_code=f"ATT-{meeting_id[:12]}-{member_id[:12]}",
+                case_type="UNEXCUSED_ABSENCE",
+                severity="MEDIUM",
+                status="OPEN",
+                title="Unexcused absence",
+                description=f"Unexcused absence in meeting {meeting_id}",
+                blocker_code=BLOCKER_UNEXCUSED_ABSENCE,
+                source_type=SOURCE_TYPE_ATTENDANCE,
+                source_id=meeting_id,
+                created_by_user_id=actor_user_id,
+            )
+        )
 
     def _score_event_exists(
         self,

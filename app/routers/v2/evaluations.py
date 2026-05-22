@@ -1275,7 +1275,7 @@ def create_score_events_bulk(
                     continue
                 existing.is_void = True
                 existing.void_reason = "Overwritten by spreadsheet update"
-                existing.voided_at = func.now()
+                existing.voided_at = datetime.now(UTC)
                 existing.voided_by_user_id = current_user.id
                 db.add(existing)
         else:
@@ -1433,6 +1433,8 @@ def void_score_event(
     _ensure_cycle_not_locked(cycle)
     event.is_void = True
     event.void_reason = body.reason
+    event.voided_at = datetime.now(UTC)
+    event.voided_by_user_id = current_user.id
     create_audit_log(
         db=db,
         action="VOID_EVALUATION_SCORE_EVENT",

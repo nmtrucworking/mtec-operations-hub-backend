@@ -19,6 +19,7 @@ def rate_limiter(max_requests: int, window_seconds: int):
         current_time = int(
             time.time() * 1000
         )  # Sử dụng millisecond để tăng độ chính xác
+        request_member = f"{current_time}:{time.time_ns()}"
         window_start = current_time - (window_seconds * 1000)
 
         # Sử dụng Pipeline để gom cụm các lệnh Redis, giảm thiểu độ trễ mạng (Network Latency)
@@ -28,7 +29,7 @@ def rate_limiter(max_requests: int, window_seconds: int):
         # 2. Đếm số lượng request còn lại trong khung thời gian
         pipe.zcard(key)
         # 3. Thêm request hiện tại vào tập hợp
-        pipe.zadd(key, {str(current_time): current_time})
+        pipe.zadd(key, {request_member: current_time})
         # 4. Thiết lập thời gian sống (TTL) cho key để giải phóng bộ nhớ
         pipe.expire(key, window_seconds)
 

@@ -53,6 +53,7 @@ def _criterion(
     component: str,
     max_score: float,
     unit_code: str | None = None,
+    score_method: str = "MANUAL",
 ) -> EvaluationCriterion:
     criterion = EvaluationCriterion(
         code=code,
@@ -61,7 +62,7 @@ def _criterion(
         unit_scope="UNIT_SPECIFIC" if unit_code else "ALL",
         unit_code=unit_code,
         max_score=max_score,
-        score_method="MANUAL",
+        score_method=score_method,
         requires_evidence=False,
     )
     test_db.add(criterion)
@@ -121,6 +122,25 @@ def test_criterion_score_never_negative(test_db: Session):
 
     assert result["breakdowns"][0]["finalScore"] == 0.0
     assert result["totalScore"] == 0.0
+
+
+def test_deductive_penalty_reduces_score_from_criterion_max(test_db: Session):
+    cycle = _cycle(test_db)
+    member = _member(test_db)
+    criterion = _criterion(
+        test_db,
+        code="I.2",
+        component=COMPONENT_I,
+        max_score=10.0,
+        score_method="DEDUCTIVE",
+    )
+    _event(test_db, cycle=cycle, member=member, criterion=criterion, score_delta=-2.0)
+
+    result = EvaluationCalculatorService(test_db).preview_member(cycle.id, member.id)
+
+    assert result["breakdowns"][0]["rawScore"] == 8.0
+    assert result["breakdowns"][0]["finalScore"] == 8.0
+    assert result["totalScore"] == 8.0
 
 
 def test_component_scores_are_capped(test_db: Session):

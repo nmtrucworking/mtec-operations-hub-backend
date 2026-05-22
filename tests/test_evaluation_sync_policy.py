@@ -7,6 +7,7 @@ from app.models import (
     Attendance,
     Competition,
     CompetitionResult,
+    DisciplineCase,
     EvaluationCriterion,
     EvaluationCycle,
     EvaluationScoreEvent,
@@ -120,6 +121,47 @@ def test_excused_absence_does_not_create_unexcused_penalty(test_db: Session):
 
     assert result["createdCount"] == 0
     assert count == 0
+
+
+def test_attendance_sync_creates_rate_event_and_unexcused_blocker(test_db: Session):
+    cycle = _cycle(test_db)
+    member = _member(test_db)
+    _criterion(test_db, code="I.1", component="I")
+    _criterion(test_db, code="I.2", component="I")
+    first_meeting = _meeting(test_db)
+    second_meeting = _meeting(test_db)
+    test_db.add_all(
+        [
+            Attendance(
+                meeting_id=first_meeting.id,
+                member_id=member.id,
+                status="Present",
+            ),
+            Attendance(
+                meeting_id=second_meeting.id,
+                member_id=member.id,
+                status="Absent",
+            ),
+        ]
+    )
+    test_db.flush()
+
+    EvaluationSyncService(test_db).sync_attendance_to_score_events(
+        cycle.id, second_meeting.id
+    )
+
+    rate_event = test_db.scalar(
+        select(EvaluationScoreEvent).where(
+            EvaluationScoreEvent.criterion_code == "I.1"
+        )
+    )
+    case = test_db.scalar(select(DisciplineCase))
+
+    assert rate_event is not None
+    assert rate_event.raw_value == 0.5
+    assert rate_event.source_type == "ATTENDANCE_AGGREGATE"
+    assert case is not None
+    assert case.blocker_code == "UNEXCUSED_ABSENCE"
 
 
 def test_competition_sync_creates_bonus_event_once(test_db: Session):

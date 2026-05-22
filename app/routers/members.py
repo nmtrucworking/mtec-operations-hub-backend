@@ -14,6 +14,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.discipline_levels import (
+    DISCIPLINE_LEVEL_LABELS,
+    DISCIPLINE_LEVEL_NONE,
+    normalize_discipline_level,
+)
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.db import get_db
@@ -42,6 +47,12 @@ def _attachment_content_disposition(filename: str) -> str:
 
 
 def _member_out(member: Member, disc: DisciplineRecord | None = None) -> dict:
+    discipline_level = DISCIPLINE_LEVEL_NONE
+    if disc:
+        try:
+            discipline_level = normalize_discipline_level(disc.discipline_level)
+        except ValueError:
+            discipline_level = disc.discipline_level
     return {
         "id": member.id,
         "mssv": member.mssv,
@@ -63,7 +74,10 @@ def _member_out(member: Member, disc: DisciplineRecord | None = None) -> dict:
         "orientation": member.orientation,
         "absents": disc.absents if disc else 0,
         "kpi": disc.kpi if disc else 100.0,
-        "disciplineLevel": disc.discipline_level if disc else "Không",
+        "disciplineLevel": discipline_level,
+        "disciplineLevelLabel": DISCIPLINE_LEVEL_LABELS.get(
+            discipline_level, discipline_level
+        ),
         "createdAt": member.created_at,
         "updatedAt": member.updated_at,
     }

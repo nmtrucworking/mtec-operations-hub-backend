@@ -4,6 +4,14 @@ from sqlalchemy.orm import Session
 
 from app.core import config
 from app.core.audit import create_audit_log
+from app.core.discipline_levels import (
+    DISCIPLINE_LEVEL_LABELS,
+    DISCIPLINE_LEVEL_NONE,
+    DISCIPLINE_LEVEL_REMINDER,
+    DISCIPLINE_LEVEL_WARNING_1,
+    discipline_level_aliases,
+    normalize_discipline_level,
+)
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -11,6 +19,7 @@ from app.models import (
     Attendance,
     Competition,
     CompetitionResult,
+    DisciplineAttendanceSyncLog,
     DisciplineRecord,
     Meeting,
     Member,
@@ -20,6 +29,14 @@ from app.schemas import DisciplineRecordCreate, DisciplineRecordUpdate
 from app.utils import sanitize_pagination
 
 router = APIRouter(prefix="/discipline-records", tags=["discipline"])
+
+
+def _discipline_alias_filter(level: str) -> list[str]:
+    return sorted({str(value).lower() for value in discipline_level_aliases(level)})
+
+
+def _normalized_level_column():
+    return func.lower(DisciplineRecord.discipline_level)
 
 
 def _apply_legacy_deprecation_header(response: Response) -> None:
@@ -41,6 +58,10 @@ def _ensure_legacy_mutation_allowed(response: Response) -> None:
 
 
 def _record_out(record: DisciplineRecord) -> dict:
+    try:
+        discipline_level = normalize_discipline_level(record.discipline_level)
+    except ValueError:
+        discipline_level = record.discipline_level
     return {
         "id": record.id,
         "memberId": record.member_id,
@@ -49,7 +70,10 @@ def _record_out(record: DisciplineRecord) -> dict:
         "committee": record.committee,
         "absents": record.absents,
         "kpi": record.kpi,
-        "disciplineLevel": record.discipline_level,
+        "disciplineLevel": discipline_level,
+        "disciplineLevelLabel": DISCIPLINE_LEVEL_LABELS.get(
+            discipline_level, record.discipline_level
+        ),
         "note": record.note,
         "updatedBy": record.updated_by,
         "updatedAt": record.updated_at,
@@ -84,10 +108,10 @@ def list_records(
         )
 
     if disciplineLevel:
-        stmt = stmt.where(DisciplineRecord.discipline_level == disciplineLevel)
-        count_stmt = count_stmt.where(
-            DisciplineRecord.discipline_level == disciplineLevel
-        )
+        canonical_level = normalize_discipline_level(disciplineLevel)
+        aliases = _discipline_alias_filter(canonical_level)
+        stmt = stmt.where(_normalized_level_column().in_(aliases))
+        count_stmt = count_stmt.where(_normalized_level_column().in_(aliases))
 
     if committee:
         stmt = stmt.where(DisciplineRecord.committee == committee)
@@ -112,11 +136,12 @@ def get_stats(
     total_records = db.scalar(select(func.count()).select_from(DisciplineRecord)) or 0
 
     # Số ca cảnh cáo (giả sử level không phải 'Khong')
+    no_level_aliases = _discipline_alias_filter(DISCIPLINE_LEVEL_NONE)
     warned_cases = (
         db.scalar(
             select(func.count())
             .select_from(DisciplineRecord)
-            .where(DisciplineRecord.discipline_level != "Khong")
+            .where(_normalized_level_column().not_in(no_level_aliases))
         )
         or 0
     )
@@ -273,9 +298,20 @@ def sync_attendance_to_discipline(
         return api_response(data={"message": "Không có thành viên vắng mặt không phép.", "syncedCount": 0})
 
     synced_count = 0
+    skipped_count = 0
     for attendance in absent_records:
         member = db.get(Member, attendance.member_id)
         if not member:
+            continue
+
+        existing_sync = db.scalar(
+            select(DisciplineAttendanceSyncLog).where(
+                DisciplineAttendanceSyncLog.meeting_id == meeting_id,
+                DisciplineAttendanceSyncLog.member_id == member.id,
+            )
+        )
+        if existing_sync:
+            skipped_count += 1
             continue
 
         # 3. Tra cứu hoặc khởi tạo bản ghi kỷ luật hiện tại
@@ -300,7 +336,7 @@ def sync_attendance_to_discipline(
                 committee=member.ban,
                 absents=1,
                 kpi=100.0,
-                discipline_level="Không",
+                discipline_level=DISCIPLINE_LEVEL_NONE,
                 updated_by=current_user.full_name
             )
             db.add(discipline_record)
@@ -309,11 +345,19 @@ def sync_attendance_to_discipline(
         # 4. Thuật toán phân cấp kỷ luật (Logic khoa học)
         # Hệ thống tự động ánh xạ số buổi vắng với hình thức kỷ luật
         if discipline_record.absents >= 3:
-            discipline_record.discipline_level = "Cảnh cáo Lần 1"
+            discipline_record.discipline_level = DISCIPLINE_LEVEL_WARNING_1
         elif discipline_record.absents > 0:
-            discipline_record.discipline_level = "Nhắc nhở"
+            discipline_record.discipline_level = DISCIPLINE_LEVEL_REMINDER
         
         discipline_record.updated_by = current_user.full_name
+        db.add(
+            DisciplineAttendanceSyncLog(
+                meeting_id=meeting_id,
+                member_id=member.id,
+                discipline_record_id=discipline_record.id,
+                synced_by_user_id=current_user.id,
+            )
+        )
 
         # 5. Ghi nhận nhật ký hệ thống (Audit Trail)
         create_audit_log(
@@ -337,7 +381,8 @@ def sync_attendance_to_discipline(
     return api_response(
         data={
             "message": f"Quá trình đồng bộ hoàn tất. Hệ thống đã cập nhật {synced_count} hồ sơ.",
-            "syncedCount": synced_count
+            "syncedCount": synced_count,
+            "skippedCount": skipped_count,
         }
     )
 
@@ -403,7 +448,7 @@ def sync_competition_to_kpi(
                 committee=member.ban,
                 absents=0,
                 kpi=100.0 + result.bonus_kpi,
-                discipline_level="Không",
+                discipline_level=DISCIPLINE_LEVEL_NONE,
                 updated_by=current_user.full_name
             )
             db.add(discipline_record)
