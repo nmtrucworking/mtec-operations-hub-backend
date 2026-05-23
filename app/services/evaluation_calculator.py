@@ -327,7 +327,7 @@ class EvaluationCalculatorService:
         return [
             {
                 "unitCode": role.unit_code,
-                "participationWeight": role.participation_weight,
+                "participationWeight": role.participation_weight or 0.0,
                 "isPrimary": role.is_primary,
                 "source": "member_cycle_roles",
             }
