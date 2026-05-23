@@ -451,18 +451,18 @@ async def import_members(
             existing.goal = body.goal
             existing.orientation = body.orientation
 
-                # replace skills if provided in import payload
-                try:
-                    if getattr(body, "hardSkills", None) is not None or getattr(body, "softSkills", None) is not None:
-                        old = db.scalars(select(MemberSkill).where(MemberSkill.member_id == existing.id)).all()
-                        for o in old:
-                            db.delete(o)
-                        for s in getattr(body, "hardSkills", []) or []:
-                            db.add(MemberSkill(member_id=existing.id, type="hard", name=s.name, level=s.level or ""))
-                        for s in getattr(body, "softSkills", []) or []:
-                            db.add(MemberSkill(member_id=existing.id, type="soft", name=s.name, level=s.level or ""))
-                except Exception:
-                    pass
+            # replace skills if provided in import payload
+            try:
+                if getattr(body, "hardSkills", None) is not None or getattr(body, "softSkills", None) is not None:
+                    old = db.scalars(select(MemberSkill).where(MemberSkill.member_id == existing.id)).all()
+                    for o in old:
+                        db.delete(o)
+                    for s in getattr(body, "hardSkills", []) or []:
+                        db.add(MemberSkill(member_id=existing.id, type="hard", name=s.name, level=s.level or ""))
+                    for s in getattr(body, "softSkills", []) or []:
+                        db.add(MemberSkill(member_id=existing.id, type="soft", name=s.name, level=s.level or ""))
+            except Exception:
+                pass
 
             create_audit_log(
                 db=db,
