@@ -1575,14 +1575,7 @@ def _review_evidence(
         )
     cycle = _get_cycle_or_404(db, evidence.cycle_id)
     _ensure_cycle_not_locked(cycle)
-    if evidence.submitted_by_user_id == current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "EVIDENCE_SELF_REVIEW_NOT_ALLOWED",
-                "message": "Evidence submitter cannot review their own evidence",
-            },
-        )
+
     evidence.status = next_status
     evidence.verified_by_user_id = current_user.id
     evidence.verified_at = datetime.now(UTC)
