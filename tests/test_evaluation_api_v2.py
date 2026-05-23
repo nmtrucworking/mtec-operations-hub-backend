@@ -13,6 +13,7 @@ from app.models import (
     Member,
     MemberCycleRole,
     MemberEvaluation,
+    MemberEvaluationBreakdown,
     User,
 )
 from app.services.evaluation_criteria_seed import DEFAULT_EVALUATION_CRITERIA_2026
@@ -569,6 +570,85 @@ def test_get_cycle_members_requires_manager(client: TestClient, test_db: Session
     response = client.get(
         f"/api/v2/evaluations/cycles/{cycle.id}/members",
         headers=_auth_header(user.id),
+    )
+
+    assert response.status_code == 403
+
+
+def test_quick_review_cycle_returns_preview_without_persisting(
+    client: TestClient,
+    test_db: Session,
+):
+    manager = _user(test_db, "quick_manager", "bvh_discipline")
+    cycle = _cycle(test_db, "2026-05-QUICK")
+    member = _member(test_db, "QUICK001")
+    criterion = _criterion(test_db, "I.QUICK", component="I", max_score=10)
+    _score_event(test_db, cycle, member, criterion, score_delta=8)
+
+    response = client.get(
+        f"/api/v2/evaluations/cycles/{cycle.id}/quick-review",
+        headers=_auth_header(manager.id),
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["cycleId"] == cycle.id
+    assert data["totalMembers"] == 1
+    assert data["averageScore"] == 8
+    assert data["isTemporary"] is True
+    assert data["persisted"] is False
+    assert data["items"][0]["totalScore"] == 8
+    assert test_db.scalar(select(MemberEvaluation).where(MemberEvaluation.cycle_id == cycle.id)) is None
+    assert test_db.scalar(
+        select(MemberEvaluationBreakdown).where(MemberEvaluationBreakdown.cycle_id == cycle.id)
+    ) is None
+
+
+def test_quick_review_cycle_requires_manager(client: TestClient, test_db: Session):
+    user = _user(test_db, "quick_member", "member")
+    cycle = _cycle(test_db, "2026-05-QUICK-DENY")
+
+    response = client.get(
+        f"/api/v2/evaluations/cycles/{cycle.id}/quick-review",
+        headers=_auth_header(user.id),
+    )
+
+    assert response.status_code == 403
+
+
+def test_quick_review_member_allows_owner_without_persisting(
+    client: TestClient,
+    test_db: Session,
+):
+    member = _member(test_db, "QUICK002")
+    owner = _user(test_db, "QUICK002", "member")
+    cycle = _cycle(test_db, "2026-05-QUICK-MEMBER")
+    criterion = _criterion(test_db, "I.QUICK.2", component="I", max_score=10)
+    _score_event(test_db, cycle, member, criterion, score_delta=7)
+
+    response = client.get(
+        f"/api/v2/evaluations/cycles/{cycle.id}/members/{member.id}/quick-review",
+        headers=_auth_header(owner.id),
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["memberId"] == member.id
+    assert data["totalScore"] == 7
+    assert test_db.scalar(select(MemberEvaluation).where(MemberEvaluation.cycle_id == cycle.id)) is None
+
+
+def test_quick_review_member_denies_other_member(
+    client: TestClient,
+    test_db: Session,
+):
+    owner = _user(test_db, "QUICK003", "member")
+    other_member = _member(test_db, "QUICK004")
+    cycle = _cycle(test_db, "2026-05-QUICK-OTHER")
+
+    response = client.get(
+        f"/api/v2/evaluations/cycles/{cycle.id}/members/{other_member.id}/quick-review",
+        headers=_auth_header(owner.id),
     )
 
     assert response.status_code == 403

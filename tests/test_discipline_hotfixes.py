@@ -108,7 +108,7 @@ def test_legacy_create_normalizes_discipline_level(
     assert response.json()["data"]["disciplineLevelLabel"] == "Cảnh cáo lần 1"
 
 
-def test_legacy_attendance_sync_is_idempotent(
+def test_legacy_attendance_sync_route_is_removed(
     client: TestClient,
     test_db: Session,
     monkeypatch,
@@ -120,11 +120,7 @@ def test_legacy_attendance_sync_is_idempotent(
     test_db.add(Attendance(meeting_id=meeting.id, member_id=member.id, status="Absent"))
     test_db.commit()
 
-    first = client.post(
-        f"/api/v1/discipline-records/sync-attendance/{meeting.id}",
-        headers=_auth_header(user.id),
-    )
-    second = client.post(
+    response = client.post(
         f"/api/v1/discipline-records/sync-attendance/{meeting.id}",
         headers=_auth_header(user.id),
     )
@@ -132,13 +128,8 @@ def test_legacy_attendance_sync_is_idempotent(
         select(DisciplineRecord).where(DisciplineRecord.member_id == member.id)
     )
 
-    assert first.status_code == 200
-    assert second.status_code == 200
-    assert first.json()["data"]["syncedCount"] == 1
-    assert second.json()["data"]["syncedCount"] == 0
-    assert second.json()["data"]["skippedCount"] == 1
-    assert record is not None
-    assert record.absents == 1
+    assert response.status_code == 404
+    assert record is None
 
 
 def test_unrecorded_attendance_is_not_counted_as_absent(

@@ -173,6 +173,65 @@ class EvaluationCalculatorService:
             evidence_mode=evidence_mode,
         )
 
+    def preview_cycle(
+        self,
+        cycle_id: str,
+        *,
+        strict: bool = False,
+        evidence_mode: str = "draft",
+    ) -> dict:
+        cycle = self._get_cycle(cycle_id)
+        member_ids = self._load_cycle_member_ids(cycle_id)
+
+        items: list[dict] = []
+        errors: list[dict] = []
+
+        for member_id in member_ids:
+            try:
+                result = self._calculate_member(
+                    cycle=cycle,
+                    member_id=member_id,
+                    strict=strict,
+                    evidence_mode=evidence_mode,
+                )
+                items.append(result)
+            except Exception as exc:  # noqa: BLE001 - surfaced in preview summary
+                errors.append(
+                    {
+                        "memberId": member_id,
+                        "code": getattr(exc, "code", "EVALUATION_PREVIEW_ERROR"),
+                        "message": str(exc),
+                    }
+                )
+                if strict:
+                    raise
+
+        total_members = len(items)
+        average_score = (
+            round(sum(item["totalScore"] for item in items) / total_members, 2)
+            if total_members > 0
+            else 0.0
+        )
+
+        classification_distribution: dict[str, int] = {}
+        for item in items:
+            key = item.get("finalClassification") or "UNCLASSIFIED"
+            classification_distribution[key] = (
+                classification_distribution.get(key, 0) + 1
+            )
+
+        return {
+            "cycleId": cycle_id,
+            "totalMembers": total_members,
+            "averageScore": average_score,
+            "classificationDistribution": classification_distribution,
+            "items": items,
+            "errors": errors,
+            "isTemporary": True,
+            "persisted": False,
+            "calculationVersion": CALCULATION_VERSION,
+        }
+
     def _calculate_member(
         self,
         *,

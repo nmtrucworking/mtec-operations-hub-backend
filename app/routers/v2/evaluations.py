@@ -554,6 +554,7 @@ def create_cycle(
         created_by_user_id=current_user.id,
     )
     db.add(cycle)
+    db.flush()
 
     create_audit_log(
         db=db,
@@ -1584,6 +1585,14 @@ def _review_evidence(
         )
     cycle = _get_cycle_or_404(db, evidence.cycle_id)
     _ensure_cycle_not_locked(cycle)
+    if evidence.submitted_by_user_id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "EVIDENCE_SELF_REVIEW_NOT_ALLOWED",
+                "message": "Cannot review evidence submitted by yourself",
+            },
+        )
 
     evidence.status = next_status
     evidence.verified_by_user_id = current_user.id
@@ -1678,6 +1687,49 @@ def compute_member(
         db.rollback()
         _raise_evaluation_http_error(exc)
     db.commit()
+    return api_response(data=result)
+
+
+@router.get("/cycles/{cycle_id}/quick-review")
+def quick_review_cycle(
+    cycle_id: str,
+    strict: bool = Query(default=False),
+    evidenceMode: str = Query(default="draft"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_manager(current_user)
+    try:
+        result = EvaluationCalculatorService(db).preview_cycle(
+            cycle_id,
+            strict=strict,
+            evidence_mode=evidenceMode,
+        )
+    except EvaluationError as exc:
+        _raise_evaluation_http_error(exc)
+    return api_response(data=result)
+
+
+@router.get("/cycles/{cycle_id}/members/{member_id}/quick-review")
+def quick_review_member(
+    cycle_id: str,
+    member_id: str,
+    strict: bool = Query(default=False),
+    evidenceMode: str = Query(default="draft"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    member = _get_member_or_404(db, member_id)
+    _ensure_can_access_member(current_user, member)
+    try:
+        result = EvaluationCalculatorService(db).preview_member(
+            cycle_id,
+            member_id,
+            strict=strict,
+            evidence_mode=evidenceMode,
+        )
+    except EvaluationError as exc:
+        _raise_evaluation_http_error(exc)
     return api_response(data=result)
 
 
