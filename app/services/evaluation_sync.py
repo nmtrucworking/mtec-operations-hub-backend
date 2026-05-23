@@ -26,6 +26,8 @@ from app.models import (
     EvaluationCycle,
     EvaluationScoreEvent,
     Meeting,
+    Member,
+    MemberCycleRole,
     User,
 )
 from app.services.evaluation_errors import (
@@ -127,6 +129,92 @@ class EvaluationSyncService:
             "meetingId": meeting_id,
             "createdCount": created,
             "skippedCount": skipped,
+        }
+
+    def init_cycle_baseline(
+        self,
+        cycle_id: str,
+        *,
+        actor_user_id: str | None = None,
+    ) -> dict:
+        self._ensure_cycle_writable(cycle_id)
+        cycle = self.db.get(EvaluationCycle, cycle_id)
+        if not cycle:
+            raise EvaluationNotFoundError(f"Evaluation cycle not found: {cycle_id}")
+
+        active_members = self.db.scalars(
+            select(Member).where(Member.status == "Active")
+        ).all()
+
+        created_roles = 0
+        created_events = 0
+
+        for member in active_members:
+            if not member.ban:
+                continue
+
+            existing_role = self.db.scalar(
+                select(MemberCycleRole).where(
+                    MemberCycleRole.cycle_id == cycle_id,
+                    MemberCycleRole.member_id == member.id,
+                )
+            )
+            if not existing_role:
+                role = MemberCycleRole(
+                    cycle_id=cycle_id,
+                    member_id=member.id,
+                    unit_code=member.ban,
+                    role_title=member.role_title or "Thành viên",
+                    participation_weight=1.0,
+                    is_primary=True,
+                    assigned_by_user_id=actor_user_id,
+                )
+                self.db.add(role)
+                created_roles += 1
+
+            criterion_ii2 = self._get_optional_active_criterion("II.2")
+            if criterion_ii2:
+                if not self._score_event_exists(
+                    cycle_id=cycle_id,
+                    member_id=member.id,
+                    criterion_code=criterion_ii2.code,
+                    source_type="BASELINE_INIT",
+                    source_id="baseline",
+                    event_type=EVENT_TYPE_BASE,
+                ):
+                    self.db.add(
+                        EvaluationScoreEvent(
+                            cycle_id=cycle_id,
+                            member_id=member.id,
+                            criterion_id=criterion_ii2.id,
+                            criterion_code=criterion_ii2.code,
+                            component=criterion_ii2.component,
+                            unit_code=criterion_ii2.unit_code,
+                            event_type=EVENT_TYPE_BASE,
+                            source_type="BASELINE_INIT",
+                            source_id="baseline",
+                            raw_value=criterion_ii2.max_score,
+                            score_delta=criterion_ii2.max_score,
+                            max_score_snapshot=criterion_ii2.max_score,
+                            recorded_by_user_id=actor_user_id,
+                            note="Điểm nền tự động thiết lập",
+                        )
+                    )
+                    created_events += 1
+
+        self._audit(
+            actor_user_id=actor_user_id,
+            action="INIT_CYCLE_BASELINE",
+            resource_id=cycle_id,
+            created=created_roles + created_events,
+            skipped=0,
+        )
+        self.db.flush()
+
+        return {
+            "cycleId": cycle_id,
+            "createdRoles": created_roles,
+            "createdEvents": created_events,
         }
 
     def sync_competition_to_score_events(

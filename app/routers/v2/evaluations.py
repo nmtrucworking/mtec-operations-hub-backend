@@ -2,7 +2,7 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -533,6 +533,7 @@ def _ensure_single_primary_role(
 @router.post("/cycles")
 def create_cycle(
     body: EvaluationCycleCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
@@ -553,17 +554,25 @@ def create_cycle(
         created_by_user_id=current_user.id,
     )
     db.add(cycle)
-    db.flush()
+
     create_audit_log(
         db=db,
         action="CREATE_EVALUATION_CYCLE",
         resource_type="evaluation_cycle",
         resource_id=cycle.id,
         actor=current_user,
-        after_snapshot={"code": cycle.code, "status": cycle.status},
+        after_snapshot={"code": cycle.code, "name": cycle.name, "type": cycle.type},
     )
     db.commit()
     db.refresh(cycle)
+
+    # Trigger baseline generation in the background
+    background_tasks.add_task(
+        EvaluationSyncService(db).init_cycle_baseline,
+        cycle_id=cycle.id,
+        actor_user_id=current_user.id,
+    )
+
     return api_response(data=_cycle_out(cycle))
 
 
