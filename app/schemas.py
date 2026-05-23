@@ -82,6 +82,14 @@ class MemberCreate(BaseModel):
     experience: str | None = None
     goal: str | None = None
     orientation: str | None = None
+    hardSkills: List[MemberSkillIn] = Field(default_factory=list)
+    softSkills: List[MemberSkillIn] = Field(default_factory=list)
+
+
+class MemberSkillIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    level: str | None = None
+
 
 
 class MemberUpdate(BaseModel):
@@ -101,6 +109,9 @@ class MemberUpdate(BaseModel):
     experience: str | None = None
     goal: str | None = None
     orientation: str | None = None
+
+    hardSkills: List[MemberSkillIn] | None = None
+    softSkills: List[MemberSkillIn] | None = None
 
 
 class RequestCreate(BaseModel):

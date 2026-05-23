@@ -131,6 +131,9 @@ class Member(Base):
     )
     # add relationship to attendance records
     attendances: Mapped[list[Attendance]] = relationship("Attendance", back_populates="member")
+    skills: Mapped[list["MemberSkill"]] = relationship(
+        "MemberSkill", back_populates="member", cascade="all, delete-orphan"
+    )
 
 
 class MemberSkill(Base):
@@ -143,6 +146,7 @@ class MemberSkill(Base):
     type: Mapped[str] = mapped_column(String(10))
     name: Mapped[str] = mapped_column(String(80))
     level: Mapped[str] = mapped_column(String(20))
+    member: Mapped[Member] = relationship("Member", back_populates="skills")
 
 
 class Request(Base):

@@ -575,6 +575,55 @@ def test_get_cycle_members_requires_manager(client: TestClient, test_db: Session
     assert response.status_code == 403
 
 
+def test_member_roles_bulk_can_update_existing_primary_role(
+    client: TestClient,
+    test_db: Session,
+):
+    manager = _user(test_db, "bulk_roles_manager", "bvh_hr")
+    cycle = _cycle(test_db, "2026-05-BULK-ROLES")
+    member = _member(test_db, "BULKROLE001")
+    payload = {
+        "roles": [
+            {
+                "memberId": member.id,
+                "unitCode": "BCNg",
+                "roleType": "MEMBER",
+                "roleTitle": "Thanh vien",
+                "participationWeight": 1,
+                "isPrimary": True,
+            }
+        ]
+    }
+
+    first = client.post(
+        f"/api/v2/evaluations/cycles/{cycle.id}/member-roles/bulk",
+        json=payload,
+        headers=_auth_header(manager.id),
+    )
+    payload["roles"][0]["roleType"] = "LEAD"
+    payload["roles"][0]["roleTitle"] = "Truong nhom"
+    second = client.post(
+        f"/api/v2/evaluations/cycles/{cycle.id}/member-roles/bulk",
+        json=payload,
+        headers=_auth_header(manager.id),
+    )
+    roles = test_db.scalars(
+        select(MemberCycleRole).where(
+            MemberCycleRole.cycle_id == cycle.id,
+            MemberCycleRole.member_id == member.id,
+        )
+    ).all()
+
+    assert first.status_code == 200
+    assert first.json()["data"]["createdCount"] == 1
+    assert second.status_code == 200
+    assert second.json()["data"]["updatedCount"] == 1
+    assert second.json()["data"]["message"]
+    assert len(roles) == 1
+    assert roles[0].role_type == "LEAD"
+    assert roles[0].is_primary is True
+
+
 def test_quick_review_cycle_returns_preview_without_persisting(
     client: TestClient,
     test_db: Session,

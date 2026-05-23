@@ -1066,25 +1066,28 @@ def create_member_roles_bulk(
     for role_body in body.roles:
         _get_member_or_404(db, role_body.memberId)
         
-        # Determine isPrimary: if this is the only role, make it primary.
-        is_primary = role_body.isPrimary
-        if is_primary:
-            _ensure_single_primary_role(db, cycle_id=cycle_id, member_id=role_body.memberId)
-            
         existing_role = db.scalar(
             select(MemberCycleRole).where(
                 MemberCycleRole.cycle_id == cycle_id,
                 MemberCycleRole.member_id == role_body.memberId,
                 MemberCycleRole.unit_code == role_body.unitCode,
-                MemberCycleRole.role_type == role_body.roleType
             )
+        )
+
+        is_primary = role_body.isPrimary
+        if is_primary:
+            _ensure_single_primary_role(
+                db,
+                cycle_id=cycle_id,
+                member_id=role_body.memberId,
+                role_id=existing_role.id if existing_role else None,
         )
         
         if existing_role:
+            existing_role.role_type = role_body.roleType
             existing_role.role_title = role_body.roleTitle
             existing_role.participation_weight = role_body.participationWeight
-            if is_primary:
-                existing_role.is_primary = True
+            existing_role.is_primary = is_primary
             if role_body.note is not None:
                 existing_role.note = role_body.note
             if role_body.metadata is not None:
@@ -1099,6 +1102,7 @@ def create_member_roles_bulk(
                 role_title=role_body.roleTitle,
                 participation_weight=role_body.participationWeight,
                 is_primary=is_primary,
+                assigned_by_user_id=current_user.id,
                 note=role_body.note,
                 metadata_json=_metadata_dump(role_body.metadata),
             )
