@@ -27,6 +27,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import DATABASE_URL
 
@@ -55,10 +56,7 @@ def _build_engine(url: str) -> Engine:
     # PostgreSQL / Supabase path
     return create_engine(
         url,
-        pool_pre_ping=True,
-        pool_recycle=300,
-        pool_size=5,
-        max_overflow=10,
+        poolclass=NullPool,
         connect_args={"connect_timeout": 10},
     )
 
