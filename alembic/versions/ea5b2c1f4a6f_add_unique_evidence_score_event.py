@@ -39,9 +39,10 @@ def upgrade() -> None:
         "evaluation_evidence", "uq_evaluation_evidence_score_event"
     ):
         bind = op.get_bind()
-        # check for existing duplicates to avoid failing migration
+        
+        # Deduplicate existing evidence for the same score_event_id
         dup_query = """
-        SELECT score_event_id, COUNT(*) as cnt
+        SELECT score_event_id
         FROM evaluation_evidence
         WHERE score_event_id IS NOT NULL
         GROUP BY score_event_id
@@ -50,12 +51,22 @@ def upgrade() -> None:
         res = bind.execute(sa.text(dup_query)).fetchall()
         if res and len(res) > 0:
             dup_ids = [row[0] for row in res]
-            raise RuntimeError(
-                f"Cannot create unique constraint 'uq_evaluation_evidence_score_event' because duplicate score_event_id values exist: {dup_ids}. Please dedupe before running this migration."
-            )
+            for event_id in dup_ids:
+                # Get all evidence ids for this score_event_id
+                evidence_query = sa.text("""
+                    SELECT id FROM evaluation_evidence 
+                    WHERE score_event_id = :event_id 
+                    ORDER BY created_at DESC
+                """)
+                evidence_rows = bind.execute(evidence_query, {"event_id": event_id}).fetchall()
+                if len(evidence_rows) > 1:
+                    # Keep the first one, delete the rest
+                    ids_to_delete = [row[0] for row in evidence_rows[1:]]
+                    for del_id in ids_to_delete:
+                        bind.execute(sa.text("DELETE FROM evaluation_evidence WHERE id = :id"), {"id": del_id})
+                        
         # add unique constraint on score_event_id to prevent duplicates
         # SQLite does not support ALTER CONSTRAINT directly; use batch_alter_table for compatibility
-        bind = op.get_bind()
         if bind.dialect.name == 'sqlite':
             with op.batch_alter_table('evaluation_evidence') as batch_op:
                 batch_op.create_unique_constraint(
