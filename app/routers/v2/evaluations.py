@@ -1767,8 +1767,8 @@ def get_cycle_summary(
     total_members = (
         db.scalar(
             select(func.count())
-            .select_from(MemberEvaluation)
-            .where(MemberEvaluation.cycle_id == cycle_id)
+            .select_from(MemberCycleRole)
+            .where(MemberCycleRole.cycle_id == cycle_id)
         )
         or 0
     )
