@@ -1,6 +1,6 @@
 # MTEC Operations Hub Backend (Python)
 
-Backend duoc scaffold bang FastAPI + SQLAlchemy + SQLite theo tai lieu yeu cau trong `../../docs/backend/BACKEND_REPORT.md`.
+Backend trong monorepo nay duoc scaffold bang FastAPI + SQLAlchemy + SQLite theo tai lieu yeu cau trong `../../docs/backend/BACKEND_REPORT.md`.
 
 ## Yeu cau Python
 
