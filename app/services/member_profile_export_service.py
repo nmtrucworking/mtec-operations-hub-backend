@@ -47,7 +47,17 @@ def generate_member_profile_docx(member: Member, skills: list[MemberSkill]) -> B
     context["c_ban_tt"] = CHECKED if member.ban == "Ban Truyền thông" else UNCHECKED
     context["c_ban_vh"] = CHECKED if member.ban == "Ban Vận hành" else UNCHECKED
     context["c_ban_cnh"] = CHECKED if member.ban == "Ban Chủ nhiệm" else UNCHECKED
-    context["c_ban_khac"] = UNCHECKED
+    context["c_ban_khac"] = (
+        CHECKED
+        if member.ban
+        and member.ban not in {
+            "Ban Công nghệ",
+            "Ban Truyền thông",
+            "Ban Vận hành",
+            "Ban Chủ nhiệm",
+        }
+        else UNCHECKED
+    )
 
     skill_map = {
         "tk": "Thiết kế",
@@ -103,7 +113,8 @@ def generate_members_zip(members_with_skills: list[tuple[Member, list[MemberSkil
         for member, skills in members_with_skills:
             try:
                 docx_buffer = generate_member_profile_docx(member, skills)
-                filename = f"HOSO_{member.mssv}_{member.name.replace(' ', '_')}.docx"
+                member_name = (member.name or "").replace(" ", "_")
+                filename = f"HOSO_{member.mssv}_{member_name}.docx"
                 zip_file.writestr(filename, docx_buffer.getvalue())
             except Exception:
                 continue
