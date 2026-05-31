@@ -1,6 +1,5 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from typing import list
 
 from app.models import UserUnitPermission
 
