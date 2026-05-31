@@ -186,16 +186,43 @@ def _is_current_user_linked_to_member(current_user: User, member: Member) -> boo
     return False
 
 
-def _can_access_member(current_user: User, member: Member) -> bool:
+def _can_access_member(db: Session, current_user: User, member: Member) -> bool:
+    # Managers have full access
     if _is_manager(current_user):
         return True
+
+    # BCM: only if user has active unit permissions and the member belongs to one of those units
     if current_user.has_role("bcm"):
-        return True
+        perms = db.scalars(
+            select("""placeholder""")
+        )
+        # avoid raw SQL if model not imported; perform ORM query for UserUnitPermission
+        try:
+            from app.models import UserUnitPermission
+
+            user_perms = db.scalars(
+                select(UserUnitPermission).where(
+                    UserUnitPermission.user_id == current_user.id,
+                    UserUnitPermission.is_active == True,
+                )
+            ).all()
+            if not user_perms:
+                return False
+            member_units = db.scalars(
+                select(MemberCycleRole.unit_code).where(MemberCycleRole.member_id == member.id)
+            ).all()
+            for p in user_perms:
+                if p.unit_code in member_units:
+                    return True
+        except Exception:
+            return False
+
+    # fallback: allow linked account (username/email)
     return _is_current_user_linked_to_member(current_user, member)
 
 
-def _ensure_can_access_member(current_user: User, member: Member) -> None:
-    if not _can_access_member(current_user, member):
+def _ensure_can_access_member(db: Session, current_user: User, member: Member) -> None:
+    if not _can_access_member(db, current_user, member):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"code": "FORBIDDEN", "message": "Cannot access this member"},
@@ -1193,7 +1220,7 @@ def get_member_roles(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     member = _get_member_or_404(db, member_id)
-    _ensure_can_access_member(current_user, member)
+    _ensure_can_access_member(db, current_user, member)
     rows = db.scalars(
         select(MemberCycleRole).where(
             MemberCycleRole.cycle_id == cycle_id,
@@ -1408,7 +1435,7 @@ def list_score_events(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if memberId:
-        _ensure_can_access_member(current_user, _get_member_or_404(db, memberId))
+        _ensure_can_access_member(db, current_user, _get_member_or_404(db, memberId))
     else:
         _require_roles(current_user, EVALUATION_RECORDER_ROLES)
 
@@ -1555,7 +1582,7 @@ def list_evidence(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if memberId:
-        _ensure_can_access_member(current_user, _get_member_or_404(db, memberId))
+        _ensure_can_access_member(db, current_user, _get_member_or_404(db, memberId))
     else:
         _require_roles(current_user, EVALUATION_RECORDER_ROLES)
 
@@ -1725,7 +1752,7 @@ def quick_review_member(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     member = _get_member_or_404(db, member_id)
-    _ensure_can_access_member(current_user, member)
+    _ensure_can_access_member(db, current_user, member)
     try:
         result = EvaluationCalculatorService(db).preview_member(
             cycle_id,
@@ -1779,7 +1806,7 @@ def get_member_result(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     member = _get_member_or_404(db, member_id)
-    _ensure_can_access_member(current_user, member)
+    _ensure_can_access_member(db, current_user, member)
     row = db.scalar(
         select(MemberEvaluation).where(
             MemberEvaluation.cycle_id == cycle_id,
@@ -1802,7 +1829,7 @@ def get_member_breakdowns(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     member = _get_member_or_404(db, member_id)
-    _ensure_can_access_member(current_user, member)
+    _ensure_can_access_member(db, current_user, member)
     rows = EvaluationReportService(db).get_member_breakdowns(cycle_id, member_id)
     return api_response(data=rows)
 

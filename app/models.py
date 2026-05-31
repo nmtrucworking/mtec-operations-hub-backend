@@ -304,6 +304,44 @@ class EvaluationCycle(Base):
     )
 
 
+class UserUnitPermission(Base):
+    __tablename__ = "user_unit_permissions"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "unit_code",
+            "permission_role",
+            name="uq_user_unit_permissions_user_unit_role",
+        ),
+        Index("ix_user_unit_permissions_user_id", "user_id"),
+        Index("ix_user_unit_permissions_unit_code", "unit_code"),
+        Index("ix_user_unit_permissions_permission_role", "permission_role"),
+        Index("ix_user_unit_permissions_is_active", "is_active"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True, nullable=False)
+    unit_code: Mapped[str] = mapped_column(String(30), nullable=False)
+    permission_role: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    can_view_unit_results: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_score_component_ii: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_score_component_iii_a: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_score_component_iii_b: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_submit_evidence: Mapped[bool] = mapped_column(Boolean, default=True)
+    can_verify_evidence: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_review_appeal: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    created_by_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    approved_by_user_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow, onupdate=_utcnow)
+
+
 class EvaluationCriterion(Base):
     __tablename__ = "evaluation_criteria"
     __table_args__ = (
