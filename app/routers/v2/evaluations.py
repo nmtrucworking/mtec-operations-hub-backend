@@ -1139,6 +1139,16 @@ def create_member_roles_bulk(
             created_count += 1
             
     db.commit()
+    # Audit bulk member role changes as a single summary entry
+    create_audit_log(
+        db=db,
+        action="BULK_UPDATE_MEMBER_CYCLE_ROLES",
+        resource_type="member_cycle_role",
+        resource_id=cycle_id,
+        actor=current_user,
+        after_snapshot={"createdCount": created_count, "updatedCount": updated_count},
+    )
+    db.commit()
     return api_response(data={"createdCount": created_count, "updatedCount": updated_count}, message=f"Đã lưu thành công. Tạo mới: {created_count}, Cập nhật: {updated_count}.")
 
 
@@ -1259,11 +1269,21 @@ def update_member_role(
         "participationWeight": "participation_weight",
         "isPrimary": "is_primary",
     }
+    before = {"unitCode": role.unit_code, "roleType": role.role_type, "isPrimary": role.is_primary}
     for key, value in payload.items():
         if key == "metadata":
             role.metadata_json = _metadata_dump(value)
         else:
             setattr(role, mapping.get(key, key), value)
+    create_audit_log(
+        db=db,
+        action="UPDATE_MEMBER_CYCLE_ROLE",
+        resource_type="member_cycle_role",
+        resource_id=role.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={"unitCode": role.unit_code, "roleType": role.role_type, "isPrimary": role.is_primary},
+    )
     db.commit()
     db.refresh(role)
     return api_response(data=_role_out(role))
@@ -1284,6 +1304,15 @@ def delete_member_role(
         )
     cycle = _get_cycle_or_404(db, role.cycle_id)
     _ensure_cycle_not_locked(cycle)
+    before = {"unitCode": role.unit_code, "roleType": role.role_type, "isPrimary": role.is_primary}
+    create_audit_log(
+        db=db,
+        action="DELETE_MEMBER_CYCLE_ROLE",
+        resource_type="member_cycle_role",
+        resource_id=role.id,
+        actor=current_user,
+        before_snapshot=before,
+    )
     db.delete(role)
     db.commit()
     return api_response(data={"deleted": True, "id": role_id})
@@ -1370,6 +1399,16 @@ def create_score_events_bulk(
             metadata_json=_metadata_dump(evt_body.metadata),
         )
         db.add(event)
+        # flush to populate `event.id` so we can audit per-event
+        db.flush()
+        create_audit_log(
+            db=db,
+            action="CREATE_EVALUATION_SCORE_EVENT",
+            resource_type="evaluation_score_event",
+            resource_id=event.id,
+            actor=current_user,
+            after_snapshot={"criterionCode": event.criterion_code, "scoreDelta": event.score_delta},
+        )
         created_count += 1
 
     db.commit()
