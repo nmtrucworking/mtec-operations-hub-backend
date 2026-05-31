@@ -14,7 +14,10 @@ CHECKED = RichText('☒', font='Segoe UI Symbol')
 UNCHECKED = RichText('☐', font='Segoe UI Symbol')
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "templates")
-MEMBER_PROFILE_TEMPLATE_PATH = os.path.join(TEMPLATE_DIR, "member_profile_template.docx")
+MEMBER_PROFILE_TEMPLATE_PATH = os.path.join(
+    TEMPLATE_DIR, 
+    "member_profile_template.docx"
+)
 TEMPLATE_PATH = MEMBER_PROFILE_TEMPLATE_PATH  # Backward-compatible alias
 EVALUATION_SHEET_TEMPLATE_PATHS = [
     os.path.join(TEMPLATE_DIR, "member_evaluation_sheet_template.docx"),
