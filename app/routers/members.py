@@ -23,7 +23,7 @@ from app.services.evaluation_calculator import EvaluationCalculatorService
 from app.services.evaluation_errors import EvaluationError
 from app.schemas import MemberCreate, MemberUpdate
 from app.utils import sanitize_pagination
-from app.services.report_service import generate_member_profile_docx, generate_members_zip
+from app.services.member_profile_export_service import generate_member_profile_docx, generate_members_zip
 
 router = APIRouter(prefix="/members", tags=["members"])
 
@@ -423,17 +423,16 @@ async def import_members(
             body = MemberCreate(**payload)
         except ValidationError as exc:
             results["failed"] += 1
-            results["errors"].append({"row": row_number, "error": "Du lieu khong hop le", "details": exc.errors()})
+            results["errors"].append({"row": row_number, "error": exc.errors()})
             continue
 
-        if existing and on_duplicate == "update":
+        if existing:
             before = {
                 "mssv": existing.mssv,
                 "name": existing.name,
                 "ban": existing.ban,
                 "status": existing.status,
             }
-
             existing.name = body.name
             existing.gender = body.gender
             existing.dob = body.dob
@@ -450,73 +449,48 @@ async def import_members(
             existing.experience = body.experience
             existing.goal = body.goal
             existing.orientation = body.orientation
-
-            # replace skills if provided in import payload
-            try:
-                if getattr(body, "hardSkills", None) is not None or getattr(body, "softSkills", None) is not None:
-                    old = db.scalars(select(MemberSkill).where(MemberSkill.member_id == existing.id)).all()
-                    for o in old:
-                        db.delete(o)
-                    for s in getattr(body, "hardSkills", []) or []:
-                        db.add(MemberSkill(member_id=existing.id, type="hard", name=s.name, level=s.level or ""))
-                    for s in getattr(body, "softSkills", []) or []:
-                        db.add(MemberSkill(member_id=existing.id, type="soft", name=s.name, level=s.level or ""))
-            except Exception:
-                pass
-
+            results["updated"] += 1
             create_audit_log(
                 db=db,
-                action="BULK_UPDATE_MEMBER",
+                action="IMPORT_UPDATE_MEMBER",
                 resource_type="member",
                 resource_id=existing.id,
                 actor=current_user,
                 before_snapshot=before,
-                after_snapshot={
-                    "mssv": existing.mssv,
-                    "name": existing.name,
-                    "ban": existing.ban,
-                    "status": existing.status,
-                },
+                after_snapshot={"mssv": existing.mssv, "name": existing.name, "ban": existing.ban},
             )
-            results["updated"] += 1
-            continue
-
-        member = Member(
-            mssv=body.mssv,
-            name=body.name,
-            gender=body.gender,
-            dob=body.dob,
-            ban=body.ban,
-            role_title=body.roleTitle,
-            status=body.status,
-            phone=body.phone,
-            email=str(body.email) if body.email else None,
-            join_date=body.joinDate,
-            lop=body.lop,
-            chuyen_nganh=body.chuyenNganh,
-            khoa=body.khoa,
-            address=body.address,
-            experience=body.experience,
-            goal=body.goal,
-            orientation=body.orientation,
-        )
-        db.add(member)
-        db.flush()
-        create_audit_log(
-            db=db,
-            action="BULK_CREATE_MEMBER",
-            resource_type="member",
-            resource_id=member.id,
-            actor=current_user,
-            after_snapshot={
-                "mssv": member.mssv,
-                "name": member.name,
-                "ban": member.ban,
-                "status": member.status,
-            },
-        )
-        existing_by_mssv[member.mssv] = member
-        results["created"] += 1
+        else:
+            member = Member(
+                mssv=body.mssv,
+                name=body.name,
+                gender=body.gender,
+                dob=body.dob,
+                ban=body.ban,
+                role_title=body.roleTitle,
+                status=body.status,
+                phone=body.phone,
+                email=str(body.email) if body.email else None,
+                join_date=body.joinDate,
+                lop=body.lop,
+                chuyen_nganh=body.chuyenNganh,
+                khoa=body.khoa,
+                address=body.address,
+                experience=body.experience,
+                goal=body.goal,
+                orientation=body.orientation,
+            )
+            db.add(member)
+            db.flush()
+            existing_by_mssv[member.mssv] = member
+            results["created"] += 1
+            create_audit_log(
+                db=db,
+                action="IMPORT_CREATE_MEMBER",
+                resource_type="member",
+                resource_id=member.id,
+                actor=current_user,
+                after_snapshot={"mssv": member.mssv, "name": member.name, "ban": member.ban},
+            )
 
     db.commit()
     return api_response(data=results)
@@ -524,50 +498,64 @@ async def import_members(
 
 @router.get("")
 def list_members(
-    search: str | None = None,
+    page: int = 1,
+    page_size: int = Query(default=10, alias="pageSize"),
+    q: str | None = None,
     ban: str | None = None,
     status_filter: str | None = Query(default=None, alias="status"),
-    page: int = Query(default=1),
-    pageSize: int = Query(default=20),
+    sort: str = "createdAt",
+    order: str = "desc",
     db: Session = Depends(get_db),
-    _: User = Depends(
-        require_roles(
-            "bcn",
-            "bvh_hr",
-            "bcm",
-            "member",
-            "bvh_finance",
-            "bvh_discipline",
-            "bvh_logistics",
-        )
-    ),
+    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
 ) -> dict:
-    page, pageSize = sanitize_pagination(page, pageSize)
+    page, page_size = sanitize_pagination(page, page_size)
     stmt = select(Member)
-    count_stmt = select(func.count()).select_from(Member)
 
-    if search:
-        pattern = f"%{search}%"
-        stmt = stmt.where((Member.name.ilike(pattern)) | (Member.mssv.ilike(pattern)))
-        count_stmt = count_stmt.where(
-            (Member.name.ilike(pattern)) | (Member.mssv.ilike(pattern))
-        )
+    if q:
+        like = f"%{q.lower()}%"
+        stmt = stmt.where(func.lower(Member.name).like(like) | func.lower(Member.mssv).like(like))
     if ban:
-        pattern = f"%{ban}%"
-        stmt = stmt.where(Member.ban.ilike(pattern))
-        count_stmt = count_stmt.where(Member.ban.ilike(pattern))
+        stmt = stmt.where(Member.ban == ban)
     if status_filter:
         stmt = stmt.where(Member.status == status_filter)
-        count_stmt = count_stmt.where(Member.status == status_filter)
 
-    total = db.scalar(count_stmt) or 0
-    members = db.scalars(stmt.offset((page - 1) * pageSize).limit(pageSize)).all()
-    member_ids = [m.id for m in members]
-    skills_map = _skills_by_member(db, member_ids)
+    sort_columns = {
+        "createdAt": Member.created_at,
+        "name": Member.name,
+        "mssv": Member.mssv,
+        "ban": Member.ban,
+        "status": Member.status,
+    }
+    sort_col = sort_columns.get(sort, Member.created_at)
+    stmt = stmt.order_by(sort_col.asc() if order == "asc" else sort_col.desc())
+
+    rows = db.scalars(stmt).all()
+    total = len(rows)
+    start = (page - 1) * page_size
+    page_rows = rows[start : start + page_size]
+    skills_map = _skills_by_member(db, [m.id for m in page_rows])
+
+    # Attach current active/latest evaluation summary if possible
+    cycle = db.scalar(
+        select(EvaluationCycle)
+        .where(EvaluationCycle.status.in_(["SCORING", "MEMBER_REVIEW", "READY_FOR_APPROVAL", "APPROVED", "LOCKED"]))
+        .order_by(EvaluationCycle.start_date.desc())
+    )
+    eval_map = {}
+    if cycle and page_rows:
+        try:
+            calc = EvaluationCalculatorService(db)
+            for m in page_rows:
+                try:
+                    eval_map[m.id] = calc.compute_member_cycle(cycle.id, m.id)
+                except EvaluationError:
+                    eval_map[m.id] = None
+        except Exception:
+            eval_map = {}
 
     return api_response(
-        data=[_member_out(member, skills=skills_map.get(member.id)) for member in members],
-        meta={"page": page, "pageSize": pageSize, "total": total},
+        data=[_member_out(m, eval_map.get(m.id), skills_map.get(m.id, [])) for m in page_rows],
+        meta={"pagination": {"page": page, "pageSize": page_size, "total": total}},
     )
 
 
@@ -575,108 +563,24 @@ def list_members(
 def get_member(
     member_id: str,
     db: Session = Depends(get_db),
-    _: User = Depends(
-        require_roles(
-            "bcn",
-            "bvh_hr",
-            "bcm",
-            "member",
-            "bvh_finance",
-            "bvh_discipline",
-            "bvh_logistics",
-        )
-    ),
+    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
 ) -> dict:
     member = db.get(Member, member_id)
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
-        )
-    
-    # legacy DisciplineRecord usage removed; try to fetch evaluation quick-review from active cycle
-    skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member_id)).all()
-    evaluation = None
-    # find active cycle covering today
-    import datetime as _dt
-
-    today = _dt.date.today()
-    cycle = db.scalars(
-        select(EvaluationCycle)
-        .where(EvaluationCycle.start_date <= today)
-        .where(EvaluationCycle.end_date >= today)
-        .order_by(EvaluationCycle.start_date.desc())
-    ).first()
-    if cycle:
-        try:
-            # best-effort: do not fail member endpoint if evaluation preview errors
-            evaluation = EvaluationCalculatorService(db).preview_member(
-                cycle.id, member_id, strict=False, evidence_mode="draft"
-            )
-        except Exception:
-            evaluation = None
-
-    return api_response(data=_member_out(member, evaluation=evaluation, skills=skills))
-
-
-@router.get("/me")
-def get_my_member(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("member", "bcn", "bvh_hr", "bcm", "bvh_finance", "bvh_discipline", "bvh_logistics")),
-) -> dict:
-    # try to resolve member by MSSV (username) or email
-    member = None
-    if current_user.username:
-        member = db.scalar(select(Member).where(Member.mssv == current_user.username))
-    if not member and current_user.email:
-        member = db.scalar(select(Member).where(func.lower(Member.email) == current_user.email.lower()))
-    if not member:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
-
-    skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member.id)).all()
-    evaluation = None
-    import datetime as _dt
-    today = _dt.date.today()
-    cycle = db.scalars(
-        select(EvaluationCycle)
-        .where(EvaluationCycle.start_date <= today)
-        .where(EvaluationCycle.end_date >= today)
-        .order_by(EvaluationCycle.start_date.desc())
-    ).first()
-    if cycle:
-        try:
-            evaluation = EvaluationCalculatorService(db).preview_member(
-                cycle.id, member.id, strict=False, evidence_mode="draft"
-            )
-        except Exception:
-            evaluation = None
-
-    return api_response(data=_member_out(member, evaluation=evaluation, skills=skills))
+    skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member_id)).all()
+    return api_response(data=_member_out(member, skills=skills))
 
 
-@router.get("/directory")
-def directory(
-    db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
-) -> dict:
-    stmt = select(Member)
-    members = db.scalars(stmt).all()
-    data = [
-        {"id": m.id, "name": m.name, "ban": m.ban, "roleTitle": m.role_title, "status": m.status}
-        for m in members
-    ]
-    return api_response(data=data)
-
-
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_member(
     body: MemberCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
-    if db.scalar(select(Member).where(Member.mssv == body.mssv)):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="mssv da ton tai"
-        )
+    exists = db.scalar(select(Member).where(Member.mssv == body.mssv))
+    if exists:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="MSSV da ton tai")
 
     member = Member(
         mssv=body.mssv,
