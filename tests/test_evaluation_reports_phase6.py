@@ -78,6 +78,7 @@ def _criterion(
     *,
     component: str,
     requires_evidence: bool = False,
+    unit_code: str | None = None,
 ) -> EvaluationCriterion:
     criterion = EvaluationCriterion(
         id=f"criterion-{code}",
@@ -85,6 +86,7 @@ def _criterion(
         name=code,
         component=component,
         unit_scope="ALL",
+        unit_code=unit_code,
         max_score=30.0,
         score_method="MANUAL",
         requires_evidence=requires_evidence,
@@ -274,6 +276,82 @@ def test_member_report_contains_breakdowns_and_blockers(test_db: Session):
 
     assert tech_report["breakdowns"][0]["criterionCode"] == "I.1"
     assert hr_report["blockers"][0]["code"] == "INTERNAL_WARNING"
+
+
+def test_member_report_filters_iii_b_breakdowns_by_unit(test_db: Session):
+    cycle = _cycle(test_db)
+    tech_member = _member(test_db, "MTEC010", ban="TECH")
+    hr_member = _member(test_db, "MTEC011", ban="HR")
+    _role(test_db, cycle, tech_member, "TECH")
+    _role(test_db, cycle, hr_member, "HR")
+
+    tech_common = _criterion(test_db, "I.1", component="I", requires_evidence=True)
+    tech_iii_b = _criterion(
+        test_db,
+        "III-B.TECH.1",
+        component="III_B",
+        unit_code="TECH",
+    )
+    hr_iii_b = _criterion(
+        test_db,
+        "III-B.HR.1",
+        component="III_B",
+        unit_code="HR",
+    )
+
+    tech_eval = _evaluation(test_db, cycle, tech_member, total=88.0, classification="GOOD")
+    _evaluation(test_db, cycle, hr_member, total=84.0, classification="GOOD")
+
+    test_db.add_all(
+        [
+            MemberEvaluationBreakdown(
+                member_evaluation_id=tech_eval.id,
+                cycle_id=cycle.id,
+                member_id=tech_member.id,
+                criterion_id=tech_common.id,
+                criterion_code=tech_common.code,
+                component=tech_common.component,
+                raw_score=25.0,
+                final_score=25.0,
+                max_score_snapshot=30.0,
+                evidence_count=1,
+            ),
+            MemberEvaluationBreakdown(
+                member_evaluation_id=tech_eval.id,
+                cycle_id=cycle.id,
+                member_id=tech_member.id,
+                criterion_id=tech_iii_b.id,
+                criterion_code=tech_iii_b.code,
+                component=tech_iii_b.component,
+                unit_code="TECH",
+                raw_score=12.0,
+                final_score=12.0,
+                max_score_snapshot=30.0,
+                evidence_count=1,
+            ),
+            MemberEvaluationBreakdown(
+                member_evaluation_id=tech_eval.id,
+                cycle_id=cycle.id,
+                member_id=tech_member.id,
+                criterion_id=hr_iii_b.id,
+                criterion_code=hr_iii_b.code,
+                component=hr_iii_b.component,
+                unit_code="HR",
+                raw_score=9.0,
+                final_score=9.0,
+                max_score_snapshot=30.0,
+                evidence_count=1,
+            ),
+        ]
+    )
+    test_db.commit()
+
+    report = EvaluationReportService(test_db).get_member_report(cycle.id, tech_member.id)
+
+    assert [item["criterionCode"] for item in report["breakdowns"]] == [
+        "I.1",
+        "III-B.TECH.1",
+    ]
 
 
 def test_unit_report_filters_members_by_unit(test_db: Session):

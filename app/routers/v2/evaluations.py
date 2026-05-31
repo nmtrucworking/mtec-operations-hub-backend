@@ -73,6 +73,7 @@ from app.services.evaluation_errors import (
     EvaluationReviewWindowClosedError,
     EvaluationWeightError,
 )
+from app.services.evaluation_report import EvaluationReportService
 from app.services.evaluation_review import EvaluationReviewService
 from app.services.evaluation_sync import EvaluationSyncService
 from app.utils import sanitize_pagination
@@ -1802,15 +1803,8 @@ def get_member_breakdowns(
 ) -> dict:
     member = _get_member_or_404(db, member_id)
     _ensure_can_access_member(current_user, member)
-    rows = db.scalars(
-        select(MemberEvaluationBreakdown)
-        .where(
-            MemberEvaluationBreakdown.cycle_id == cycle_id,
-            MemberEvaluationBreakdown.member_id == member_id,
-        )
-        .order_by(MemberEvaluationBreakdown.component, MemberEvaluationBreakdown.criterion_code)
-    ).all()
-    return api_response(data=[_breakdown_out(row) for row in rows])
+    rows = EvaluationReportService(db).get_member_breakdowns(cycle_id, member_id)
+    return api_response(data=rows)
 
 
 @router.get("/cycles/{cycle_id}/summary")

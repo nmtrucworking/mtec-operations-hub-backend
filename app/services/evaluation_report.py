@@ -15,6 +15,7 @@ from app.core.evaluation_constants import (
     APPEAL_STATUS_PARTIALLY_ACCEPTED,
     APPEAL_STATUS_PENDING,
     APPEAL_STATUS_REJECTED,
+    COMPONENT_III_B,
     BLOCKER_INTERNAL_WARNING,
     BLOCKER_SEVERE_VIOLATION,
     CYCLE_STATUS_LOCKED,
@@ -195,20 +196,7 @@ class EvaluationReportService:
                 "final": row.final_classification,
             },
             "blockers": _load_json(row.blockers_json, []),
-            "breakdowns": [
-                self._breakdown_out(item)
-                for item in self.db.scalars(
-                    select(MemberEvaluationBreakdown)
-                    .where(
-                        MemberEvaluationBreakdown.cycle_id == cycle_id,
-                        MemberEvaluationBreakdown.member_id == member_id,
-                    )
-                    .order_by(
-                        MemberEvaluationBreakdown.component,
-                        MemberEvaluationBreakdown.criterion_code,
-                    )
-                ).all()
-            ],
+            "breakdowns": self.get_member_breakdowns(cycle_id, member_id),
             "evidence": [
                 self._evidence_out(item)
                 for item in self.db.scalars(
@@ -243,6 +231,30 @@ class EvaluationReportService:
                 ).all()
             ],
         }
+
+    def get_member_breakdowns(self, cycle_id: str, member_id: str) -> list[dict[str, Any]]:
+        member_unit_codes = self._member_unit_codes(cycle_id, member_id)
+        rows = self.db.scalars(
+            select(MemberEvaluationBreakdown)
+            .where(
+                MemberEvaluationBreakdown.cycle_id == cycle_id,
+                MemberEvaluationBreakdown.member_id == member_id,
+            )
+            .order_by(
+                MemberEvaluationBreakdown.component,
+                MemberEvaluationBreakdown.criterion_code,
+            )
+        ).all()
+
+        filtered_rows = []
+        for row in rows:
+            if row.component == COMPONENT_III_B and (
+                not row.unit_code or row.unit_code not in member_unit_codes
+            ):
+                continue
+            filtered_rows.append(self._breakdown_out(row))
+
+        return filtered_rows
 
     def get_unit_report(
         self, cycle_id: str, unit_code: str, filters: dict[str, Any] | None = None
@@ -438,6 +450,18 @@ class EvaluationReportService:
             .order_by(MemberCycleRole.is_primary.desc(), MemberCycleRole.unit_code)
         ).all()
         return roles[0] if roles else None
+
+    def _member_unit_codes(self, cycle_id: str, member_id: str) -> set[str]:
+        return {
+            role.unit_code
+            for role in self.db.scalars(
+                select(MemberCycleRole).where(
+                    MemberCycleRole.cycle_id == cycle_id,
+                    MemberCycleRole.member_id == member_id,
+                )
+            ).all()
+            if role.unit_code
+        }
 
     def _member_out(self, member: Member, cycle_id: str) -> dict[str, Any]:
         primary_role = self._primary_role(cycle_id, member.id)
