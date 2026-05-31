@@ -117,10 +117,15 @@ def change_password(
 def _ensure_notification_row(db: Session, user_id: str) -> SettingsNotification:
     row = db.get(SettingsNotification, user_id)
     if row:
+        if row.noti1 or row.noti3:
+            row.noti1 = False
+            row.noti3 = False
+            db.commit()
+            db.refresh(row)
         return row
 
     row = SettingsNotification(
-        user_id=user_id, noti1=True, noti2=True, noti3=True, noti4=True
+        user_id=user_id, noti1=False, noti2=False, noti3=False, noti4=True
     )
     db.add(row)
     db.commit()
@@ -137,10 +142,15 @@ def get_notifications(
     return api_response(
         data={
             "userId": row.user_id,
-            "noti1": row.noti1,
+            "noti1": False,
             "noti2": row.noti2,
-            "noti3": row.noti3,
+            "noti3": False,
             "noti4": row.noti4,
+            "emailNotifications": False,
+            "pushNotifications": row.noti2,
+            "smsNotifications": False,
+            "financeNotifications": row.noti4,
+            "lockedChannels": ["email", "sms"],
             "updatedAt": row.updated_at,
         }
     )
@@ -155,18 +165,35 @@ def update_notifications(
     row = _ensure_notification_row(db, current_user.id)
     payload = body.model_dump(exclude_none=True)
 
+    mapping = {
+        "pushNotifications": "noti2",
+        "financeNotifications": "noti4",
+        "noti2": "noti2",
+        "noti4": "noti4",
+    }
+
     for key, value in payload.items():
-        setattr(row, key, value)
+        target = mapping.get(key)
+        if target:
+            setattr(row, target, value)
+
+    row.noti1 = False
+    row.noti3 = False
 
     db.commit()
     db.refresh(row)
     return api_response(
         data={
             "userId": row.user_id,
-            "noti1": row.noti1,
+            "noti1": False,
             "noti2": row.noti2,
-            "noti3": row.noti3,
+            "noti3": False,
             "noti4": row.noti4,
+            "emailNotifications": False,
+            "pushNotifications": row.noti2,
+            "smsNotifications": False,
+            "financeNotifications": row.noti4,
+            "lockedChannels": ["email", "sms"],
             "updatedAt": row.updated_at,
         }
     )

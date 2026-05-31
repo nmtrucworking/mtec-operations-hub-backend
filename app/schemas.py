@@ -227,6 +227,10 @@ class NotificationSettingsUpdate(BaseModel):
     noti2: bool | None = None
     noti3: bool | None = None
     noti4: bool | None = None
+    emailNotifications: bool | None = None
+    pushNotifications: bool | None = None
+    smsNotifications: bool | None = None
+    financeNotifications: bool | None = None
 
 
 class CompetitionCreate(BaseModel):
