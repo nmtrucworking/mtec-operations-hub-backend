@@ -229,25 +229,6 @@ class NotificationSettingsUpdate(BaseModel):
     noti4: bool | None = None
 
 
-class AIGenerateInsightBody(BaseModel):
-    prompt: str = Field(min_length=1)
-
-
-class AIGenerateDraftBody(BaseModel):
-    prompt: str = Field(min_length=1)
-    context: str | None = None
-
-
-class AIProcessContextBody(BaseModel):
-    source: str  # 'file' or 'link'
-    content: str
-
-
-class AIExportDocumentBody(BaseModel):
-    content: str
-    templateId: str
-    metadata: dict | None = None
-
 class CompetitionCreate(BaseModel):
     title: str
     date: dt_date

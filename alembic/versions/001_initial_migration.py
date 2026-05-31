@@ -81,29 +81,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_assets_status"), "assets", ["status"], unique=False)
 
     op.create_table(
-        "ai_generation_logs",
-        sa.Column("id", sa.String(length=36), nullable=False),
-        sa.Column("user_id", sa.String(length=36), nullable=False),
-        sa.Column("module", sa.String(length=30), nullable=False),
-        sa.Column("prompt", sa.Text(), nullable=False),
-        sa.Column("response_text", sa.Text(), nullable=True),
-        sa.Column("provider", sa.String(length=30), nullable=False),
-        sa.Column("status", sa.String(length=20), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.id"],
-        ),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(
-        op.f("ix_ai_generation_logs_user_id"),
-        "ai_generation_logs",
-        ["user_id"],
-        unique=False,
-    )
-
-    op.create_table(
         "audit_logs",
         sa.Column("id", sa.String(length=36), nullable=False),
         sa.Column("actor_user_id", sa.String(length=36), nullable=True),
@@ -303,10 +280,6 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_audit_logs_resource_id"), table_name="audit_logs")
     op.drop_index(op.f("ix_audit_logs_action"), table_name="audit_logs")
     op.drop_table("audit_logs")
-    op.drop_index(
-        op.f("ix_ai_generation_logs_user_id"), table_name="ai_generation_logs"
-    )
-    op.drop_table("ai_generation_logs")
     op.drop_index(op.f("ix_assets_status"), table_name="assets")
     op.drop_index(op.f("ix_assets_name"), table_name="assets")
     op.drop_table("assets")

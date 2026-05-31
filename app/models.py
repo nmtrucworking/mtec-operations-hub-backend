@@ -648,19 +648,6 @@ class SettingsNotification(Base):
     )
 
 
-class AIGenerationLog(Base):
-    __tablename__ = "ai_generation_logs"
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True)
-    module: Mapped[str] = mapped_column(String(30))
-    prompt: Mapped[str] = mapped_column(Text)
-    response_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    provider: Mapped[str] = mapped_column(String(30), default="gemini")
-    status: Mapped[str] = mapped_column(String(20), default="success")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
-
-
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
