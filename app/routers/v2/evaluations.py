@@ -76,6 +76,7 @@ from app.services.evaluation_errors import (
 from app.services.evaluation_report import EvaluationReportService
 from app.services.evaluation_review import EvaluationReviewService
 from app.services.evaluation_sync import EvaluationSyncService
+from app.services.evaluation_permissions import EvaluationPermissionService
 from app.utils import sanitize_pagination
 from sqlalchemy.exc import IntegrityError
 
@@ -1300,6 +1301,7 @@ def create_score_events_bulk(
     _ensure_cycle_not_locked(cycle)
     
     created_count = 0
+    perm_svc = EvaluationPermissionService(db)
     for evt_body in body.events:
         _get_member_or_404(db, evt_body.memberId)
         
@@ -1332,6 +1334,19 @@ def create_score_events_bulk(
             criterion_code=evt_body.criterionCode,
             unit_code=evt_body.unitCode,
         )
+        # permission check per component/unit
+        unit_code_for_event = evt_body.unitCode if evt_body.unitCode is not None else criterion.unit_code
+        if not perm_svc.can_write_score_event(
+            user=current_user,
+            cycle_id=cycle_id,
+            member_id=evt_body.memberId,
+            component=criterion.component,
+            unit_code=unit_code_for_event,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={"code": "FORBIDDEN", "message": "No permission to create score event for this component/unit"},
+            )
         score_delta = evt_body.scoreDelta
         if evt_body.eventType == EVENT_TYPE_PENALTY and score_delta > 0:
             score_delta = -score_delta
@@ -1382,6 +1397,19 @@ def create_score_event(
         criterion_code=body.criterionCode,
         unit_code=body.unitCode,
     )
+    perm_svc = EvaluationPermissionService(db)
+    unit_code_for_event = body.unitCode if body.unitCode is not None else criterion.unit_code
+    if not perm_svc.can_write_score_event(
+        user=current_user,
+        cycle_id=cycle_id,
+        member_id=body.memberId,
+        component=criterion.component,
+        unit_code=unit_code_for_event,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "FORBIDDEN", "message": "No permission to create score event for this component/unit"},
+        )
     score_delta = body.scoreDelta
     if body.eventType == EVENT_TYPE_PENALTY and score_delta > 0:
         score_delta = -score_delta
@@ -1437,7 +1465,8 @@ def list_score_events(
     if memberId:
         _ensure_can_access_member(db, current_user, _get_member_or_404(db, memberId))
     else:
-        _require_roles(current_user, EVALUATION_RECORDER_ROLES)
+        # when not querying for a specific member, only managers can list globally
+        _require_manager(current_user)
 
     stmt = select(EvaluationScoreEvent).where(EvaluationScoreEvent.cycle_id == cycle_id)
     if memberId:

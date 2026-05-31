@@ -208,3 +208,29 @@ class EvaluationApproveCycleRequest(BaseModel):
 
 class EvaluationReopenCorrectionRequest(BaseModel):
     reason: str = Field(min_length=1)
+
+
+class UserUnitPermissionCreate(BaseModel):
+    userId: str
+    unitCode: str
+    permissionRole: str
+    canViewUnitResults: bool = False
+    canScoreComponentIi: bool = False
+    canScoreComponentIiiA: bool = False
+    canScoreComponentIiiB: bool = False
+    canSubmitEvidence: bool = True
+    canVerifyEvidence: bool = False
+    canReviewAppeal: bool = False
+
+
+class UserUnitPermissionUpdate(BaseModel):
+    unitCode: str | None = None
+    permissionRole: str | None = None
+    canViewUnitResults: bool | None = None
+    canScoreComponentIi: bool | None = None
+    canScoreComponentIiiA: bool | None = None
+    canScoreComponentIiiB: bool | None = None
+    canSubmitEvidence: bool | None = None
+    canVerifyEvidence: bool | None = None
+    canReviewAppeal: bool | None = None
+    isActive: bool | None = None
