@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 from app.services.evaluation_report import REPORT_VERSION, EvaluationReportService
-from app.services.report_service import generate_member_evaluation_sheet_docx
+from app.services.member_evaluation_export_service import generate_member_evaluation_sheet_docx
 
 MEMBER_EXPORT_COLUMNS = [
     "cycle_id",
