@@ -1,4 +1,5 @@
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -56,15 +57,23 @@ class EvaluationCalculatorService:
         actor_user_id: str | None = None,
         strict: bool = True,
         evidence_mode: str = "draft",
+        should_cancel: Callable[[], bool] | None = None,
+        progress_callback: Callable[[dict], None] | None = None,
     ) -> dict:
         cycle = self._get_cycle(cycle_id)
         self._ensure_cycle_is_writable(cycle)
         member_ids = self._load_cycle_member_ids(cycle_id)
 
         computed = 0
+        processed = 0
         errors: list[dict] = []
+        cancelled = False
 
         for member_id in member_ids:
+            if should_cancel and should_cancel():
+                cancelled = True
+                break
+
             if strict:
                 self.compute_member(
                     cycle_id,
@@ -74,6 +83,16 @@ class EvaluationCalculatorService:
                     evidence_mode=evidence_mode,
                 )
                 computed += 1
+                processed += 1
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "totalMembers": len(member_ids),
+                            "processedMembers": processed,
+                            "computedMembers": computed,
+                            "skippedMembers": len(errors),
+                        }
+                    )
                 continue
 
             try:
@@ -94,17 +113,32 @@ class EvaluationCalculatorService:
                         "message": str(exc),
                     }
                 )
+            finally:
+                processed += 1
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "totalMembers": len(member_ids),
+                            "processedMembers": processed,
+                            "computedMembers": computed,
+                            "skippedMembers": len(errors),
+                        }
+                    )
 
         actor = self.db.get(User, actor_user_id) if actor_user_id else None
         create_audit_log(
             db=self.db,
-            action="COMPUTE_CYCLE_EVALUATION",
+            action="CANCEL_CYCLE_EVALUATION_COMPUTE"
+            if cancelled
+            else "COMPUTE_CYCLE_EVALUATION",
             resource_type="evaluation_cycle",
             resource_id=cycle_id,
             actor=actor,
             after_snapshot={
                 "computedMembers": computed,
+                "processedMembers": processed,
                 "skippedMembers": len(errors),
+                "cancelled": cancelled,
                 "calculationVersion": CALCULATION_VERSION,
             },
         )
@@ -112,8 +146,11 @@ class EvaluationCalculatorService:
 
         return {
             "cycleId": cycle_id,
+            "totalMembers": len(member_ids),
+            "processedMembers": processed,
             "computedMembers": computed,
             "skippedMembers": len(errors),
+            "cancelled": cancelled,
             "errors": errors,
             "calculationVersion": CALCULATION_VERSION,
         }

@@ -53,6 +53,7 @@ from app.schemas_evaluation import (
 from app.services.evaluation_appeal import EvaluationAppealService
 from app.services.evaluation_approval import EvaluationApprovalService
 from app.services.evaluation_calculator import EvaluationCalculatorService
+from app.services.evaluation_compute_jobs import EvaluationComputeJobService
 from app.services.evaluation_criteria_seed import (
     DEFAULT_CRITERIA_EFFECTIVE_FROM,
     EvaluationCriteriaSeedService,
@@ -1803,6 +1804,64 @@ def compute_cycle(
         _raise_evaluation_http_error(exc)
     db.commit()
     return api_response(data=result)
+
+
+@router.post("/cycles/{cycle_id}/compute-jobs")
+def start_compute_cycle_job(
+    cycle_id: str,
+    body: EvaluationComputeRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    cycle = _get_cycle_or_404(db, cycle_id)
+    _ensure_cycle_not_locked(cycle)
+    job = EvaluationComputeJobService.create_cycle_job(
+        cycle_id=cycle_id,
+        actor_user_id=current_user.id,
+        strict=body.strict,
+        evidence_mode=body.evidenceMode,
+    )
+    if EvaluationComputeJobService.mark_scheduled(job.job_id):
+        background_tasks.add_task(EvaluationComputeJobService.run_cycle_job, job.job_id)
+    return api_response(data=job.to_dict())
+
+
+@router.get("/cycles/{cycle_id}/compute-jobs/{job_id}")
+def get_compute_job(
+    cycle_id: str,
+    job_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    _get_cycle_or_404(db, cycle_id)
+    job = EvaluationComputeJobService.get_job(job_id)
+    if not job or job.cycle_id != cycle_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "RESOURCE_NOT_FOUND", "message": "Compute job not found"},
+        )
+    return api_response(data=job.to_dict())
+
+
+@router.post("/cycles/{cycle_id}/compute-jobs/{job_id}/cancel")
+def cancel_compute_job(
+    cycle_id: str,
+    job_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    _get_cycle_or_404(db, cycle_id)
+    job = EvaluationComputeJobService.cancel_job(job_id)
+    if not job or job.cycle_id != cycle_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "RESOURCE_NOT_FOUND", "message": "Compute job not found"},
+        )
+    return api_response(data=job.to_dict())
 
 
 @router.post("/cycles/{cycle_id}/members/{member_id}/compute")
