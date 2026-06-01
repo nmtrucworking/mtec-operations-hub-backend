@@ -34,6 +34,7 @@ class User(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    student_id: Mapped[str | None] = mapped_column(String(20), unique=True, index=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(30), index=True)

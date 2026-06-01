@@ -18,6 +18,7 @@ def _user_out(user: User) -> dict:
     return {
         "id": user.id,
         "username": user.username,
+        "studentId": user.student_id,
         "fullName": user.full_name,
         "role": user.primary_role,
         "roles": user.role_names,

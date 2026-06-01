@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
@@ -26,6 +26,7 @@ def _user_payload(user: User) -> dict:
     return {
         "id": user.id,
         "username": user.username,
+        "studentId": user.student_id,
         "fullName": user.full_name,
         "role": user.primary_role,
         "roles": user.role_names,
@@ -33,11 +34,21 @@ def _user_payload(user: User) -> dict:
     }
 
 
+
 @router.post(
     "/login", dependencies=[Depends(rate_limiter(max_requests=5, window_seconds=60))]
 )
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
-    user = db.scalar(select(User).where(User.username == body.username))
+    '''
+    Login API:
+    - LoginRequest includes: `username` and `password`.
+    - Can login with 
+    '''
+    user = db.scalar(
+        select(User).where(
+            or_(User.username == body.username, User.student_id == body.username)
+        )
+    )
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Sai thong tin dang nhap"
