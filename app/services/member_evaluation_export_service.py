@@ -13,7 +13,7 @@ UNCHECKED = RichText("☐", font="Segoe UI Symbol")
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "templates")
 MEMBER_EVALUATION_TEMPLATE_PATHS = [
-    os.path.join(TEMPLATE_DIR, "member_evaluation_template.dotx"),
+    os.path.join(TEMPLATE_DIR, "member_evaluation_template.docx"),
     os.path.join(TEMPLATE_DIR, "BM-MTEC-NS-03 - Phiếu đánh giá thành viên.dotx"),
 ]
 
