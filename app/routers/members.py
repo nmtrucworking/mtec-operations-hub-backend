@@ -572,6 +572,57 @@ def get_member(
     return api_response(data=_member_out(member, skills=skills))
 
 
+@router.get("/export")
+def export_members(
+    format: str = Query(default="csv"),
+    ban: str | None = None,
+    status_filter: str | None = Query(default=None, alias="status"),
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles("bcn", "bvh_hr")),
+) -> StreamingResponse:
+    if format not in {"csv", "zip"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv hoac zip"
+        )
+
+    stmt = select(Member)
+    if ban:
+        stmt = stmt.where(Member.ban == ban)
+    if status_filter:
+        stmt = stmt.where(Member.status == status_filter)
+
+    members = db.scalars(stmt).all()
+
+    if format == "csv":
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(["id", "mssv", "name", "ban", "status", "phone", "email"])
+
+        for m in members:
+            writer.writerow([m.id, m.mssv, m.name, m.ban, m.status, m.phone, m.email])
+
+        buffer.seek(0)
+        headers = {"Content-Disposition": "attachment; filename=members.csv"}
+        return StreamingResponse(
+            iter([buffer.getvalue()]), media_type="text/csv", headers=headers
+        )
+
+    members_with_skills = []
+    for m in members:
+        skills = db.scalars(
+            select(MemberSkill).where(MemberSkill.member_id == m.id)
+        ).all()
+        members_with_skills.append((m, list(skills)))
+
+    buffer = generate_members_zip(members_with_skills)
+    headers = {"Content-Disposition": "attachment; filename=members_profiles.zip"}
+    return StreamingResponse(
+        buffer,
+        media_type="application/zip",
+        headers=headers,
+    )
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_member(
     body: MemberCreate,
@@ -738,57 +789,6 @@ def update_member_status(
     db.refresh(member)
     skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member.id)).all()
     return api_response(data=_member_out(member, skills=skills))
-
-
-@router.get("/export")
-def export_members(
-    format: str = Query(default="csv"),
-    ban: str | None = None,
-    status_filter: str | None = Query(default=None, alias="status"),
-    db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr")),
-) -> StreamingResponse:
-    if format not in {"csv", "zip"}:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv hoac zip"
-        )
-
-    stmt = select(Member)
-    if ban:
-        stmt = stmt.where(Member.ban == ban)
-    if status_filter:
-        stmt = stmt.where(Member.status == status_filter)
-
-    members = db.scalars(stmt).all()
-
-    if format == "csv":
-        buffer = io.StringIO()
-        writer = csv.writer(buffer)
-        writer.writerow(["id", "mssv", "name", "ban", "status", "phone", "email"])
-
-        for m in members:
-            writer.writerow([m.id, m.mssv, m.name, m.ban, m.status, m.phone, m.email])
-
-        buffer.seek(0)
-        headers = {"Content-Disposition": "attachment; filename=members.csv"}
-        return StreamingResponse(
-            iter([buffer.getvalue()]), media_type="text/csv", headers=headers
-        )
-    else:  # zip
-        members_with_skills = []
-        for m in members:
-            skills = db.scalars(
-                select(MemberSkill).where(MemberSkill.member_id == m.id)
-            ).all()
-            members_with_skills.append((m, list(skills)))
-
-        buffer = generate_members_zip(members_with_skills)
-        headers = {"Content-Disposition": "attachment; filename=members_profiles.zip"}
-        return StreamingResponse(
-            buffer,
-            media_type="application/zip",
-            headers=headers,
-        )
 
 
 @router.get("/{member_id}/profile")
