@@ -28,3 +28,7 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary compute jobs
+temp/
+
