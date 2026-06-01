@@ -1590,6 +1590,45 @@ def create_evidence(
                 detail={"code": "EVIDENCE_EVENT_MISMATCH", "message": "Evidence does not match score event"},
             )
         criterion_id = event.criterion_id
+
+        existing_evidence = db.scalars(
+            select(EvaluationEvidence).where(
+                EvaluationEvidence.score_event_id == score_event_id
+            )
+        ).first()
+        if existing_evidence:
+            if existing_evidence.status != "REJECTED":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "code": "EVIDENCE_DUPLICATE",
+                        "message": "Evidence for this score event already exists",
+                    },
+                )
+
+            existing_evidence.criterion_id = criterion_id
+            existing_evidence.evidence_type = body.evidenceType
+            existing_evidence.title = body.title
+            existing_evidence.url = body.url
+            existing_evidence.file_path = body.filePath
+            existing_evidence.description = body.description
+            existing_evidence.captured_at = body.capturedAt
+            existing_evidence.submitted_by_user_id = current_user.id
+            existing_evidence.verified_by_user_id = None
+            existing_evidence.verified_at = None
+            existing_evidence.status = "PENDING"
+            existing_evidence.metadata_json = _metadata_dump(body.metadata)
+            create_audit_log(
+                db=db,
+                action="RESUBMIT_EVALUATION_EVIDENCE",
+                resource_type="evaluation_evidence",
+                resource_id=existing_evidence.id,
+                actor=current_user,
+                after_snapshot={"status": "PENDING", "scoreEventId": score_event_id},
+            )
+            db.commit()
+            db.refresh(existing_evidence)
+            return api_response(data=_evidence_out(existing_evidence))
     elif body.criterionCode:
         criterion_id = _find_criterion(
             db,
@@ -1909,14 +1948,7 @@ def get_cycle_summary(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     _require_manager(current_user)
-    total_members = (
-        db.scalar(
-            select(func.count())
-            .select_from(MemberCycleRole)
-            .where(MemberCycleRole.cycle_id == cycle_id)
-        )
-        or 0
-    )
+    total_members = len(EvaluationCalculatorService(db).get_cycle_member_ids(cycle_id))
     avg_score = (
         db.scalar(
             select(func.avg(MemberEvaluation.total_score)).where(

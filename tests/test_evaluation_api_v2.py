@@ -478,6 +478,29 @@ def test_compute_cycle_success(client: TestClient, test_db: Session):
     assert stored.component_iii_b_score == 18
 
 
+def test_compute_cycle_includes_active_members_without_roles_or_events(
+    client: TestClient, test_db: Session
+):
+    manager = _user(test_db, "compute_active", "bvh_discipline")
+    cycle = _cycle(test_db, "2026-05-ACTIVE")
+    member = _member(test_db, "ACTIVE001")
+    _criterion(test_db, "I.9", component="I", max_score=10)
+
+    response = client.post(
+        f"/api/v2/evaluations/cycles/{cycle.id}/compute",
+        json={"strict": False, "evidenceMode": "draft"},
+        headers=_auth_header(manager.id),
+    )
+    stored = test_db.scalar(
+        select(MemberEvaluation).where(MemberEvaluation.member_id == member.id)
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["computedMembers"] == 1
+    assert stored is not None
+    assert stored.total_score == 0
+
+
 def test_compute_cycle_requires_operator_role(client: TestClient, test_db: Session):
     user = _user(test_db, "compute_member", "member")
     cycle = _cycle(test_db, "2026-05-COMPUTE-DENIED")
@@ -489,6 +512,21 @@ def test_compute_cycle_requires_operator_role(client: TestClient, test_db: Sessi
     )
 
     assert response.status_code == 403
+
+
+def test_cycle_summary_counts_active_members(client: TestClient, test_db: Session):
+    manager = _user(test_db, "summary_manager", "bvh_discipline")
+    cycle = _cycle(test_db, "2026-05-SUMMARY")
+    _member(test_db, "SUMMARY001")
+    _member(test_db, "SUMMARY002", ban="BCNg")
+
+    response = client.get(
+        f"/api/v2/evaluations/cycles/{cycle.id}/summary",
+        headers=_auth_header(manager.id),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["totalMembers"] == 2
 
 
 def test_compute_cycle_maps_weight_error_to_422(client: TestClient, test_db: Session):

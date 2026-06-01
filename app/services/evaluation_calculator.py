@@ -232,6 +232,9 @@ class EvaluationCalculatorService:
             "calculationVersion": CALCULATION_VERSION,
         }
 
+    def get_cycle_member_ids(self, cycle_id: str) -> list[str]:
+        return self._load_cycle_member_ids(cycle_id)
+
     def _calculate_member(
         self,
         *,
@@ -562,6 +565,11 @@ class EvaluationCalculatorService:
 
     def _load_cycle_member_ids(self, cycle_id: str) -> list[str]:
         member_ids: set[str] = set()
+        member_ids.update(
+            self.db.scalars(
+                select(Member.id).where(Member.status == "Active")
+            ).all()
+        )
         member_ids.update(
             self.db.scalars(
                 select(EvaluationScoreEvent.member_id).where(
