@@ -563,11 +563,18 @@ def list_members(
 def get_member(
     member_id: str,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
+    current_user: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
 ) -> dict:
-    member = db.get(Member, member_id)
-    if not member:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+    if member_id == "me":
+        member = db.scalar(select(Member).where(Member.mssv == current_user.username))
+        if not member:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+        member_id = member.id
+    else:
+        member = db.get(Member, member_id)
+        if not member:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
+
     skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member_id)).all()
     return api_response(data=_member_out(member, skills=skills))
 

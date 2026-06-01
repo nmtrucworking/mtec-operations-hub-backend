@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from threading import Lock
+from threading import RLock
 from uuid import uuid4
 
 from app.db import get_session_factory
@@ -111,7 +111,7 @@ class EvaluationComputeJob:
 
 
 class EvaluationComputeJobService:
-    _lock = Lock()
+    _lock = RLock()
     _jobs: dict[str, EvaluationComputeJob] = {}
 
     @classmethod
