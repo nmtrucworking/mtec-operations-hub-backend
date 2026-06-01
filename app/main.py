@@ -1,10 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
 
+from fastapi import Request
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
+from app.core.response import api_response
 from app.db import Base, get_engine
 
 from app.routers import api_v1_router
@@ -92,7 +95,7 @@ async def lifespan(app: FastAPI):
 
 
 # Create the FastAPI application instance. This is the main entry point for the app.
-app = FastAPI(title="MTEC Operations Hub Backend", version="2.1.1")
+app = FastAPI(title="MTEC Operations Hub Backend", version="2.1.1", lifespan=lifespan)
 
 
 # CORS middleware is required to allow the frontend (served from a different origin)
@@ -103,6 +106,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception(
+        "[unhandled_exception] %s %s failed: %s",
+        request.method,
+        request.url.path,
+        exc,
+    )
+    return JSONResponse(
+        status_code=500,
+        content=api_response(
+            error={
+                "code": "INTERNAL_SERVER_ERROR",
+                "message": "Unexpected server error",
+            }
+        ),
+    )
 
 # Register API routers. The order here doesn't usually matter, but it's a good idea to keep related routes together.
 

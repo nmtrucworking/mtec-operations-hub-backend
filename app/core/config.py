@@ -1,3 +1,4 @@
+import json
 import os
 
 
@@ -23,10 +24,30 @@ def normalize_database_url(value: str) -> str:
     return value
 
 
+def _normalize_origin(value: str) -> str:
+    origin = value.strip().strip("\"'")
+    if origin == "*":
+        return origin
+    return origin.rstrip("/")
+
+
 def _as_list(value: str, default: list[str]) -> list[str]:
     if not value:
         return default
-    return [item.strip() for item in value.split(",") if item.strip()]
+
+    raw_value = value.strip()
+    if raw_value.startswith("["):
+        try:
+            parsed = json.loads(raw_value)
+            if isinstance(parsed, list):
+                items = [_normalize_origin(str(item)) for item in parsed]
+                return [item for item in items if item]
+        except json.JSONDecodeError:
+            pass
+
+    normalized = raw_value.replace("\n", ",").replace(";", ",")
+    items = [_normalize_origin(item) for item in normalized.split(",")]
+    return [item for item in items if item]
 
 
 def _with_localhost_origins(origins: list[str]) -> list[str]:
