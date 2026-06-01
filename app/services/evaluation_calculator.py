@@ -246,12 +246,23 @@ class EvaluationCalculatorService:
         member = self._get_member(member_id)
         criteria = self._load_active_criteria(cycle)
         events = self._load_valid_events(cycle.id, member_id)
+        evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
+            (event.id for event in events if event.id), mode=evidence_mode
+        )
         valid_events, warnings = self._filter_events_by_evidence(
-            events, criteria, strict=strict, evidence_mode=evidence_mode
+            events,
+            criteria,
+            strict=strict,
+            evidence_mode=evidence_mode,
+            evidence_count_by_event_id=evidence_count_by_event_id,
         )
         roles = self._load_roles_or_fallback(cycle.id, member)
 
-        breakdowns = self._calculate_breakdowns(criteria, valid_events)
+        breakdowns = self._calculate_breakdowns(
+            criteria,
+            valid_events,
+            evidence_count_by_event_id=evidence_count_by_event_id,
+        )
         component_scores = self._calculate_component_scores(breakdowns, roles)
         total_score = _clamp(sum(component_scores.values()), 0.0, TOTAL_MAX_SCORE)
         attendance_rate = self._extract_attendance_rate(valid_events)
@@ -342,13 +353,17 @@ class EvaluationCalculatorService:
         *,
         strict: bool,
         evidence_mode: str,
+        evidence_count_by_event_id: dict[str, int] | None = None,
     ) -> tuple[list[EvaluationScoreEvent], list[dict]]:
         criterion_by_id = {criterion.id: criterion for criterion in criteria}
         events_in_active_criteria = [
             event for event in events if event.criterion_id in criterion_by_id
         ]
         warnings = self.evidence_service.validate_score_events(
-            events_in_active_criteria, strict=strict, mode=evidence_mode
+            events_in_active_criteria,
+            strict=strict,
+            mode=evidence_mode,
+            evidence_count_by_event_id=evidence_count_by_event_id,
         )
         missing_event_ids = {warning["scoreEventId"] for warning in warnings}
         valid_events = [
@@ -400,10 +415,17 @@ class EvaluationCalculatorService:
         self,
         criteria: list[EvaluationCriterion],
         events: list[EvaluationScoreEvent],
+        *,
+        evidence_count_by_event_id: dict[str, int] | None = None,
     ) -> list[dict[str, Any]]:
         events_by_criterion_id: dict[str, list[EvaluationScoreEvent]] = {}
         for event in events:
             events_by_criterion_id.setdefault(event.criterion_id, []).append(event)
+
+        if evidence_count_by_event_id is None:
+            evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
+                (event.id for event in events if event.id)
+            )
 
         breakdowns: list[dict[str, Any]] = []
         for criterion in criteria:
@@ -415,7 +437,7 @@ class EvaluationCalculatorService:
                 raw_score = event_total
             final_score = _clamp(raw_score, 0.0, criterion.max_score)
             evidence_count = sum(
-                self.evidence_service.count_evidence_for_event(event.id)
+                evidence_count_by_event_id.get(event.id, 0)
                 for event in related_events
                 if event.id
             )

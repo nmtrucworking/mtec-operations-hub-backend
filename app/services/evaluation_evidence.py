@@ -34,6 +34,32 @@ class EvidenceValidationService:
             or 0
         )
 
+    def count_evidence_for_events(
+        self, score_event_ids: Iterable[str], *, mode: str = "draft"
+    ) -> dict[str, int]:
+        event_ids = [event_id for event_id in score_event_ids if event_id]
+        if not event_ids:
+            return {}
+
+        statuses = self._valid_statuses(mode)
+        rows = self.db.execute(
+            select(
+                EvaluationEvidence.score_event_id,
+                func.count().label("evidence_count"),
+            )
+            .where(
+                EvaluationEvidence.score_event_id.in_(event_ids),
+                EvaluationEvidence.status.in_(statuses),
+            )
+            .group_by(EvaluationEvidence.score_event_id)
+        ).all()
+
+        return {
+            row.score_event_id: int(row.evidence_count or 0)
+            for row in rows
+            if row.score_event_id
+        }
+
     def has_valid_evidence_for_event(
         self, score_event_id: str, *, mode: str = "draft"
     ) -> bool:
@@ -45,11 +71,17 @@ class EvidenceValidationService:
         *,
         strict: bool = True,
         mode: str = "draft",
+        evidence_count_by_event_id: dict[str, int] | None = None,
     ) -> list[dict]:
+        events_list = list(events)
         warnings: list[dict] = []
         criteria_cache: dict[str, EvaluationCriterion | None] = {}
+        if evidence_count_by_event_id is None:
+            evidence_count_by_event_id = self.count_evidence_for_events(
+                (event.id for event in events_list if event.id), mode=mode
+            )
 
-        for event in events:
+        for event in events_list:
             criterion = criteria_cache.get(event.criterion_id)
             if event.criterion_id not in criteria_cache:
                 criterion = self.db.get(EvaluationCriterion, event.criterion_id)
@@ -58,7 +90,7 @@ class EvidenceValidationService:
             if criterion is None or not criterion.requires_evidence:
                 continue
 
-            if event.id and self.has_valid_evidence_for_event(event.id, mode=mode):
+            if event.id and evidence_count_by_event_id.get(event.id, 0) > 0:
                 continue
 
             warnings.append(
