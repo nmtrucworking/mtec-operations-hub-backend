@@ -321,7 +321,7 @@ class UserUnitPermission(Base):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
-    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), index=True, nullable=False)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"), nullable=False)
     unit_code: Mapped[str] = mapped_column(String(30), nullable=False)
     permission_role: Mapped[str] = mapped_column(String(50), nullable=False)
 

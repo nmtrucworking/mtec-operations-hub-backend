@@ -61,10 +61,76 @@ class EvaluationComputeJob:
             "updatedAt": self.updated_at.isoformat(),
         }
 
+    def to_json_dict(self) -> dict:
+        return {
+            "job_id": self.job_id,
+            "cycle_id": self.cycle_id,
+            "actor_user_id": self.actor_user_id,
+            "strict": self.strict,
+            "evidence_mode": self.evidence_mode,
+            "status": self.status,
+            "total_members": self.total_members,
+            "processed_members": self.processed_members,
+            "computed_members": self.computed_members,
+            "skipped_members": self.skipped_members,
+            "error": self.error,
+            "result": self.result,
+            "logs": self.logs,
+            "cancel_requested": self.cancel_requested,
+            "background_scheduled": self.background_scheduled,
+            "created_at": self.created_at.isoformat(),
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+    @classmethod
+    def from_json_dict(cls, d: dict) -> EvaluationComputeJob:
+        return cls(
+            job_id=d["job_id"],
+            cycle_id=d["cycle_id"],
+            actor_user_id=d["actor_user_id"],
+            strict=d["strict"],
+            evidence_mode=d["evidence_mode"],
+            status=d["status"],
+            total_members=d["total_members"],
+            processed_members=d["processed_members"],
+            computed_members=d["computed_members"],
+            skipped_members=d["skipped_members"],
+            error=d["error"],
+            result=d["result"],
+            logs=d.get("logs") or [],
+            cancel_requested=d["cancel_requested"],
+            background_scheduled=d["background_scheduled"],
+            created_at=datetime.fromisoformat(d["created_at"]),
+            started_at=datetime.fromisoformat(d["started_at"]) if d["started_at"] else None,
+            completed_at=datetime.fromisoformat(d["completed_at"]) if d["completed_at"] else None,
+            updated_at=datetime.fromisoformat(d["updated_at"]),
+        )
+
+
 
 class EvaluationComputeJobService:
     _lock = Lock()
     _jobs: dict[str, EvaluationComputeJob] = {}
+
+    @classmethod
+    def _get_job_file_path(cls, job_id: str) -> str:
+        import os
+        from pathlib import Path
+        temp_dir = Path("temp") / "compute_jobs"
+        os.makedirs(temp_dir, exist_ok=True)
+        return str(temp_dir / f"{job_id}.json")
+
+    @classmethod
+    def _save_job_to_file(cls, job: EvaluationComputeJob) -> None:
+        file_path = cls._get_job_file_path(job.job_id)
+        import json
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(job.to_json_dict(), f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Error saving job {job.job_id} to file: {e}")
 
     @classmethod
     def create_cycle_job(
@@ -90,17 +156,30 @@ class EvaluationComputeJobService:
                 logs=["Da tao job tinh diem chu ky."],
             )
             cls._jobs[job.job_id] = job
+            cls._save_job_to_file(job)
             return job
 
     @classmethod
     def get_job(cls, job_id: str) -> EvaluationComputeJob | None:
+        file_path = cls._get_job_file_path(job_id)
+        import os
+        import json
         with cls._lock:
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    job = EvaluationComputeJob.from_json_dict(data)
+                    cls._jobs[job_id] = job
+                    return job
+                except Exception as e:
+                    print(f"Error loading job {job_id} from file: {e}")
             return cls._jobs.get(job_id)
 
     @classmethod
     def cancel_job(cls, job_id: str) -> EvaluationComputeJob | None:
         with cls._lock:
-            job = cls._jobs.get(job_id)
+            job = cls.get_job(job_id)
             if not job:
                 return None
 
@@ -108,17 +187,19 @@ class EvaluationComputeJobService:
                 job.cancel_requested = True
                 job.updated_at = datetime.now(UTC)
                 job.logs.append("Da nhan yeu cau huy tu nguoi dung.")
+                cls._save_job_to_file(job)
             return job
 
     @classmethod
     def mark_scheduled(cls, job_id: str) -> bool:
         with cls._lock:
-            job = cls._jobs.get(job_id)
+            job = cls.get_job(job_id)
             if not job or job.background_scheduled:
                 return False
 
             job.background_scheduled = True
             job.updated_at = datetime.now(UTC)
+            cls._save_job_to_file(job)
             return True
 
     @classmethod
@@ -192,6 +273,22 @@ class EvaluationComputeJobService:
 
     @classmethod
     def _find_active_cycle_job(cls, cycle_id: str) -> EvaluationComputeJob | None:
+        import os
+        import json
+        from pathlib import Path
+        temp_dir = Path("temp") / "compute_jobs"
+        if temp_dir.exists():
+            for filename in os.listdir(temp_dir):
+                if filename.endswith(".json"):
+                    file_path = temp_dir / filename
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        job = EvaluationComputeJob.from_json_dict(data)
+                        if job.cycle_id == cycle_id and job.status not in TERMINAL_STATUSES:
+                            return job
+                    except Exception as e:
+                        print(f"Error loading job from file {file_path}: {e}")
         for job in cls._jobs.values():
             if job.cycle_id == cycle_id and job.status not in TERMINAL_STATUSES:
                 return job
@@ -221,7 +318,7 @@ class EvaluationComputeJobService:
     def _update_job(cls, job_id: str, **changes) -> None:
         logs_append = changes.pop("logs_append", None)
         with cls._lock:
-            job = cls._jobs.get(job_id)
+            job = cls.get_job(job_id)
             if not job:
                 return
             for key, value in changes.items():
@@ -229,9 +326,13 @@ class EvaluationComputeJobService:
             if logs_append:
                 job.logs.append(logs_append)
             job.updated_at = datetime.now(UTC)
+            cls._save_job_to_file(job)
 
     @classmethod
     def _trim_finished_jobs(cls) -> None:
+        import os
+        from pathlib import Path
+        temp_dir = Path("temp") / "compute_jobs"
         if len(cls._jobs) <= 100:
             return
 
@@ -243,3 +344,9 @@ class EvaluationComputeJobService:
         finished.sort(key=lambda job: job.completed_at or job.updated_at)
         for job in finished[: len(cls._jobs) - 100]:
             cls._jobs.pop(job.job_id, None)
+            file_path = temp_dir / f"{job.job_id}.json"
+            if file_path.exists():
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error removing old job file {file_path}: {e}")

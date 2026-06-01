@@ -12,6 +12,7 @@ from app.models import (
     EvaluationCriterion,
     MemberCycleRole,
     UserUnitPermission,
+    MemberEvaluation,
 )
 
 
@@ -100,6 +101,14 @@ def test_bcm_can_only_view_members_in_own_unit(client: TestClient, test_db: Sess
     member = _member(test_db, "MV001")
     _assign_member_role(test_db, cycle, member, "BCNg")
     _grant_user_unit_permission(test_db, bcm, "BCNg", can_view_unit_results=True)
+
+    eval_row = MemberEvaluation(
+        cycle_id=cycle.id,
+        member_id=member.id,
+        status="DRAFT",
+    )
+    test_db.add(eval_row)
+    test_db.commit()
 
     resp = client.get(f"/api/v2/evaluations/cycles/{cycle.id}/members/{member.id}", headers=_auth_header(bcm.id))
     assert resp.status_code == 200

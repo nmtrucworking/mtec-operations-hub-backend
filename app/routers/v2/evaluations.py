@@ -195,9 +195,6 @@ def _can_access_member(db: Session, current_user: User, member: Member) -> bool:
 
     # BCM: only if user has active unit permissions and the member belongs to one of those units
     if current_user.has_role("bcm"):
-        perms = db.scalars(
-            select("""placeholder""")
-        )
         # avoid raw SQL if model not imported; perform ORM query for UserUnitPermission
         try:
             from app.models import UserUnitPermission
@@ -2114,7 +2111,7 @@ def list_appeals(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     if memberId:
-        _ensure_can_access_member(current_user, _get_member_or_404(db, memberId))
+        _ensure_can_access_member(db, current_user, _get_member_or_404(db, memberId))
     else:
         _require_manager(current_user)
     stmt = select(EvaluationAppeal).where(EvaluationAppeal.cycle_id == cycle_id)
@@ -2138,7 +2135,7 @@ def get_appeal(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"code": "RESOURCE_NOT_FOUND", "message": "Appeal not found"},
         )
-    _ensure_can_access_member(current_user, _get_member_or_404(db, appeal.member_id))
+    _ensure_can_access_member(db, current_user, _get_member_or_404(db, appeal.member_id))
     return api_response(data=_appeal_out(appeal))
 
 
@@ -2232,7 +2229,7 @@ def cancel_appeal(
             detail={"code": "RESOURCE_NOT_FOUND", "message": "Appeal not found"},
         )
     if not _is_manager(current_user):
-        _ensure_can_access_member(current_user, _get_member_or_404(db, appeal.member_id))
+        _ensure_can_access_member(db, current_user, _get_member_or_404(db, appeal.member_id))
     try:
         appeal = EvaluationAppealService(db).cancel_appeal(
             appeal_id,

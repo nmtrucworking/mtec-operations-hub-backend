@@ -21,11 +21,11 @@ def override_get_current_user(user: User):
     return _dep
 
 
-def test_create_update_member_skills(client: TestClient, test_db: Session, auth_user: User, monkeypatch):
+def test_create_update_member_skills(client: TestClient, test_db: Session, auth_user: User):
     # override current user dependency
     from app.deps import get_current_user
 
-    monkeypatch.setattr('app.deps.get_current_user', lambda: auth_user)
+    client.app.dependency_overrides[get_current_user] = lambda: auth_user
     # also ensure the app dependency override for get_db is respected (conftest provides it)
 
     payload = {
@@ -65,4 +65,4 @@ def test_create_update_member_skills(client: TestClient, test_db: Session, auth_
     assert data3 is not None
     assert data3.get('mssv') == '22000001'
     assert data3.get('hardSkills')[0]['name'] == 'Vue'
-*** End Patch
+    client.app.dependency_overrides.clear()

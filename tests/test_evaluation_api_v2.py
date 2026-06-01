@@ -281,7 +281,7 @@ def test_create_score_event_requires_recorder_role(client: TestClient, test_db: 
 
 
 def test_create_score_event_success(client: TestClient, test_db: Session):
-    recorder = _user(test_db, "score_recorder", "bcm")
+    recorder = _user(test_db, "score_recorder", "bvh_discipline")
     cycle = _cycle(test_db, "2026-05-SCORE")
     member = _member(test_db, "SCORE002")
     criterion = _criterion(test_db, "I.3")
