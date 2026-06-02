@@ -48,11 +48,19 @@ def _build_engine(url: str) -> Engine:
     established only when a session executes its first SQL statement.
     """
     if url.startswith("sqlite"):
-        return create_engine(
+        from sqlalchemy import event
+        engine = create_engine(
             url,
             connect_args={"check_same_thread": False},
             pool_pre_ping=True,
         )
+        @event.listens_for(engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.close()
+        return engine
     # PostgreSQL / Supabase path
     return create_engine(
         url,

@@ -88,6 +88,13 @@ async def lifespan(app: FastAPI):
         except Exception as exc:
             logger.error("[lifespan] Lỗi nạp dữ liệu mẫu: %s", exc)
 
+    try:
+        from app.services.evaluation_compute_jobs import EvaluationComputeJobService
+        EvaluationComputeJobService.cleanup_stale_jobs()
+        logger.info("[lifespan] Quá trình dọn dẹp các compute jobs bị gián đoạn hoàn tất.")
+    except Exception as exc:
+        logger.error("[lifespan] Lỗi dọn dẹp stale compute jobs: %s", exc)
+
     yield  # Ứng dụng bắt đầu chạy và nhận request tại đây
 
     # --- PHẦN SHUTDOWN ---

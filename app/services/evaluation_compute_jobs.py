@@ -115,6 +115,34 @@ class EvaluationComputeJobService:
     _jobs: dict[str, EvaluationComputeJob] = {}
 
     @classmethod
+    def cleanup_stale_jobs(cls) -> None:
+        import os
+        import json
+        from pathlib import Path
+        temp_dir = Path("temp") / "compute_jobs"
+        if not temp_dir.exists():
+            return
+
+        with cls._lock:
+            for filename in os.listdir(temp_dir):
+                if filename.endswith(".json"):
+                    file_path = temp_dir / filename
+                    try:
+                        with open(file_path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        job = EvaluationComputeJob.from_json_dict(data)
+                        if job.status not in TERMINAL_STATUSES:
+                            job.status = "FAILED"
+                            job.error = "Job was interrupted due to server restart."
+                            job.completed_at = datetime.now(UTC)
+                            job.logs.append("Job bi gian doan do server khoi dong lai.")
+                            cls._save_job_to_file(job)
+                            print(f"Cleaned up stale compute job: {job.job_id}")
+                    except Exception as e:
+                        print(f"Error cleaning up stale job file {file_path}: {e}")
+
+
+    @classmethod
     def _get_job_file_path(cls, job_id: str) -> str:
         import os
         from pathlib import Path
