@@ -72,10 +72,14 @@ class EvidenceValidationService:
         strict: bool = True,
         mode: str = "draft",
         evidence_count_by_event_id: dict[str, int] | None = None,
+        criteria: list[EvaluationCriterion] | None = None,
     ) -> list[dict]:
         events_list = list(events)
         warnings: list[dict] = []
         criteria_cache: dict[str, EvaluationCriterion | None] = {}
+        if criteria:
+            criteria_cache = {c.id: c for c in criteria}
+
         if evidence_count_by_event_id is None:
             evidence_count_by_event_id = self.count_evidence_for_events(
                 (event.id for event in events_list if event.id), mode=mode

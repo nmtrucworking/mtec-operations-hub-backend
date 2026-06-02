@@ -46,7 +46,7 @@ class ClassificationPolicyService:
         return final
 
     def collect_blockers(
-        self, *, cycle_id: str, member_id: str, attendance_rate: float | None
+        self, *, cycle_id: str, member_id: str, attendance_rate: float | None, cases: list[DisciplineCase] | None = None
     ) -> list[dict]:
         blockers: list[dict] = []
 
@@ -60,17 +60,18 @@ class ClassificationPolicyService:
                 }
             )
 
-        if self.db is None:
+        if self.db is None and cases is None:
             return blockers
 
-        cases = self.db.scalars(
-            select(DisciplineCase).where(
-                DisciplineCase.cycle_id == cycle_id,
-                DisciplineCase.member_id == member_id,
-                DisciplineCase.status != "CANCELLED",
-                DisciplineCase.blocker_code.is_not(None),
-            )
-        ).all()
+        if cases is None:
+            cases = self.db.scalars(
+                select(DisciplineCase).where(
+                    DisciplineCase.cycle_id == cycle_id,
+                    DisciplineCase.member_id == member_id,
+                    DisciplineCase.status != "CANCELLED",
+                    DisciplineCase.blocker_code.is_not(None),
+                )
+            ).all()
 
         for case in cases:
             if case.blocker_code not in BLOCKER_CLASSIFICATION_CAPS:

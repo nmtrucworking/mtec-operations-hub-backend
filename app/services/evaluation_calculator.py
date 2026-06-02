@@ -50,6 +50,72 @@ class EvaluationCalculatorService:
         self.evidence_service = EvidenceValidationService(db)
         self.classification_service = ClassificationPolicyService(db)
 
+    def _preload_cycle_data(
+        self,
+        cycle: EvaluationCycle,
+        member_ids: list[str],
+        evidence_mode: str,
+    ) -> dict[str, Any]:
+        cycle_id = cycle.id
+        # Preload active criteria
+        criteria = self._load_active_criteria(cycle)
+
+        # Preload members
+        members_list = self.db.scalars(
+            select(Member).where(Member.id.in_(member_ids))
+        ).all()
+        members_map = {m.id: m for m in members_list}
+
+        # Preload events
+        events_list = self.db.scalars(
+            select(EvaluationScoreEvent).where(
+                EvaluationScoreEvent.cycle_id == cycle_id,
+                EvaluationScoreEvent.is_void.is_(False),
+                EvaluationScoreEvent.member_id.in_(member_ids),
+            )
+        ).all()
+        events_by_member: dict[str, list[EvaluationScoreEvent]] = {}
+        for event in events_list:
+            events_by_member.setdefault(event.member_id, []).append(event)
+
+        # Preload evidence count for all events
+        evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
+            (event.id for event in events_list if event.id), mode=evidence_mode
+        )
+
+        # Preload roles
+        roles_list = self.db.scalars(
+            select(MemberCycleRole).where(
+                MemberCycleRole.cycle_id == cycle_id,
+                MemberCycleRole.member_id.in_(member_ids),
+            )
+        ).all()
+        roles_by_member: dict[str, list[MemberCycleRole]] = {}
+        for role in roles_list:
+            roles_by_member.setdefault(role.member_id, []).append(role)
+
+        # Preload discipline cases
+        cases_list = self.db.scalars(
+            select(DisciplineCase).where(
+                DisciplineCase.cycle_id == cycle_id,
+                DisciplineCase.member_id.in_(member_ids),
+                DisciplineCase.status != "CANCELLED",
+                DisciplineCase.blocker_code.is_not(None),
+            )
+        ).all()
+        cases_by_member: dict[str, list[DisciplineCase]] = {}
+        for case in cases_list:
+            cases_by_member.setdefault(case.member_id, []).append(case)
+
+        return {
+            "criteria": criteria,
+            "members_map": members_map,
+            "events_by_member": events_by_member,
+            "evidence_count_by_event_id": evidence_count_by_event_id,
+            "roles_by_member": roles_by_member,
+            "cases_by_member": cases_by_member,
+        }
+
     def compute_cycle(
         self,
         cycle_id: str,
@@ -64,6 +130,24 @@ class EvaluationCalculatorService:
         self._ensure_cycle_is_writable(cycle)
         member_ids = self._load_cycle_member_ids(cycle_id)
 
+        # Preload data
+        preloaded = self._preload_cycle_data(cycle, member_ids, evidence_mode)
+        criteria = preloaded["criteria"]
+        members_map = preloaded["members_map"]
+        events_by_member = preloaded["events_by_member"]
+        evidence_count_by_event_id = preloaded["evidence_count_by_event_id"]
+        roles_by_member = preloaded["roles_by_member"]
+        cases_by_member = preloaded["cases_by_member"]
+
+        # Preload member evaluations
+        evaluations_list = self.db.scalars(
+            select(MemberEvaluation).where(
+                MemberEvaluation.cycle_id == cycle_id,
+                MemberEvaluation.member_id.in_(member_ids),
+            )
+        ).all()
+        evaluations_map = {e.member_id: e for e in evaluations_list}
+
         computed = 0
         processed = 0
         errors: list[dict] = []
@@ -74,6 +158,12 @@ class EvaluationCalculatorService:
                 cancelled = True
                 break
 
+            m_member = members_map.get(member_id)
+            m_events = events_by_member.get(member_id, [])
+            m_roles = roles_by_member.get(member_id, [])
+            m_cases = cases_by_member.get(member_id, [])
+            m_evaluation = evaluations_map.get(member_id)
+
             if strict:
                 self.compute_member(
                     cycle_id,
@@ -81,6 +171,15 @@ class EvaluationCalculatorService:
                     actor_user_id=actor_user_id,
                     strict=strict,
                     evidence_mode=evidence_mode,
+                    member=m_member,
+                    criteria=criteria,
+                    events=m_events,
+                    preloaded_roles=m_roles,
+                    preloaded_cases=m_cases,
+                    evidence_count_by_event_id=evidence_count_by_event_id,
+                    cycle=cycle,
+                    preloaded_evaluation=m_evaluation,
+                    flush=False,
                 )
                 computed += 1
                 processed += 1
@@ -103,6 +202,15 @@ class EvaluationCalculatorService:
                         actor_user_id=actor_user_id,
                         strict=False,
                         evidence_mode=evidence_mode,
+                        member=m_member,
+                        criteria=criteria,
+                        events=m_events,
+                        preloaded_roles=m_roles,
+                        preloaded_cases=m_cases,
+                        evidence_count_by_event_id=evidence_count_by_event_id,
+                        cycle=cycle,
+                        preloaded_evaluation=m_evaluation,
+                        flush=False,
                     )
                 computed += 1
             except Exception as exc:  # noqa: BLE001 - returned as batch summary
@@ -124,6 +232,9 @@ class EvaluationCalculatorService:
                             "skippedMembers": len(errors),
                         }
                     )
+
+        # Do a single flush at the end of the entire loop
+        self.db.flush()
 
         actor = self.db.get(User, actor_user_id) if actor_user_id else None
         create_audit_log(
@@ -163,17 +274,35 @@ class EvaluationCalculatorService:
         actor_user_id: str | None = None,
         strict: bool = True,
         evidence_mode: str = "draft",
+        member: Member | None = None,
+        criteria: list[EvaluationCriterion] | None = None,
+        events: list[EvaluationScoreEvent] | None = None,
+        preloaded_roles: list[MemberCycleRole] | None = None,
+        preloaded_cases: list[DisciplineCase] | None = None,
+        evidence_count_by_event_id: dict[str, int] | None = None,
+        cycle: EvaluationCycle | None = None,
+        preloaded_evaluation: MemberEvaluation | None = None,
+        flush: bool = True,
     ) -> dict:
-        cycle = self._get_cycle(cycle_id)
+        if cycle is None:
+            cycle = self._get_cycle(cycle_id)
         self._ensure_cycle_is_writable(cycle)
         result = self._calculate_member(
             cycle=cycle,
             member_id=member_id,
             strict=strict,
             evidence_mode=evidence_mode,
+            member=member,
+            criteria=criteria,
+            events=events,
+            preloaded_roles=preloaded_roles,
+            preloaded_cases=preloaded_cases,
+            evidence_count_by_event_id=evidence_count_by_event_id,
         )
 
-        member_evaluation = self._upsert_member_evaluation(result)
+        member_evaluation = self._upsert_member_evaluation(
+            result, preloaded_evaluation=preloaded_evaluation
+        )
         self._replace_breakdowns(member_evaluation.id, result)
 
         actor = self.db.get(User, actor_user_id) if actor_user_id else None
@@ -190,7 +319,8 @@ class EvaluationCalculatorService:
                 "finalClassification": result["finalClassification"],
             },
         )
-        self.db.flush()
+        if flush:
+            self.db.flush()
 
         return {**result, "memberEvaluationId": member_evaluation.id}
 
@@ -220,16 +350,36 @@ class EvaluationCalculatorService:
         cycle = self._get_cycle(cycle_id)
         member_ids = self._load_cycle_member_ids(cycle_id)
 
+        # Preload data for preview
+        preloaded = self._preload_cycle_data(cycle, member_ids, evidence_mode)
+        criteria = preloaded["criteria"]
+        members_map = preloaded["members_map"]
+        events_by_member = preloaded["events_by_member"]
+        evidence_count_by_event_id = preloaded["evidence_count_by_event_id"]
+        roles_by_member = preloaded["roles_by_member"]
+        cases_by_member = preloaded["cases_by_member"]
+
         items: list[dict] = []
         errors: list[dict] = []
 
         for member_id in member_ids:
             try:
+                m_member = members_map.get(member_id)
+                m_events = events_by_member.get(member_id, [])
+                m_roles = roles_by_member.get(member_id, [])
+                m_cases = cases_by_member.get(member_id, [])
+
                 result = self._calculate_member(
                     cycle=cycle,
                     member_id=member_id,
                     strict=strict,
                     evidence_mode=evidence_mode,
+                    member=m_member,
+                    criteria=criteria,
+                    events=m_events,
+                    preloaded_roles=m_roles,
+                    preloaded_cases=m_cases,
+                    evidence_count_by_event_id=evidence_count_by_event_id,
                 )
                 items.append(result)
             except Exception as exc:  # noqa: BLE001 - surfaced in preview summary
@@ -279,13 +429,25 @@ class EvaluationCalculatorService:
         member_id: str,
         strict: bool,
         evidence_mode: str,
+        member: Member | None = None,
+        criteria: list[EvaluationCriterion] | None = None,
+        events: list[EvaluationScoreEvent] | None = None,
+        preloaded_roles: list[MemberCycleRole] | None = None,
+        preloaded_cases: list[DisciplineCase] | None = None,
+        evidence_count_by_event_id: dict[str, int] | None = None,
     ) -> dict:
-        member = self._get_member(member_id)
-        criteria = self._load_active_criteria(cycle)
-        events = self._load_valid_events(cycle.id, member_id)
-        evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
-            (event.id for event in events if event.id), mode=evidence_mode
-        )
+        if member is None:
+            member = self._get_member(member_id)
+        if criteria is None:
+            criteria = self._load_active_criteria(cycle)
+        if events is None:
+            events = self._load_valid_events(cycle.id, member_id)
+
+        if evidence_count_by_event_id is None:
+            evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
+                (event.id for event in events if event.id), mode=evidence_mode
+            )
+
         valid_events, warnings = self._filter_events_by_evidence(
             events,
             criteria,
@@ -293,7 +455,7 @@ class EvaluationCalculatorService:
             evidence_mode=evidence_mode,
             evidence_count_by_event_id=evidence_count_by_event_id,
         )
-        roles = self._load_roles_or_fallback(cycle.id, member)
+        roles = self._load_roles_or_fallback(cycle.id, member, preloaded_roles=preloaded_roles)
 
         breakdowns = self._calculate_breakdowns(
             criteria,
@@ -307,6 +469,7 @@ class EvaluationCalculatorService:
             cycle_id=cycle.id,
             member_id=member_id,
             attendance_rate=attendance_rate,
+            cases=preloaded_cases,
         )
         preliminary = self.classification_service.classify_preliminary(total_score)
         final = self.classification_service.apply_blockers(preliminary, blockers)
@@ -401,6 +564,7 @@ class EvaluationCalculatorService:
             strict=strict,
             mode=evidence_mode,
             evidence_count_by_event_id=evidence_count_by_event_id,
+            criteria=criteria,
         )
         missing_event_ids = {warning["scoreEventId"] for warning in warnings}
         valid_events = [
@@ -408,13 +572,15 @@ class EvaluationCalculatorService:
         ]
         return valid_events, warnings
 
-    def _load_roles_or_fallback(self, cycle_id: str, member: Member) -> list[dict]:
-        roles = self.db.scalars(
-            select(MemberCycleRole).where(
-                MemberCycleRole.cycle_id == cycle_id,
-                MemberCycleRole.member_id == member.id,
-            )
-        ).all()
+    def _load_roles_or_fallback(self, cycle_id: str, member: Member, preloaded_roles: list[MemberCycleRole] | None = None) -> list[dict]:
+        roles = preloaded_roles
+        if roles is None:
+            roles = self.db.scalars(
+                select(MemberCycleRole).where(
+                    MemberCycleRole.cycle_id == cycle_id,
+                    MemberCycleRole.member_id == member.id,
+                )
+            ).all()
 
         if not roles:
             if member.ban:
@@ -559,20 +725,25 @@ class EvaluationCalculatorService:
             return None
         return max(0.0, min(float(attendance_events[-1].raw_value), 1.0))
 
-    def _upsert_member_evaluation(self, result: dict) -> MemberEvaluation:
-        member_evaluation = self.db.scalar(
-            select(MemberEvaluation).where(
-                MemberEvaluation.cycle_id == result["cycleId"],
-                MemberEvaluation.member_id == result["memberId"],
-            )
-        )
+    def _upsert_member_evaluation(
+        self, result: dict, preloaded_evaluation: MemberEvaluation | None = None
+    ) -> MemberEvaluation:
+        member_evaluation = preloaded_evaluation
         if member_evaluation is None:
+            member_evaluation = self.db.scalar(
+                select(MemberEvaluation).where(
+                    MemberEvaluation.cycle_id == result["cycleId"],
+                    MemberEvaluation.member_id == result["memberId"],
+                )
+            )
+        if member_evaluation is None:
+            from app.models import _uuid
             member_evaluation = MemberEvaluation(
+                id=_uuid(),
                 cycle_id=result["cycleId"],
                 member_id=result["memberId"],
             )
             self.db.add(member_evaluation)
-            self.db.flush()
 
         component_scores = result["componentScores"]
         member_evaluation.component_i_score = component_scores[COMPONENT_I]
