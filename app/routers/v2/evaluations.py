@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.audit import create_audit_log
@@ -1611,7 +1611,7 @@ def create_evidence(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail={"code": "RESOURCE_NOT_FOUND", "message": "Score event not found"},
                 )
-            if event.cycle_id != cycle_id or event.member_id != body.memberId:
+            if event.cycle_id != cycle_id:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail={"code": "EVIDENCE_EVENT_MISMATCH", "message": "Evidence does not match score event"},
@@ -1619,7 +1619,23 @@ def create_evidence(
             selected_events.append(event)
 
         criterion_ids = {event.criterion_id for event in selected_events if event.criterion_id}
-        selected_criterion_id = next(iter(criterion_ids), None) if len(criterion_ids) == 1 else None
+        if len(criterion_ids) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "EVIDENCE_EVENT_CRITERION_MISMATCH",
+                    "message": "Selected events must belong to the same criterion",
+                },
+            )
+        selected_criterion_id = next(iter(criterion_ids), None)
+        if criterion_id and selected_criterion_id and criterion_id != selected_criterion_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "EVIDENCE_EVENT_CRITERION_MISMATCH",
+                    "message": "Selected events do not match the chosen criterion",
+                },
+            )
         if not criterion_id and selected_criterion_id:
             criterion_id = selected_criterion_id
 
@@ -1695,7 +1711,33 @@ def list_evidence(
 
     stmt = select(EvaluationEvidence).where(EvaluationEvidence.cycle_id == cycle_id)
     if memberId:
-        stmt = stmt.where(EvaluationEvidence.member_id == memberId)
+        member_events = select(EvaluationScoreEvent.id, EvaluationScoreEvent.criterion_id).where(
+            EvaluationScoreEvent.cycle_id == cycle_id,
+            EvaluationScoreEvent.member_id == memberId,
+        ).subquery()
+        member_event_ids = select(member_events.c.id)
+        member_criterion_ids = select(member_events.c.criterion_id).where(
+            member_events.c.criterion_id.is_not(None)
+        )
+        stmt = stmt.where(
+            or_(
+                EvaluationEvidence.member_id == memberId,
+                EvaluationEvidence.score_event_id.in_(member_event_ids),
+                and_(
+                    EvaluationEvidence.score_event_id.is_(None),
+                    ~EvaluationEvidence.applied_events.any(),
+                    EvaluationEvidence.criterion_id.in_(member_criterion_ids),
+                ),
+                exists(
+                    select(1).where(
+                        and_(
+                            EvaluationEvidenceAppliedEvent.evidence_id == EvaluationEvidence.id,
+                            EvaluationEvidenceAppliedEvent.score_event_id.in_(member_event_ids),
+                        )
+                    )
+                ),
+            )
+        )
     if criterionId:
         stmt = stmt.where(EvaluationEvidence.criterion_id == criterionId)
     if evidenceType:

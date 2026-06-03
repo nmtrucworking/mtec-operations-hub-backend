@@ -86,7 +86,6 @@ class EvidenceValidationService:
             .select_from(EvaluationEvidence)
             .where(
                 EvaluationEvidence.cycle_id == event.cycle_id,
-                EvaluationEvidence.member_id == event.member_id,
                 EvaluationEvidence.criterion_id == event.criterion_id,
                 EvaluationEvidence.score_event_id.is_(None),
                 ~EvaluationEvidence.applied_events.any(),
@@ -109,7 +108,6 @@ class EvidenceValidationService:
         counts = self.count_evidence_for_events((event.id for event in events_list), mode=mode)
         events_by_key: dict[tuple[str, str, str], list[str]] = {}
         cycle_ids = {event.cycle_id for event in events_list}
-        member_ids = {event.member_id for event in events_list}
         criterion_ids = {event.criterion_id for event in events_list if event.criterion_id}
         for event in events_list:
             if event.criterion_id:
@@ -121,13 +119,11 @@ class EvidenceValidationService:
         criterion_rows = self.db.execute(
             select(
                 EvaluationEvidence.cycle_id,
-                EvaluationEvidence.member_id,
                 EvaluationEvidence.criterion_id,
                 func.count(func.distinct(EvaluationEvidence.id)).label("evidence_count"),
             )
             .where(
                 EvaluationEvidence.cycle_id.in_(cycle_ids),
-                EvaluationEvidence.member_id.in_(member_ids),
                 EvaluationEvidence.criterion_id.in_(criterion_ids),
                 EvaluationEvidence.score_event_id.is_(None),
                 ~EvaluationEvidence.applied_events.any(),
@@ -135,14 +131,16 @@ class EvidenceValidationService:
             )
             .group_by(
                 EvaluationEvidence.cycle_id,
-                EvaluationEvidence.member_id,
                 EvaluationEvidence.criterion_id,
             )
         ).all()
 
         for row in criterion_rows:
-            key = (row.cycle_id, row.member_id, row.criterion_id)
-            event_ids = events_by_key.get(key, [])
+            event_ids = [
+                event.id
+                for event in events_list
+                if event.cycle_id == row.cycle_id and event.criterion_id == row.criterion_id
+            ]
             if not event_ids:
                 continue
             criterion_count = int(row.evidence_count or 0)

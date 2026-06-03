@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from statistics import mean
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.evaluation_constants import (
@@ -30,6 +30,7 @@ from app.models import (
     EvaluationCriterion,
     EvaluationCycle,
     EvaluationEvidence,
+    EvaluationEvidenceAppliedEvent,
     EvaluationScoreEvent,
     Member,
     MemberCycleRole,
@@ -201,12 +202,9 @@ class EvaluationReportService:
             "evidence": [
                 self._evidence_out(item)
                 for item in self.db.scalars(
-                    select(EvaluationEvidence)
-                    .where(
-                        EvaluationEvidence.cycle_id == cycle_id,
-                        EvaluationEvidence.member_id == member_id,
+                    self._member_evidence_stmt(cycle_id=cycle_id, member_id=member_id).order_by(
+                        EvaluationEvidence.created_at
                     )
-                    .order_by(EvaluationEvidence.created_at)
                 ).all()
             ],
             "appeals": [
@@ -256,6 +254,40 @@ class EvaluationReportService:
             filtered_rows.append(self._breakdown_out(row))
 
         return filtered_rows
+
+    def _member_evidence_stmt(self, *, cycle_id: str, member_id: str):
+        member_events = select(EvaluationScoreEvent.id, EvaluationScoreEvent.criterion_id).where(
+            EvaluationScoreEvent.cycle_id == cycle_id,
+            EvaluationScoreEvent.member_id == member_id,
+        ).subquery()
+        member_event_ids = select(member_events.c.id)
+        member_criterion_ids = select(member_events.c.criterion_id).where(
+            member_events.c.criterion_id.is_not(None)
+        )
+
+        return (
+            select(EvaluationEvidence)
+            .where(
+                EvaluationEvidence.cycle_id == cycle_id,
+                or_(
+                    EvaluationEvidence.member_id == member_id,
+                    EvaluationEvidence.score_event_id.in_(member_event_ids),
+                    and_(
+                        EvaluationEvidence.score_event_id.is_(None),
+                        ~EvaluationEvidence.applied_events.any(),
+                        EvaluationEvidence.criterion_id.in_(member_criterion_ids),
+                    ),
+                    exists(
+                        select(1).where(
+                            and_(
+                                EvaluationEvidenceAppliedEvent.evidence_id == EvaluationEvidence.id,
+                                EvaluationEvidenceAppliedEvent.score_event_id.in_(member_event_ids),
+                            )
+                        )
+                    ),
+                ),
+            )
+        )
 
     def get_unit_report(
         self, cycle_id: str, unit_code: str, filters: dict[str, Any] | None = None
