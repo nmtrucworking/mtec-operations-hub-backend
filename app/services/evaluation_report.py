@@ -37,6 +37,7 @@ from app.models import (
     MemberEvaluationBreakdown,
 )
 from app.services.evaluation_errors import EvaluationNotFoundError
+from app.services.evaluation_evidence import EvidenceValidationService
 from app.services.evaluation_report_cache import EvaluationReportCacheService
 
 REPORT_VERSION = "phase6-v1"
@@ -633,17 +634,14 @@ class EvaluationReportService:
                 EvaluationCriterion.requires_evidence.is_(True),
             )
         ).all()
-        missing = 0
-        for event, _criterion in events:
-            evidence_count = self.db.scalar(
-                select(func.count()).select_from(EvaluationEvidence).where(
-                    EvaluationEvidence.score_event_id == event.id,
-                    EvaluationEvidence.status == EVIDENCE_STATUS_VERIFIED,
-                )
-            )
-            if not evidence_count:
-                missing += 1
-        return missing
+        if not events:
+            return 0
+
+        evidence_counts = EvidenceValidationService(self.db).count_effective_evidence_for_events(
+            (event for event, _criterion in events),
+            mode="approval",
+        )
+        return sum(1 for event, _criterion in events if not evidence_counts.get(event.id, 0))
 
     def _count_invalid_weight_members(
         self, cycle_id: str, filters: dict[str, Any] | None = None

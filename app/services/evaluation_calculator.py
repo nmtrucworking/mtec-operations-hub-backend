@@ -80,8 +80,8 @@ class EvaluationCalculatorService:
             events_by_member.setdefault(event.member_id, []).append(event)
 
         # Preload evidence count for all events
-        evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
-            (event.id for event in events_list if event.id), mode=evidence_mode
+        evidence_count_by_event_id = self.evidence_service.count_effective_evidence_for_events(
+            events_list, mode=evidence_mode
         )
 
         # Preload roles
@@ -620,8 +620,8 @@ class EvaluationCalculatorService:
             events = self._load_valid_events(cycle.id, member_id)
 
         if evidence_count_by_event_id is None:
-            evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
-                (event.id for event in events if event.id), mode=evidence_mode
+            evidence_count_by_event_id = self.evidence_service.count_effective_evidence_for_events(
+                events, mode=evidence_mode
             )
 
         valid_events, warnings = self._filter_events_by_evidence(
@@ -802,8 +802,8 @@ class EvaluationCalculatorService:
             events_by_criterion_id.setdefault(event.criterion_id, []).append(event)
 
         if evidence_count_by_event_id is None:
-            evidence_count_by_event_id = self.evidence_service.count_evidence_for_events(
-                (event.id for event in events if event.id)
+            evidence_count_by_event_id = self.evidence_service.count_effective_evidence_for_events(
+                events
             )
 
         breakdowns: list[dict[str, Any]] = []
@@ -971,11 +971,8 @@ class EvaluationCalculatorService:
 
     def _load_cycle_member_ids(self, cycle_id: str) -> list[str]:
         member_ids: set[str] = set()
-        member_ids.update(
-            self.db.scalars(
-                select(Member.id).where(Member.status == "Active")
-            ).all()
-        )
+        # Only include members that have cycle-scoped data. Pulling all active
+        # members here makes Quick Review leak unrelated cycles into the preview.
         member_ids.update(
             self.db.scalars(
                 select(EvaluationScoreEvent.member_id).where(
