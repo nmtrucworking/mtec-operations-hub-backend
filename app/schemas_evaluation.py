@@ -131,6 +131,7 @@ class EvaluationEvidenceCreate(BaseModel):
     criterionId: str | None = None
     criterionCode: str | None = None
     scoreEventId: str | None = None
+    appliedScoreEventIds: list[str] = Field(default_factory=list)
     evidenceType: str
     title: str
     url: str | None = None

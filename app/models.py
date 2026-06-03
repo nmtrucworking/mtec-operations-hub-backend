@@ -512,6 +512,37 @@ class EvaluationEvidence(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=_utcnow, onupdate=_utcnow
     )
+    applied_events: Mapped[list["EvaluationEvidenceAppliedEvent"]] = relationship(
+        "EvaluationEvidenceAppliedEvent",
+        back_populates="evidence",
+        cascade="all, delete-orphan",
+    )
+
+
+class EvaluationEvidenceAppliedEvent(Base):
+    __tablename__ = "evaluation_evidence_applied_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "evidence_id",
+            "score_event_id",
+            name="uq_evaluation_evidence_applied_events_evidence_event",
+        ),
+        Index("ix_evaluation_evidence_applied_events_evidence_id", "evidence_id"),
+        Index("ix_evaluation_evidence_applied_events_score_event_id", "score_event_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    evidence_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("evaluation_evidence.id", ondelete="CASCADE")
+    )
+    score_event_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("evaluation_score_events.id", ondelete="CASCADE")
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    evidence: Mapped[EvaluationEvidence] = relationship(
+        "EvaluationEvidence", back_populates="applied_events"
+    )
 
 
 class MemberEvaluation(Base):

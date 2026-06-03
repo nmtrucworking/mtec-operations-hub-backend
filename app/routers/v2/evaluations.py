@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.audit import create_audit_log
 from app.core.evaluation_constants import (
@@ -19,6 +19,7 @@ from app.models import (
     EvaluationCriterion,
     EvaluationCycle,
     EvaluationEvidence,
+    EvaluationEvidenceAppliedEvent,
     EvaluationScoreEvent,
     Member,
     MemberCycleRole,
@@ -368,12 +369,18 @@ def _score_event_out(event: EvaluationScoreEvent) -> dict:
 
 
 def _evidence_out(evidence: EvaluationEvidence) -> dict:
+    applied_score_event_ids = [
+        link.score_event_id for link in getattr(evidence, "applied_events", []) if link.score_event_id
+    ]
+    if not applied_score_event_ids and evidence.score_event_id:
+        applied_score_event_ids = [evidence.score_event_id]
     return {
         "id": evidence.id,
         "cycleId": evidence.cycle_id,
         "memberId": evidence.member_id,
         "criterionId": evidence.criterion_id,
         "scoreEventId": evidence.score_event_id,
+        "appliedScoreEventIds": applied_score_event_ids,
         "evidenceType": evidence.evidence_type,
         "title": evidence.title,
         "url": evidence.url,
@@ -1591,60 +1598,32 @@ def create_evidence(
         )
 
     criterion_id = body.criterionId
-    score_event_id = body.scoreEventId
-    if score_event_id:
-        event = db.get(EvaluationScoreEvent, score_event_id)
-        if not event:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={"code": "RESOURCE_NOT_FOUND", "message": "Score event not found"},
-            )
-        if event.cycle_id != cycle_id or event.member_id != body.memberId:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={"code": "EVIDENCE_EVENT_MISMATCH", "message": "Evidence does not match score event"},
-            )
-        criterion_id = event.criterion_id
+    applied_score_event_ids = list(dict.fromkeys(body.appliedScoreEventIds or []))
+    legacy_score_event_id = body.scoreEventId if not applied_score_event_ids else None
 
-        existing_evidence = db.scalars(
-            select(EvaluationEvidence).where(
-                EvaluationEvidence.score_event_id == score_event_id
-            )
-        ).first()
-        if existing_evidence:
-            if existing_evidence.status != "REJECTED":
+    selected_events: list[EvaluationScoreEvent] = []
+    validation_event_ids = applied_score_event_ids or ([legacy_score_event_id] if legacy_score_event_id else [])
+    if validation_event_ids:
+        for score_event_id in validation_event_ids:
+            event = db.get(EvaluationScoreEvent, score_event_id)
+            if not event:
                 raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail={
-                        "code": "EVIDENCE_DUPLICATE",
-                        "message": "Evidence for this score event already exists",
-                    },
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={"code": "RESOURCE_NOT_FOUND", "message": "Score event not found"},
                 )
+            if event.cycle_id != cycle_id or event.member_id != body.memberId:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={"code": "EVIDENCE_EVENT_MISMATCH", "message": "Evidence does not match score event"},
+                )
+            selected_events.append(event)
 
-            existing_evidence.criterion_id = criterion_id
-            existing_evidence.evidence_type = body.evidenceType
-            existing_evidence.title = body.title
-            existing_evidence.url = body.url
-            existing_evidence.file_path = body.filePath
-            existing_evidence.description = body.description
-            existing_evidence.captured_at = body.capturedAt
-            existing_evidence.submitted_by_user_id = current_user.id
-            existing_evidence.verified_by_user_id = None
-            existing_evidence.verified_at = None
-            existing_evidence.status = "PENDING"
-            existing_evidence.metadata_json = _metadata_dump(body.metadata)
-            create_audit_log(
-                db=db,
-                action="RESUBMIT_EVALUATION_EVIDENCE",
-                resource_type="evaluation_evidence",
-                resource_id=existing_evidence.id,
-                actor=current_user,
-                after_snapshot={"status": "PENDING", "scoreEventId": score_event_id},
-            )
-            db.commit()
-            db.refresh(existing_evidence)
-            return api_response(data=_evidence_out(existing_evidence))
-    elif body.criterionCode:
+        criterion_ids = {event.criterion_id for event in selected_events if event.criterion_id}
+        selected_criterion_id = next(iter(criterion_ids), None) if len(criterion_ids) == 1 else None
+        if not criterion_id and selected_criterion_id:
+            criterion_id = selected_criterion_id
+
+    if criterion_id is None and body.criterionCode:
         criterion_id = _find_criterion(
             db,
             criterion_id=body.criterionId,
@@ -1655,7 +1634,7 @@ def create_evidence(
         cycle_id=cycle_id,
         member_id=body.memberId,
         criterion_id=criterion_id,
-        score_event_id=score_event_id,
+        score_event_id=legacy_score_event_id,
         evidence_type=body.evidenceType,
         title=body.title,
         url=body.url,
@@ -1668,6 +1647,13 @@ def create_evidence(
     db.add(evidence)
     try:
         db.flush()
+        if applied_score_event_ids:
+            for score_event_id in applied_score_event_ids:
+                evidence.applied_events.append(
+                    EvaluationEvidenceAppliedEvent(score_event_id=score_event_id)
+                )
+            db.flush()
+        response_data = _evidence_out(evidence)
     except IntegrityError as ie:
         db.rollback()
         # Unique constraint on score_event_id prevents duplicate evidence for same score event
@@ -1687,8 +1673,7 @@ def create_evidence(
         actor=current_user,
     )
     db.commit()
-    db.refresh(evidence)
-    return api_response(data=_evidence_out(evidence))
+    return api_response(data=response_data)
 
 
 @router.get("/cycles/{cycle_id}/evidence")
@@ -1717,7 +1702,12 @@ def list_evidence(
         stmt = stmt.where(EvaluationEvidence.evidence_type == evidenceType)
     if status_filter:
         stmt = stmt.where(EvaluationEvidence.status == status_filter)
-    rows, meta = _page_rows(db, stmt.order_by(EvaluationEvidence.created_at.desc()), page, pageSize)
+    rows, meta = _page_rows(
+        db,
+        stmt.options(selectinload(EvaluationEvidence.applied_events)).order_by(EvaluationEvidence.created_at.desc()),
+        page,
+        pageSize,
+    )
     return api_response(data=[_evidence_out(row) for row in rows], meta=meta)
 
 
