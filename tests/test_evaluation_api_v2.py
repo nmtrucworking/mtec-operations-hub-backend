@@ -760,3 +760,41 @@ def test_create_appeal_rejects_locked_cycle(client: TestClient, test_db: Session
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "EVALUATION_CYCLE_LOCKED"
+
+
+def test_list_criteria_filters_by_cycle(client: TestClient, test_db: Session):
+    user = _user(test_db, "criteria_cycle_viewer", "member")
+    cycle = _cycle(test_db, "2026-05-CRIT-FILTER")
+    
+    crit_ok = EvaluationCriterion(
+        code="I.CRIT-OK",
+        name="OK",
+        component="I",
+        unit_scope="ALL",
+        max_score=10.0,
+        score_method="MANUAL",
+        effective_from=date(2026, 5, 15),
+        effective_to=date(2026, 5, 20),
+    )
+    crit_bad = EvaluationCriterion(
+        code="I.CRIT-BAD",
+        name="BAD",
+        component="I",
+        unit_scope="ALL",
+        max_score=10.0,
+        score_method="MANUAL",
+        effective_from=date(2026, 6, 1),
+    )
+    test_db.add_all([crit_ok, crit_bad])
+    test_db.commit()
+
+    response = client.get(
+        f"/api/v2/evaluations/criteria?cycleId={cycle.id}",
+        headers=_auth_header(user.id),
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    codes = [item["code"] for item in data]
+    assert "I.CRIT-OK" in codes
+    assert "I.CRIT-BAD" not in codes

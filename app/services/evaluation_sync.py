@@ -54,6 +54,14 @@ class EvaluationSyncService:
             raise EvaluationNotFoundError(f"Meeting not found: {meeting_id}")
 
         cycle = self.db.get(EvaluationCycle, cycle_id)
+        if cycle:
+            meeting_date_date = meeting.date.date()
+            if not (cycle.start_date <= meeting_date_date <= cycle.end_date):
+                from app.services.evaluation_errors import EvaluationValidationError
+                raise EvaluationValidationError(
+                    f"Meeting date ({meeting_date_date}) is outside of cycle range ({cycle.start_date} to {cycle.end_date})"
+                )
+
         criterion = self._get_active_criterion(DEFAULT_ATTENDANCE_PENALTY_CRITERION_CODE)
         attendance_rate_criterion = self._get_optional_active_criterion(
             DEFAULT_ATTENDANCE_RATE_CRITERION_CODE
@@ -228,6 +236,14 @@ class EvaluationSyncService:
         competition = self.db.get(Competition, competition_id)
         if not competition:
             raise EvaluationNotFoundError(f"Competition not found: {competition_id}")
+
+        cycle = self.db.get(EvaluationCycle, cycle_id)
+        if cycle:
+            if not (cycle.start_date <= competition.date <= cycle.end_date):
+                from app.services.evaluation_errors import EvaluationValidationError
+                raise EvaluationValidationError(
+                    f"Competition date ({competition.date}) is outside of cycle range ({cycle.start_date} to {cycle.end_date})"
+                )
 
         criterion = self._get_active_criterion(DEFAULT_COMPETITION_BONUS_CRITERION_CODE)
         results = self.db.scalars(

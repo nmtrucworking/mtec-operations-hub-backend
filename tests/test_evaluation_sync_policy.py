@@ -199,3 +199,65 @@ def test_competition_sync_creates_bonus_event_once(test_db: Session):
     assert event.event_type == "BONUS"
     assert event.source_type == "COMPETITION"
     assert event.score_delta == 2.5
+
+
+def test_sync_attendance_rejects_out_of_range_date(test_db: Session):
+    cycle = _cycle(test_db)
+    member = _member(test_db)
+    _criterion(test_db, code="I.2", component="I")
+    
+    # Meeting is in June, outside of cycle (May)
+    meeting = Meeting(
+        title="June meeting",
+        date=datetime(2026, 6, 10, tzinfo=UTC),
+        meeting_type="Monthly",
+    )
+    test_db.add(meeting)
+    test_db.flush()
+    test_db.add(
+        Attendance(meeting_id=meeting.id, member_id=member.id, status="Absent")
+    )
+    test_db.flush()
+    
+    from app.services.evaluation_errors import EvaluationValidationError
+    import pytest
+    
+    service = EvaluationSyncService(test_db)
+    with pytest.raises(EvaluationValidationError) as exc_info:
+        service.sync_attendance_to_score_events(cycle.id, meeting.id)
+    
+    assert "outside of cycle range" in str(exc_info.value)
+
+
+def test_sync_competition_rejects_out_of_range_date(test_db: Session):
+    cycle = _cycle(test_db)
+    member = _member(test_db)
+    _criterion(test_db, code="III-A.5", component="III_A")
+    
+    # Competition is in June, outside of cycle (May)
+    competition = Competition(
+        title="Innovation challenge",
+        date=date(2026, 6, 20),
+        scale="Club",
+        status="Completed",
+    )
+    test_db.add(competition)
+    test_db.flush()
+    test_db.add(
+        CompetitionResult(
+            competition_id=competition.id,
+            member_id=member.id,
+            achievement="Top 3",
+            bonus_kpi=2.5,
+        )
+    )
+    test_db.flush()
+    
+    from app.services.evaluation_errors import EvaluationValidationError
+    import pytest
+    
+    service = EvaluationSyncService(test_db)
+    with pytest.raises(EvaluationValidationError) as exc_info:
+        service.sync_competition_to_score_events(cycle.id, competition.id)
+        
+    assert "outside of cycle range" in str(exc_info.value)

@@ -911,6 +911,7 @@ def list_criteria(
     unitCode: str | None = None,
     isActive: bool | None = None,
     search: str | None = None,
+    cycle_id: str | None = Query(default=None, alias="cycleId"),
     page: int = Query(default=1),
     pageSize: int = Query(default=50),
     db: Session = Depends(get_db),
@@ -925,6 +926,20 @@ def list_criteria(
         stmt = stmt.where(EvaluationCriterion.unit_code == unitCode)
     if isActive is not None:
         stmt = stmt.where(EvaluationCriterion.is_active.is_(isActive))
+    if cycle_id:
+        cycle = db.get(EvaluationCycle, cycle_id)
+        if cycle:
+            from sqlalchemy import or_
+            stmt = stmt.where(
+                or_(
+                    EvaluationCriterion.effective_from.is_(None),
+                    EvaluationCriterion.effective_from <= cycle.end_date,
+                ),
+                or_(
+                    EvaluationCriterion.effective_to.is_(None),
+                    EvaluationCriterion.effective_to >= cycle.start_date,
+                ),
+            )
     if search:
         pattern = f"%{search}%"
         stmt = stmt.where(
