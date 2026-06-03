@@ -1639,6 +1639,10 @@ def create_evidence(
         if not criterion_id and selected_criterion_id:
             criterion_id = selected_criterion_id
 
+        # In the new flow, `memberId` is only the representative owner of the evidence record.
+        # The actual applied score events may belong to multiple members, as long as they share
+        # the same criterion within the selected cycle.
+
     if criterion_id is None and body.criterionCode:
         criterion_id = _find_criterion(
             db,
