@@ -35,6 +35,7 @@ from app.services.evaluation_errors import (
     EvaluationCycleLockedError,
     EvaluationMissingCriteriaError,
     EvaluationNotFoundError,
+    EvaluationValidationError,
     EvaluationWeightError,
 )
 from app.services.evaluation_evidence import EvidenceValidationService
@@ -116,6 +117,172 @@ class EvaluationCalculatorService:
             "cases_by_member": cases_by_member,
         }
 
+    def validate_cycle_data(
+        self,
+        cycle_id: str,
+        *,
+        strict: bool = True,
+        evidence_mode: str = "draft",
+    ) -> dict:
+        cycle = self._get_cycle(cycle_id)
+        # 1. Load active criteria
+        try:
+            criteria = self._load_active_criteria(cycle)
+        except EvaluationMissingCriteriaError as exc:
+            return {
+                "cycleId": cycle_id,
+                "totalMembersChecked": 0,
+                "hasErrors": True,
+                "errorsCount": 1,
+                "warningsCount": 0,
+                "issues": [
+                    {
+                        "memberId": None,
+                        "mssv": None,
+                        "name": None,
+                        "errors": [
+                            {
+                                "code": exc.code,
+                                "message": str(exc),
+                                "details": {}
+                            }
+                        ],
+                        "warnings": []
+                    }
+                ]
+            }
+
+        member_ids = self._load_cycle_member_ids(cycle_id)
+        preloaded = self._preload_cycle_data(cycle, member_ids, evidence_mode)
+        members_map = preloaded["members_map"]
+        events_by_member = preloaded["events_by_member"]
+        evidence_count_by_event_id = preloaded["evidence_count_by_event_id"]
+        roles_by_member = preloaded["roles_by_member"]
+
+        issues: list[dict] = []
+        errors_count = 0
+        warnings_count = 0
+
+        for member_id in member_ids:
+            member = members_map.get(member_id)
+            if not member:
+                continue
+
+            member_errors = []
+            member_warnings = []
+
+            # 1. Check if member has no roles and no ban (department)
+            roles = roles_by_member.get(member_id, [])
+            if not roles and not member.ban:
+                member_errors.append({
+                    "code": "MISSING_MEMBER_ROLE",
+                    "message": "Thành viên không có vai trò nào trong chu kỳ và không thuộc Ban nào.",
+                    "details": {}
+                })
+
+            # 2. Check roles weights and primary roles
+            if roles:
+                total_weight = sum(role.participation_weight or 0.0 for role in roles)
+                if abs(total_weight - 1.0) > WEIGHT_TOLERANCE:
+                    member_errors.append({
+                        "code": "EVALUATION_WEIGHT_ERROR",
+                        "message": f"Tổng tỷ trọng tham gia của các vai trò ({total_weight}) phải bằng 1.0",
+                        "details": {"totalWeight": total_weight}
+                    })
+
+                primary_count = sum(1 for role in roles if role.is_primary)
+                if primary_count > 1:
+                    member_errors.append({
+                        "code": "EVALUATION_WEIGHT_ERROR",
+                        "message": f"Thành viên có {primary_count} vai trò chính (chỉ cho phép tối đa 1)",
+                        "details": {"primaryCount": primary_count}
+                    })
+                elif primary_count == 0:
+                    member_warnings.append({
+                        "code": "MISSING_PRIMARY_ROLE",
+                        "message": "Thành viên không có vai trò chính nào được đánh dấu (isPrimary = True).",
+                        "details": {}
+                    })
+
+            # 3. Check active criteria matching and evidence
+            m_events = events_by_member.get(member_id, [])
+            criterion_by_id = {criterion.id: criterion for criterion in criteria}
+
+            for event in m_events:
+                if event.criterion_id not in criterion_by_id:
+                    member_warnings.append({
+                        "code": "INVALID_CRITERION_REFERENCE",
+                        "message": f"Sự kiện ghi điểm tham chiếu tiêu chí không hoạt động hoặc không tồn tại (ID: {event.criterion_id}, Code: {event.criterion_code})",
+                        "details": {
+                            "scoreEventId": event.id,
+                            "criterionId": event.criterion_id,
+                            "criterionCode": event.criterion_code
+                        }
+                    })
+
+            events_in_active_criteria = [
+                event for event in m_events if event.criterion_id in criterion_by_id
+            ]
+
+            # 4. Check missing evidence
+            warnings = self.evidence_service.validate_score_events(
+                events_in_active_criteria,
+                strict=False,
+                mode=evidence_mode,
+                evidence_count_by_event_id=evidence_count_by_event_id,
+                criteria=criteria,
+            )
+
+            for w in warnings:
+                issue_item = {
+                    "code": w["code"],
+                    "message": f"Sự kiện ghi điểm cho tiêu chí '{w['criterionCode']}' thiếu minh chứng bắt buộc.",
+                    "details": {
+                        "scoreEventId": w["scoreEventId"],
+                        "criterionId": w["criterionId"],
+                        "criterionCode": w["criterionCode"],
+                        "mode": w["mode"]
+                    }
+                }
+                if strict:
+                    member_errors.append(issue_item)
+                else:
+                    member_warnings.append(issue_item)
+
+            # 5. Check III_B component unit mismatch
+            member_unit_codes = {role.unit_code for role in roles} if roles else (set([member.ban]) if member.ban else set())
+            for event in events_in_active_criteria:
+                if event.component == COMPONENT_III_B and event.unit_code and event.unit_code not in member_unit_codes:
+                    member_warnings.append({
+                        "code": "UNIT_ROLE_MISMATCH",
+                        "message": f"Sự kiện ghi điểm chuyên môn (III_B) của Ban '{event.unit_code}' nhưng thành viên không có vai trò nào trong Ban này.",
+                        "details": {
+                            "scoreEventId": event.id,
+                            "eventUnitCode": event.unit_code,
+                            "memberUnitCodes": list(member_unit_codes)
+                        }
+                    })
+
+            if member_errors or member_warnings:
+                errors_count += len(member_errors)
+                warnings_count += len(member_warnings)
+                issues.append({
+                    "memberId": member.id,
+                    "mssv": member.mssv,
+                    "name": member.name,
+                    "errors": member_errors,
+                    "warnings": member_warnings
+                })
+
+        return {
+            "cycleId": cycle_id,
+            "totalMembersChecked": len(member_ids),
+            "hasErrors": errors_count > 0,
+            "errorsCount": errors_count,
+            "warningsCount": warnings_count,
+            "issues": issues,
+        }
+
     def compute_cycle(
         self,
         cycle_id: str,
@@ -128,6 +295,15 @@ class EvaluationCalculatorService:
     ) -> dict:
         cycle = self._get_cycle(cycle_id)
         self._ensure_cycle_is_writable(cycle)
+
+        if strict:
+            validation_result = self.validate_cycle_data(cycle_id, strict=True, evidence_mode=evidence_mode)
+            if validation_result["hasErrors"]:
+                raise EvaluationValidationError(
+                    f"Phát hiện {validation_result['errorsCount']} lỗi dữ liệu trong chu kỳ.",
+                    details=validation_result
+                )
+
         member_ids = self._load_cycle_member_ids(cycle_id)
 
         # Preload data

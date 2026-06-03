@@ -60,3 +60,8 @@ class EvaluationCorrectionNotAllowedError(EvaluationError):
 
 class EvaluationAppealPermissionDeniedError(EvaluationError):
     code = "EVALUATION_APPEAL_PERMISSION_DENIED"
+
+
+class EvaluationValidationError(EvaluationError):
+    code = "EVALUATION_VALIDATION_ERROR"
+

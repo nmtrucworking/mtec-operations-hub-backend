@@ -72,6 +72,7 @@ from app.services.evaluation_errors import (
     EvaluationNotReadyForApprovalError,
     EvaluationOpenAppealsExistError,
     EvaluationReviewWindowClosedError,
+    EvaluationValidationError,
     EvaluationWeightError,
 )
 from app.services.evaluation_report import EvaluationReportService
@@ -113,6 +114,7 @@ EVALUATION_ERROR_STATUS_MAP = {
     EvaluationMissingCriteriaError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
     EvaluationEvidenceError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
     EvaluationWeightError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
+    EvaluationValidationError.code: status.HTTP_422_UNPROCESSABLE_ENTITY,
     EvaluationNotFoundError.code: status.HTTP_404_NOT_FOUND,
 }
 
@@ -1781,6 +1783,24 @@ def reject_evidence(
     )
 
 
+@router.get("/cycles/{cycle_id}/validate")
+def validate_cycle_data(
+    cycle_id: str,
+    strict: bool = Query(default=True),
+    evidenceMode: str = Query(default="approval"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
+    _get_cycle_or_404(db, cycle_id)
+    report = EvaluationCalculatorService(db).validate_cycle_data(
+        cycle_id,
+        strict=strict,
+        evidence_mode=evidenceMode,
+    )
+    return api_response(data=report)
+
+
 @router.post("/cycles/{cycle_id}/compute")
 def compute_cycle(
     cycle_id: str,
@@ -1814,15 +1834,32 @@ def start_compute_cycle_job(
     _require_roles(current_user, EVALUATION_OPERATOR_ROLES)
     cycle = _get_cycle_or_404(db, cycle_id)
     _ensure_cycle_not_locked(cycle)
-    job = EvaluationComputeJobService.create_cycle_job(
-        cycle_id=cycle_id,
-        actor_user_id=current_user.id,
-        strict=body.strict,
-        evidence_mode=body.evidenceMode,
-    )
-    if EvaluationComputeJobService.mark_scheduled(job.job_id):
-        background_tasks.add_task(EvaluationComputeJobService.run_cycle_job, job.job_id)
-    return api_response(data=job.to_dict())
+
+    if body.strict:
+        try:
+            validation_result = EvaluationCalculatorService(db).validate_cycle_data(
+                cycle_id, strict=True, evidence_mode=body.evidenceMode
+            )
+            if validation_result["hasErrors"]:
+                raise EvaluationValidationError(
+                    f"Phát hiện {validation_result['errorsCount']} lỗi dữ liệu trong chu kỳ.",
+                    details=validation_result
+                )
+        except EvaluationError as exc:
+            _raise_evaluation_http_error(exc)
+
+    try:
+        job = EvaluationComputeJobService.create_cycle_job(
+            cycle_id=cycle_id,
+            actor_user_id=current_user.id,
+            strict=body.strict,
+            evidence_mode=body.evidenceMode,
+        )
+        if EvaluationComputeJobService.mark_scheduled(job.job_id):
+            background_tasks.add_task(EvaluationComputeJobService.run_cycle_job, job.job_id)
+        return api_response(data=job.to_dict())
+    except EvaluationError as exc:
+        _raise_evaluation_http_error(exc)
 
 
 @router.get("/cycles/{cycle_id}/compute-jobs/{job_id}")
