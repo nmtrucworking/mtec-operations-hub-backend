@@ -17,6 +17,7 @@ from app.core.evaluation_constants import (
     MEMBER_EVALUATION_STATUS_UNDER_REVIEW,
 )
 from app.models import EvaluationAppeal, EvaluationCycle, MemberEvaluation, User
+from app.services.evaluation_calculator import EvaluationCalculatorService
 from app.services.evaluation_errors import (
     EvaluationCorrectionNotAllowedError,
     EvaluationCycleAlreadyApprovedError,
@@ -266,11 +267,19 @@ class EvaluationApprovalService:
         )
         total = sum(member_counts.values())
         unstable = sum(member_counts.get(status, 0) for status in UNSTABLE_MEMBER_STATUSES)
+
+        validation_report = EvaluationCalculatorService(self.db).validate_cycle_data(
+            cycle_id,
+            strict=False,
+            evidence_mode="approval",
+        )
+
         return {
             "totalMemberEvaluations": total,
             "openAppeals": open_appeals,
             "unstableMemberEvaluations": unstable,
             "memberStatusCounts": member_counts,
+            "validationReport": validation_report,
         }
 
     def _count_member_evaluations(self, cycle_id: str) -> int:
