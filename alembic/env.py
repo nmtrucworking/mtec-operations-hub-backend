@@ -1,10 +1,14 @@
 import os
 import sys
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy import engine_from_config, pool
+from dotenv import load_dotenv
 
 from alembic import context
+
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 # Add the app directory to the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")

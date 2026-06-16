@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.departments import extract_member_department_codes
 from app.core.evaluation_constants import (
     BLOCKER_UNEXCUSED_ABSENCE,
     CYCLE_MUTABLE_STATUSES,
@@ -158,7 +159,8 @@ class EvaluationSyncService:
         created_events = 0
 
         for member in active_members:
-            if not member.ban:
+            department_codes = extract_member_department_codes(member)
+            if not department_codes:
                 continue
 
             existing_role = self.db.scalar(
@@ -168,17 +170,18 @@ class EvaluationSyncService:
                 )
             )
             if not existing_role:
-                role = MemberCycleRole(
-                    cycle_id=cycle_id,
-                    member_id=member.id,
-                    unit_code=member.ban,
-                    role_title=member.role_title or "Thành viên",
-                    participation_weight=1.0,
-                    is_primary=True,
-                    assigned_by_user_id=actor_user_id,
-                )
-                self.db.add(role)
-                created_roles += 1
+                for index, code in enumerate(department_codes):
+                    role = MemberCycleRole(
+                        cycle_id=cycle_id,
+                        member_id=member.id,
+                        unit_code=code,
+                        role_title=member.role_title or "Thành viên",
+                        participation_weight=1.0 / len(department_codes),
+                        is_primary=index == 0,
+                        assigned_by_user_id=actor_user_id,
+                    )
+                    self.db.add(role)
+                    created_roles += 1
 
             criterion_ii2 = self._get_optional_active_criterion("II.2")
             if criterion_ii2:

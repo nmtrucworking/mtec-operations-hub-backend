@@ -7,6 +7,7 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.departments import extract_member_department_codes
 from app.core.evaluation_constants import (
     CALCULATION_VERSION,
     COMPONENT_I,
@@ -173,7 +174,7 @@ class EvaluationCalculatorService:
 
             # 1. Check if member has no roles and no ban (department)
             roles = roles_by_member.get(member_id, [])
-            if not roles and not member.ban:
+            if not roles and not extract_member_department_codes(member):
                 member_errors.append({
                     "code": "MISSING_MEMBER_ROLE",
                     "message": "Thành viên không có vai trò nào trong chu kỳ và không thuộc Ban nào.",
@@ -250,7 +251,7 @@ class EvaluationCalculatorService:
                     member_warnings.append(issue_item)
 
             # 5. Check III_B component unit mismatch
-            member_unit_codes = {role.unit_code for role in roles} if roles else (set([member.ban]) if member.ban else set())
+            member_unit_codes = {role.unit_code for role in roles} if roles else set(extract_member_department_codes(member))
             for event in events_in_active_criteria:
                 if event.component == COMPONENT_III_B and event.unit_code and event.unit_code not in member_unit_codes:
                     member_warnings.append({
@@ -759,15 +760,21 @@ class EvaluationCalculatorService:
             ).all()
 
         if not roles:
-            if member.ban:
-                return [
+            department_codes = extract_member_department_codes(member)
+            if department_codes:
+                fallback_roles = [
                     {
-                        "unitCode": member.ban,
-                        "participationWeight": 1.0,
-                        "isPrimary": True,
-                        "source": "member.ban",
+                        "unitCode": code,
+                        "participationWeight": 1.0 / len(department_codes),
+                        "isPrimary": index == 0,
+                        "source": "member_departments",
                     }
+                    for index, code in enumerate(department_codes)
                 ]
+                total_weight = sum(role["participationWeight"] for role in fallback_roles)
+                if fallback_roles:
+                    fallback_roles[0]["participationWeight"] += 1.0 - total_weight
+                return fallback_roles
             return []
 
         total_weight = sum(role.participation_weight or 0.0 for role in roles)

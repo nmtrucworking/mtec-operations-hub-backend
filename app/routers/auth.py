@@ -1,12 +1,12 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, or_
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
 from app.core.rate_limit import rate_limiter
-from app.core.redis import redis_client
+from app.core.redis import blacklist_token, is_token_blacklisted
 from app.core.response import api_response
 from app.core.security import (
     create_access_token,
@@ -31,19 +31,18 @@ def _user_payload(user: User) -> dict:
         "role": user.primary_role,
         "roles": user.role_names,
         "avatarInitials": user.avatar_initials,
+        "avatarUrl": user.avatar_url,
+        "avatarSource": user.avatar_source,
+        "email": user.email,
+        "phone": user.phone,
+        "isActive": user.is_active,
     }
-
 
 
 @router.post(
     "/login", dependencies=[Depends(rate_limiter(max_requests=5, window_seconds=60))]
 )
 def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
-    '''
-    Login API:
-    - LoginRequest includes: `username` and `password`.
-    - Can login with 
-    '''
     user = db.scalar(
         select(User).where(
             or_(User.username == body.username, User.student_id == body.username)
@@ -51,11 +50,13 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
     )
     if not user or not verify_password(body.password, user.password_hash):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Sai thong tin dang nhap"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sai thong tin dang nhap",
         )
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Tai khoan da bi khoa"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tai khoan da bi khoa",
         )
 
     access_token = create_access_token(user.id)
@@ -81,9 +82,6 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/logout")
 def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
-    """
-    Vô hiệu hóa Refresh Token hiện tại bằng cách đưa vào Redis Blacklist.
-    """
     payload = decode_token(body.refreshToken)
     if payload and payload.get("type") == "refresh":
         user_id = payload.get("sub")
@@ -91,8 +89,7 @@ def logout(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
         now = int(datetime.now(UTC).timestamp())
         ttl = exp - now
         if ttl > 0:
-            # Lưu token vào Redis với TTL tương ứng thời gian sống còn lại
-            redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
+            blacklist_token(body.refreshToken, ttl)
 
         user = db.get(User, user_id)
         if user:
@@ -115,14 +112,12 @@ def me(current_user: User = Depends(get_current_user)) -> dict:
 
 @router.post("/refresh")
 def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
-    # 1. Kiểm tra Token có nằm trong danh sách Blacklist hay không
-    if redis_client.exists(f"blacklist:{body.refreshToken}"):
+    if is_token_blacklisted(body.refreshToken):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token da bi thu hoi hoac het han",
         )
 
-    # 2. Giải mã và xác thực Token
     payload = decode_token(body.refreshToken)
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
@@ -133,17 +128,16 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)) -> dict:
     user = db.get(User, payload.get("sub"))
     if not user or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Nguoi dung khong hop le"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nguoi dung khong hop le",
         )
 
-    # 3. Thu hồi (Blacklist) Token cũ ngay sau khi sử dụng để ngăn chặn Replay Attack
     exp = payload.get("exp")
     now = int(datetime.now(UTC).timestamp())
     ttl = exp - now
     if ttl > 0:
-        redis_client.setex(f"blacklist:{body.refreshToken}", ttl, "revoked")
+        blacklist_token(body.refreshToken, ttl)
 
-    # 4. Cấp phát cặp Token mới (Token Rotation)
     return api_response(
         data={
             "accessToken": create_access_token(user.id),

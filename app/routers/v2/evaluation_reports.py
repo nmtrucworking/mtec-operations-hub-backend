@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.departments import extract_member_department_codes
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
@@ -66,8 +67,7 @@ def _user_unit_codes(db: Session, current_user: User, cycle_id: str) -> set[str]
         )
     ).all()
     unit_codes = {role.unit_code for role in roles if role.unit_code}
-    if member.ban:
-        unit_codes.add(member.ban)
+    unit_codes.update(extract_member_department_codes(member))
     return unit_codes
 
 
@@ -85,8 +85,8 @@ def _ensure_member_report_access(
         ).all()
         target_units = {role.unit_code for role in target_roles if role.unit_code}
         target = db.get(Member, member_id)
-        if target and target.ban:
-            target_units.add(target.ban)
+        if target:
+            target_units.update(extract_member_department_codes(target))
         if target_units.intersection(_user_unit_codes(db, current_user, cycle_id)):
             return
     raise HTTPException(

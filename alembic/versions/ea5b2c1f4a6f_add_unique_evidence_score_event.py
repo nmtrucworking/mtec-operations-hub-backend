@@ -65,28 +65,15 @@ def upgrade() -> None:
                     for del_id in ids_to_delete:
                         bind.execute(sa.text("DELETE FROM evaluation_evidence WHERE id = :id"), {"id": del_id})
                         
-        # add unique constraint on score_event_id to prevent duplicates
-        # SQLite does not support ALTER CONSTRAINT directly; use batch_alter_table for compatibility
-        if bind.dialect.name == 'sqlite':
-            with op.batch_alter_table('evaluation_evidence') as batch_op:
-                batch_op.create_unique_constraint(
-                    "uq_evaluation_evidence_score_event", ["score_event_id"]
-                )
-        else:
-            op.create_unique_constraint(
-                "uq_evaluation_evidence_score_event", "evaluation_evidence", ["score_event_id"]
-            )
+        op.create_unique_constraint(
+            "uq_evaluation_evidence_score_event", "evaluation_evidence", ["score_event_id"]
+        )
 
 
 def downgrade() -> None:
     if _table_exists("evaluation_evidence") and _uq_exists(
         "evaluation_evidence", "uq_evaluation_evidence_score_event"
     ):
-        bind = op.get_bind()
-        if bind.dialect.name == 'sqlite':
-            with op.batch_alter_table('evaluation_evidence') as batch_op:
-                batch_op.drop_constraint("uq_evaluation_evidence_score_event")
-        else:
-            op.drop_constraint(
-                "uq_evaluation_evidence_score_event", "evaluation_evidence", type_="unique"
-            )
+        op.drop_constraint(
+            "uq_evaluation_evidence_score_event", "evaluation_evidence", type_="unique"
+        )

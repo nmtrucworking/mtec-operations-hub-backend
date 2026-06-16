@@ -1,10 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Request
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import AUTO_CREATE_TABLES, CORS_ORIGINS, ENABLE_SEED_DATA
 from app.core.response import api_response
@@ -27,6 +29,7 @@ def _seed_users() -> None:
     from app.models import User
 
     defaults = [
+        ("admin", "System Admin", "admin"),
         ("bcn", "BCN Admin", "bcn"),
         ("bvh_hr", "BVH HR", "bvh_hr"),
         ("bvh_finance", "BVH Finance", "bvh_finance"),
@@ -137,6 +140,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 app.include_router(api_v1_router, prefix="/api/v1")
 app.include_router(api_v2_router, prefix="/api/v2")
+
+uploads_root = Path(__file__).resolve().parents[1] / "uploads"
+uploads_root.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_root)), name="uploads")
 
 
 @app.get("/health")

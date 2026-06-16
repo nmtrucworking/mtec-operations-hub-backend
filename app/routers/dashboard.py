@@ -2,10 +2,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
+from app.core.departments import DEPARTMENT_LABEL_BY_CODE
 from app.core.response import api_response
 from app.db import get_db
 from app.deps import get_current_user
-from app.models import Asset, Member, Request, Transaction, User
+from app.models import Asset, Member, MemberDepartment, Request, Transaction, User
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -69,10 +70,10 @@ def overview(
     )
 
     dept_distribution = [
-        {"ban": row[0], "count": row[1]}
+        {"ban": DEPARTMENT_LABEL_BY_CODE.get(row[0], row[0]), "count": row[1]}
         for row in db.execute(
-            select(Member.ban, func.count())
-            .group_by(Member.ban)
+            select(MemberDepartment.department_code, func.count(func.distinct(MemberDepartment.member_id)))
+            .group_by(MemberDepartment.department_code)
             .order_by(func.count().desc())
         )
     ]

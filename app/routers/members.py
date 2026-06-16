@@ -11,14 +11,23 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 from fastapi.responses import StreamingResponse
 from pydantic import ValidationError
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.audit import create_audit_log
+from app.core.departments import (
+    extract_member_department_codes,
+    extract_member_department_labels,
+    normalize_department_codes,
+    primary_member_department_code,
+    serialize_department_codes,
+    serialize_department_labels,
+    set_member_departments,
+)
 # legacy discipline levels removed from member detail
 from app.core.rbac import require_roles
 from app.core.response import api_response
 from app.db import get_db
-from app.models import Member, User, MemberSkill, EvaluationCycle
+from app.models import Member, User, MemberSkill, EvaluationCycle, MemberDepartment
 from app.services.evaluation_calculator import EvaluationCalculatorService
 from app.services.evaluation_errors import EvaluationError
 from app.schemas import MemberCreate, MemberUpdate
@@ -63,7 +72,8 @@ def _member_out(member: Member, evaluation: dict | None = None, skills: list[Mem
         "name": member.name,
         "gender": member.gender,
         "dob": member.dob,
-        "ban": member.ban,
+        "ban": extract_member_department_labels(member),
+        "banCodes": extract_member_department_codes(member),
         "roleTitle": member.role_title,
         "status": member.status,
         "phone": member.phone,
@@ -394,7 +404,11 @@ async def import_members(
     mssv_values = [str(payload.get("mssv", "")).strip() for _, payload in mapped if payload.get("mssv")]
     existing_by_mssv: dict[str, Member] = {}
     if mssv_values:
-        existing_members = db.scalars(select(Member).where(Member.mssv.in_(mssv_values))).all()
+        existing_members = db.scalars(
+            select(Member)
+            .options(selectinload(Member.member_departments))
+            .where(Member.mssv.in_(mssv_values))
+        ).all()
         existing_by_mssv = {m.mssv: m for m in existing_members}
 
     results = {
@@ -430,13 +444,15 @@ async def import_members(
             before = {
                 "mssv": existing.mssv,
                 "name": existing.name,
-                "ban": existing.ban,
+                "ban": extract_member_department_labels(existing),
                 "status": existing.status,
             }
             existing.name = body.name
             existing.gender = body.gender
             existing.dob = body.dob
-            existing.ban = body.ban
+            department_codes = normalize_department_codes(body.ban, strict=True)
+            existing.ban = serialize_department_codes(department_codes)
+            set_member_departments(existing, department_codes)
             existing.role_title = body.roleTitle
             existing.status = body.status
             existing.phone = body.phone
@@ -457,15 +473,16 @@ async def import_members(
                 resource_id=existing.id,
                 actor=current_user,
                 before_snapshot=before,
-                after_snapshot={"mssv": existing.mssv, "name": existing.name, "ban": existing.ban},
+                after_snapshot={"mssv": existing.mssv, "name": existing.name, "ban": extract_member_department_labels(existing)},
             )
         else:
+            department_codes = normalize_department_codes(body.ban, strict=True)
             member = Member(
                 mssv=body.mssv,
                 name=body.name,
                 gender=body.gender,
                 dob=body.dob,
-                ban=body.ban,
+                ban=serialize_department_codes(department_codes),
                 role_title=body.roleTitle,
                 status=body.status,
                 phone=body.phone,
@@ -481,6 +498,7 @@ async def import_members(
             )
             db.add(member)
             db.flush()
+            set_member_departments(member, department_codes)
             existing_by_mssv[member.mssv] = member
             results["created"] += 1
             create_audit_log(
@@ -489,7 +507,7 @@ async def import_members(
                 resource_type="member",
                 resource_id=member.id,
                 actor=current_user,
-                after_snapshot={"mssv": member.mssv, "name": member.name, "ban": member.ban},
+                after_snapshot={"mssv": member.mssv, "name": member.name, "ban": extract_member_department_labels(member)},
             )
 
     db.commit()
@@ -509,13 +527,15 @@ def list_members(
     _: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
 ) -> dict:
     page, page_size = sanitize_pagination(page, page_size)
-    stmt = select(Member)
+    stmt = select(Member).options(selectinload(Member.member_departments))
 
     if q:
         like = f"%{q.lower()}%"
         stmt = stmt.where(func.lower(Member.name).like(like) | func.lower(Member.mssv).like(like))
     if ban:
-        stmt = stmt.where(Member.ban == ban)
+        department_codes = normalize_department_codes([ban], strict=True)
+        if department_codes:
+            stmt = stmt.join(MemberDepartment).where(MemberDepartment.department_code == department_codes[0]).distinct()
     if status_filter:
         stmt = stmt.where(Member.status == status_filter)
 
@@ -566,12 +586,20 @@ def get_member(
     current_user: User = Depends(require_roles("bcn", "bvh_hr", "bcm", "member", "bvh_finance", "bvh_discipline", "bvh_logistics")),
 ) -> dict:
     if member_id == "me":
-        member = db.scalar(select(Member).where(Member.mssv == current_user.username))
+        member = db.scalar(
+            select(Member)
+            .options(selectinload(Member.member_departments))
+            .where(Member.mssv == current_user.username)
+        )
         if not member:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
         member_id = member.id
     else:
-        member = db.get(Member, member_id)
+        member = db.scalar(
+            select(Member)
+            .options(selectinload(Member.member_departments))
+            .where(Member.id == member_id)
+        )
         if not member:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member")
 
@@ -592,9 +620,11 @@ def export_members(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Chi ho tro csv hoac zip"
         )
 
-    stmt = select(Member)
+    stmt = select(Member).options(selectinload(Member.member_departments))
     if ban:
-        stmt = stmt.where(Member.ban == ban)
+        department_codes = normalize_department_codes([ban], strict=True)
+        if department_codes:
+            stmt = stmt.join(MemberDepartment).where(MemberDepartment.department_code == department_codes[0]).distinct()
     if status_filter:
         stmt = stmt.where(Member.status == status_filter)
 
@@ -606,7 +636,7 @@ def export_members(
         writer.writerow(["id", "mssv", "name", "ban", "status", "phone", "email"])
 
         for m in members:
-            writer.writerow([m.id, m.mssv, m.name, m.ban, m.status, m.phone, m.email])
+            writer.writerow([m.id, m.mssv, m.name, serialize_department_labels(extract_member_department_codes(m)) or "", m.status, m.phone, m.email])
 
         buffer.seek(0)
         headers = {"Content-Disposition": "attachment; filename=members.csv"}
@@ -640,12 +670,13 @@ def create_member(
     if exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="MSSV da ton tai")
 
+    department_codes = normalize_department_codes(body.ban, strict=True)
     member = Member(
         mssv=body.mssv,
         name=body.name,
         gender=body.gender,
         dob=body.dob,
-        ban=body.ban,
+        ban=serialize_department_codes(department_codes),
         role_title=body.roleTitle,
         status=body.status,
         phone=body.phone,
@@ -661,6 +692,7 @@ def create_member(
     )
     db.add(member)
     db.flush()
+    set_member_departments(member, department_codes)
     # persist skills if provided
     try:
         for s in getattr(body, "hardSkills", []) or []:
@@ -679,7 +711,7 @@ def create_member(
         after_snapshot={
             "mssv": member.mssv,
             "name": member.name,
-            "ban": member.ban,
+            "ban": extract_member_department_labels(member),
             "status": member.status,
         },
     )
@@ -696,7 +728,11 @@ def update_member(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
-    member = db.get(Member, member_id)
+    member = db.scalar(
+        select(Member)
+        .options(selectinload(Member.member_departments))
+        .where(Member.id == member_id)
+    )
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
@@ -708,7 +744,7 @@ def update_member(
         "name": member.name,
         "gender": member.gender,
         "dob": member.dob,
-        "ban": member.ban,
+        "ban": extract_member_department_labels(member),
         "status": member.status,
         "role_title": member.role_title,
         "phone": member.phone,
@@ -729,7 +765,13 @@ def update_member(
         "chuyenNganh": "chuyen_nganh",
     }
     for key, value in payload.items():
+        if key == "ban":
+            continue
         setattr(member, mapping.get(key, key), value)
+    if getattr(body, "ban", None) is not None:
+        department_codes = normalize_department_codes(body.ban, strict=True)
+        member.ban = serialize_department_codes(department_codes)
+        set_member_departments(member, department_codes)
     # handle skills replacement if provided
     if getattr(body, "hardSkills", None) is not None or getattr(body, "softSkills", None) is not None:
         existing_skills = db.scalars(select(MemberSkill).where(MemberSkill.member_id == member.id)).all()
@@ -751,7 +793,7 @@ def update_member(
             "name": member.name,
             "gender": member.gender,
             "dob": member.dob,
-            "ban": member.ban,
+            "ban": extract_member_department_labels(member),
             "status": member.status,
             "role_title": member.role_title,
             "phone": member.phone,
@@ -779,7 +821,11 @@ def update_member_status(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles("bcn", "bvh_hr")),
 ) -> dict:
-    member = db.get(Member, member_id)
+    member = db.scalar(
+        select(Member)
+        .options(selectinload(Member.member_departments))
+        .where(Member.id == member_id)
+    )
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"
@@ -814,7 +860,11 @@ def export_member_profile(
         )
     ),
 ) -> StreamingResponse:
-    member = db.get(Member, member_id)
+    member = db.scalar(
+        select(Member)
+        .options(selectinload(Member.member_departments))
+        .where(Member.id == member_id)
+    )
     if not member:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Khong tim thay member"

@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from pathlib import Path
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
@@ -14,22 +17,33 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/settings", tags=["settings"])
+UPLOAD_ROOT = Path(__file__).resolve().parents[2] / "uploads" / "avatars"
+ALLOWED_AVATAR_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024
+
+
+def _user_profile_payload(user: User) -> dict:
+    return {
+        "id": user.id,
+        "username": user.username,
+        "fullName": user.full_name,
+        "role": user.primary_role,
+        "roles": user.role_names,
+        "avatarInitials": user.avatar_initials,
+        "avatarUrl": user.avatar_url,
+        "avatarSource": user.avatar_source,
+        "email": user.email,
+        "phone": user.phone,
+    }
 
 
 @router.get("/profile")
 def get_profile(current_user: User = Depends(get_current_user)) -> dict:
-    return api_response(
-        data={
-            "id": current_user.id,
-            "username": current_user.username,
-            "fullName": current_user.full_name,
-            "role": current_user.primary_role,
-            "roles": current_user.role_names,
-            "avatarInitials": current_user.avatar_initials,
-            "email": current_user.email,
-            "phone": current_user.phone,
-        }
-    )
+    return api_response(data=_user_profile_payload(current_user))
 
 
 @router.patch("/profile")
@@ -42,6 +56,8 @@ def update_profile(
     before = {
         "full_name": current_user.full_name,
         "avatar_initials": current_user.avatar_initials,
+        "avatar_url": current_user.avatar_url,
+        "avatar_source": current_user.avatar_source,
         "email": current_user.email,
         "phone": current_user.phone,
     }
@@ -49,6 +65,8 @@ def update_profile(
     mapping = {
         "fullName": "full_name",
         "avatarInitials": "avatar_initials",
+        "avatarUrl": "avatar_url",
+        "avatarSource": "avatar_source",
     }
 
     for key, value in payload.items():
@@ -64,24 +82,70 @@ def update_profile(
         after_snapshot={
             "full_name": current_user.full_name,
             "avatar_initials": current_user.avatar_initials,
+            "avatar_url": current_user.avatar_url,
+            "avatar_source": current_user.avatar_source,
             "email": current_user.email,
             "phone": current_user.phone,
         },
     )
     db.commit()
     db.refresh(current_user)
-    return api_response(
-        data={
-            "id": current_user.id,
-            "username": current_user.username,
-            "fullName": current_user.full_name,
-            "role": current_user.primary_role,
-            "roles": current_user.role_names,
-            "avatarInitials": current_user.avatar_initials,
-            "email": current_user.email,
-            "phone": current_user.phone,
-        }
+    return api_response(data=_user_profile_payload(current_user))
+
+
+@router.post("/avatar/upload")
+async def upload_avatar(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    content_type = (file.content_type or "").lower()
+    ext = ALLOWED_AVATAR_TYPES.get(content_type)
+    if not ext:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chi ho tro JPG, PNG hoac WEBP",
+        )
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File avatar rong",
+        )
+    if len(content) > MAX_AVATAR_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Avatar vuot qua gioi han 2MB",
+        )
+
+    UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
+    filename = f"{current_user.id}-{uuid4().hex}{ext}"
+    file_path = UPLOAD_ROOT / filename
+    file_path.write_bytes(content)
+
+    before = {
+        "avatar_url": current_user.avatar_url,
+        "avatar_source": current_user.avatar_source,
+    }
+    current_user.avatar_url = f"/uploads/avatars/{filename}"
+    current_user.avatar_source = "device"
+
+    create_audit_log(
+        db=db,
+        action="UPLOAD_AVATAR",
+        resource_type="settings",
+        resource_id=current_user.id,
+        actor=current_user,
+        before_snapshot=before,
+        after_snapshot={
+            "avatar_url": current_user.avatar_url,
+            "avatar_source": current_user.avatar_source,
+        },
     )
+    db.commit()
+    db.refresh(current_user)
+    return api_response(data=_user_profile_payload(current_user))
 
 
 @router.post("/change-password")

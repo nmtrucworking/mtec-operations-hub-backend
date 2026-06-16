@@ -60,6 +60,8 @@ def _format_percent(value: Any) -> str:
 def _text(value: Any) -> str:
     if value is None:
         return ""
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value if item)
     return str(value)
 
 

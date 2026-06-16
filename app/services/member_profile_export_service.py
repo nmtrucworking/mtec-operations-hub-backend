@@ -5,6 +5,7 @@ from io import BytesIO
 
 from docxtpl import DocxTemplate, RichText
 
+from app.core.departments import extract_member_department_labels
 from app.models import Member, MemberSkill
 
 CHECKED = RichText("☒", font="Segoe UI Symbol")
@@ -43,21 +44,13 @@ def generate_member_profile_docx(member: Member, skills: list[MemberSkill]) -> B
         "vi_tri": member.role_title or "",
     }
 
-    context["c_ban_cn"] = CHECKED if member.ban == "Ban Công nghệ" else UNCHECKED
-    context["c_ban_tt"] = CHECKED if member.ban == "Ban Truyền thông" else UNCHECKED
-    context["c_ban_vh"] = CHECKED if member.ban == "Ban Vận hành" else UNCHECKED
-    context["c_ban_cnh"] = CHECKED if member.ban == "Ban Chủ nhiệm" else UNCHECKED
-    context["c_ban_khac"] = (
-        CHECKED
-        if member.ban
-        and member.ban not in {
-            "Ban Công nghệ",
-            "Ban Truyền thông",
-            "Ban Vận hành",
-            "Ban Chủ nhiệm",
-        }
-        else UNCHECKED
-    )
+    member_departments = set(extract_member_department_labels(member))
+    known_departments = {"Ban Công nghệ", "Ban Truyền thông", "Ban Vận hành", "Ban Chủ nhiệm"}
+    context["c_ban_cn"] = CHECKED if "Ban Công nghệ" in member_departments else UNCHECKED
+    context["c_ban_tt"] = CHECKED if "Ban Truyền thông" in member_departments else UNCHECKED
+    context["c_ban_vh"] = CHECKED if "Ban Vận hành" in member_departments else UNCHECKED
+    context["c_ban_cnh"] = CHECKED if "Ban Chủ nhiệm" in member_departments else UNCHECKED
+    context["c_ban_khac"] = CHECKED if member_departments.difference(known_departments) else UNCHECKED
 
     skill_map = {
         "tk": "Thiết kế",

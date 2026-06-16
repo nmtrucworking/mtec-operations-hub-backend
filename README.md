@@ -129,6 +129,11 @@ alembic revision -m "init"
 alembic upgrade head
 ```
 
+Run local:
+```bash
+uvicorn app.main:app --reload
+```
+
 ## 8. Ghi chu
 
 - Database hien tai dung SQLite (`mtec_ops.db`) de MVP chay nhanh.

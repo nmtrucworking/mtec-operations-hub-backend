@@ -8,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.audit import create_audit_log
+from app.core.departments import DEPARTMENT_LABEL_BY_CODE
 from app.core.discipline_levels import (
     DISCIPLINE_LEVEL_EXPULSION,
     DISCIPLINE_LEVEL_NONE,
@@ -47,6 +48,7 @@ from app.models import (
     EvaluationScoreEvent,
     Meeting,
     Member,
+    MemberDepartment,
 )
 from app.services.evaluation_errors import (
     EvaluationCycleLockedError,
@@ -320,7 +322,7 @@ class EvaluationLegacyMigrationService:
             },
             "members": {
                 "activeCount": self._count_where(Member, Member.status == "Active"),
-                "unitDistribution": self._distribution(Member.ban),
+                "unitDistribution": self._member_department_distribution(),
             },
         }
         create_audit_log(
@@ -380,6 +382,21 @@ class EvaluationLegacyMigrationService:
         )
         self._audit_batch("LEGACY_MIGRATION_COMPLETE", summary)
         return summary.as_dict()
+
+    def _member_department_distribution(self) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            select(
+                MemberDepartment.department_code,
+                func.count(func.distinct(MemberDepartment.member_id)),
+            ).group_by(MemberDepartment.department_code)
+        ).all()
+        return [
+            {
+                "value": DEPARTMENT_LABEL_BY_CODE.get(code, code),
+                "count": count,
+            }
+            for code, count in rows
+        ]
 
     def soft_rollback(self, migration_batch_id: str) -> dict[str, Any]:
         voided_events = 0

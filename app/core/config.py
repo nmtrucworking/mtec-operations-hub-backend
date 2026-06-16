@@ -1,5 +1,11 @@
 import json
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
 def _as_bool(value: str, default: bool = False) -> bool:
@@ -22,6 +28,19 @@ def normalize_database_url(value: str) -> str:
         sep = "&" if "?" in value else "?"
         value += f"{sep}sslmode=require"
     return value
+
+
+def ensure_postgres_database_url(value: str) -> str:
+    normalized = normalize_database_url(value)
+    if not normalized:
+        raise RuntimeError(
+            "DATABASE_URL environment variable is required and must point to PostgreSQL."
+        )
+    if not normalized.startswith("postgresql+psycopg://"):
+        raise RuntimeError(
+            "SQLite is no longer supported. Configure DATABASE_URL with a PostgreSQL URL."
+        )
+    return normalized
 
 
 def _normalize_origin(value: str) -> str:
@@ -69,9 +88,7 @@ def _with_localhost_origins(origins: list[str]) -> list[str]:
 
 
 APP_ENV = os.getenv("APP_ENV", "development")
-DATABASE_URL = normalize_database_url(
-    os.getenv("DATABASE_URL", "sqlite:///./mtec_ops.db")
-)
+DATABASE_URL = ensure_postgres_database_url(os.getenv("DATABASE_URL", "").strip())
 AUTO_CREATE_TABLES = _as_bool(
     os.getenv("AUTO_CREATE_TABLES"), default=(APP_ENV == "development")
 )

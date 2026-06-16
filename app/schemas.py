@@ -6,6 +6,7 @@ from datetime import datetime as dt_datetime
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.core.departments import department_codes_to_labels, normalize_department_codes
 from app.core.discipline_levels import (
     DISCIPLINE_LEVEL_NONE,
     normalize_discipline_level,
@@ -31,6 +32,8 @@ class UserOut(BaseModel):
     role: str
     roles: list[str] = Field(default_factory=list)
     avatarInitials: str | None = None
+    avatarUrl: str | None = None
+    avatarSource: str | None = None
     email: str | None = None
     phone: str | None = None
     isActive: bool
@@ -43,6 +46,8 @@ class UserCreate(BaseModel):
     role: str | None = None
     roles: list[str] | None = None
     avatarInitials: str | None = None
+    avatarUrl: str | None = None
+    avatarSource: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
 
@@ -52,6 +57,8 @@ class UserUpdate(BaseModel):
     role: str | None = None
     roles: list[str] | None = None
     avatarInitials: str | None = None
+    avatarUrl: str | None = None
+    avatarSource: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
 
@@ -69,7 +76,7 @@ class MemberCreate(BaseModel):
     name: str
     gender: str | None = None
     dob: dt_date | None = None
-    ban: str | None = None
+    ban: List[str] = Field(default_factory=list)
     roleTitle: str | None = None
     status: str = "Active"
     phone: str | None = None
@@ -85,6 +92,11 @@ class MemberCreate(BaseModel):
     hardSkills: List[MemberSkillIn] = Field(default_factory=list)
     softSkills: List[MemberSkillIn] = Field(default_factory=list)
 
+    @field_validator("ban", mode="before")
+    @classmethod
+    def validate_ban(cls, value: object) -> List[str]:
+        return department_codes_to_labels(normalize_department_codes(value, strict=True))
+
 
 class MemberSkillIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
@@ -96,7 +108,7 @@ class MemberUpdate(BaseModel):
     name: str | None = None
     gender: str | None = None
     dob: dt_date | None = None
-    ban: str | None = None
+    ban: List[str] | None = None
     roleTitle: str | None = None
     status: str | None = None
     phone: str | None = None
@@ -112,6 +124,13 @@ class MemberUpdate(BaseModel):
 
     hardSkills: List[MemberSkillIn] | None = None
     softSkills: List[MemberSkillIn] | None = None
+
+    @field_validator("ban", mode="before")
+    @classmethod
+    def validate_ban(cls, value: object) -> List[str] | None:
+        if value is None:
+            return None
+        return department_codes_to_labels(normalize_department_codes(value, strict=True))
 
 
 class RequestCreate(BaseModel):
@@ -213,6 +232,8 @@ class DisciplineRecordUpdate(BaseModel):
 class SettingsProfileUpdate(BaseModel):
     fullName: str | None = None
     avatarInitials: str | None = None
+    avatarUrl: str | None = None
+    avatarSource: str | None = None
     email: EmailStr | None = None
     phone: str | None = None
 

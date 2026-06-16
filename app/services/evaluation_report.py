@@ -9,6 +9,7 @@ from typing import Any
 from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.departments import extract_member_department_labels, primary_member_department_code
 from app.core.evaluation_constants import (
     APPEAL_OPEN_STATUSES,
     APPEAL_STATUS_ACCEPTED,
@@ -431,7 +432,7 @@ class EvaluationReportService:
         output = []
         for evaluation, member in rows:
             primary_role = self._primary_role(cycle_id, member.id)
-            unit_code = primary_role.unit_code if primary_role else member.ban
+            unit_code = primary_role.unit_code if primary_role else primary_member_department_code(member)
             role_title = primary_role.role_title if primary_role else member.role_title
             item = {
                 "evaluation": evaluation,
@@ -502,8 +503,8 @@ class EvaluationReportService:
             "id": member.id,
             "mssv": member.mssv,
             "name": member.name,
-            "ban": member.ban,
-            "unitCode": primary_role.unit_code if primary_role else member.ban,
+            "ban": extract_member_department_labels(member),
+            "unitCode": primary_role.unit_code if primary_role else primary_member_department_code(member),
             "roleTitle": primary_role.role_title if primary_role else member.role_title,
             "status": member.status,
         }
@@ -726,5 +727,5 @@ class EvaluationReportService:
             if not member:
                 continue
             role = self._primary_role(cycle_id, member.id)
-            counts[(role.unit_code if role else member.ban) or "UNASSIGNED"] += 1
+            counts[(role.unit_code if role else primary_member_department_code(member)) or "UNASSIGNED"] += 1
         return dict(counts)

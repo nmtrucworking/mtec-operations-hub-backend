@@ -39,6 +39,8 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(30), index=True)
     avatar_initials: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    avatar_source: Mapped[str | None] = mapped_column(String(30), nullable=True)
     email: Mapped[str | None] = mapped_column(String(120), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -60,6 +62,7 @@ class User(Base):
     @property
     def primary_role(self) -> str:
         priorities = {
+            "admin": -1,
             "bcn": 0,
             "bvh_finance": 1,
             "bvh_hr": 2,
@@ -74,12 +77,17 @@ class User(Base):
         return min(role_names, key=lambda item: priorities.get(item, 999))
 
     def has_role(self, role: str) -> bool:
-        return role in self.role_names
+        role_names = self.role_names
+        if "admin" in role_names:
+            return True
+        return role in role_names
 
     def has_any_roles(self, roles: set[str] | list[str] | tuple[str, ...]) -> bool:
         if not roles:
             return False
         role_set = set(self.role_names)
+        if "admin" in role_set:
+            return True
         return bool(role_set.intersection(set(roles)))
 
 
@@ -113,7 +121,7 @@ class Member(Base):
     name: Mapped[str] = mapped_column(String(120))
     gender: Mapped[str | None] = mapped_column(String(20), nullable=True)
     dob: Mapped[date | None] = mapped_column(Date, nullable=True)
-    ban: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    ban: Mapped[str | None] = mapped_column(Text, nullable=True)
     role_title: Mapped[str | None] = mapped_column(String(80), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="Active")
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
@@ -135,6 +143,26 @@ class Member(Base):
     skills: Mapped[list["MemberSkill"]] = relationship(
         "MemberSkill", back_populates="member", cascade="all, delete-orphan"
     )
+    member_departments: Mapped[list["MemberDepartment"]] = relationship(
+        "MemberDepartment", back_populates="member", cascade="all, delete-orphan", order_by="MemberDepartment.sort_order"
+    )
+
+
+class MemberDepartment(Base):
+    __tablename__ = "member_departments"
+    __table_args__ = (
+        UniqueConstraint("member_id", "department_code", name="uq_member_departments_member_code"),
+        Index("ix_member_departments_member_id", "member_id"),
+        Index("ix_member_departments_department_code", "department_code"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    member_id: Mapped[str] = mapped_column(String(36), ForeignKey("members.id", ondelete="CASCADE"))
+    department_code: Mapped[str] = mapped_column(String(20))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC))
+
+    member: Mapped[Member] = relationship("Member", back_populates="member_departments")
 
 
 class MemberSkill(Base):

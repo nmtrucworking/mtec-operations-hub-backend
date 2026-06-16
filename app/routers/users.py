@@ -23,6 +23,8 @@ def _user_out(user: User) -> dict:
         "role": user.primary_role,
         "roles": user.role_names,
         "avatarInitials": user.avatar_initials,
+        "avatarUrl": user.avatar_url,
+        "avatarSource": user.avatar_source,
         "email": user.email,
         "phone": user.phone,
         "isActive": user.is_active,
@@ -44,6 +46,7 @@ def _resolve_roles_payload(role: str | None, roles: list[str] | None) -> list[st
 
 def _pick_primary_role(role_names: list[str]) -> str:
     priorities = {
+        "admin": -1,
         "bcn": 0,
         "bvh_finance": 1,
         "bvh_hr": 2,
@@ -89,7 +92,7 @@ def list_users(
     page: int = Query(default=1),
     pageSize: int = Query(default=20),
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    _: User = Depends(require_roles("admin")),
 ) -> dict:
     page, pageSize = sanitize_pagination(page, pageSize)
 
@@ -121,7 +124,7 @@ def list_users(
 def create_user(
     body: UserCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("admin")),
 ) -> dict:
     if db.scalar(select(User).where(User.username == body.username)):
         raise HTTPException(
@@ -136,6 +139,8 @@ def create_user(
         full_name=body.fullName,
         role=roles_payload[0],
         avatar_initials=body.avatarInitials,
+        avatar_url=body.avatarUrl,
+        avatar_source=body.avatarSource,
         email=body.email,
         phone=body.phone,
         is_active=True,
@@ -166,7 +171,7 @@ def update_user(
     user_id: str,
     body: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("admin")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -185,6 +190,8 @@ def update_user(
     mapping = {
         "fullName": "full_name",
         "avatarInitials": "avatar_initials",
+        "avatarUrl": "avatar_url",
+        "avatarSource": "avatar_source",
     }
 
     roles_payload = None
@@ -223,7 +230,7 @@ def reset_password(
     user_id: str,
     body: ResetPasswordRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("admin")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -248,7 +255,7 @@ def update_status(
     user_id: str,
     body: UserStatusUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("admin")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -276,7 +283,7 @@ def update_status(
 def delete_user(
     user_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("bcn")),
+    current_user: User = Depends(require_roles("admin")),
 ) -> dict:
     user = db.get(User, user_id)
     if not user:
@@ -317,7 +324,7 @@ def delete_user(
 def get_user(
     user_id: str,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles("bcn")),
+    _: User = Depends(require_roles("admin")),
 ) -> dict:
     """
     Truy xuất thông tin chi tiết của một tài khoản người dùng cụ thể từ cơ sở dữ liệu.
